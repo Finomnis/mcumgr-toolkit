@@ -1,1 +1,20 @@
 [workspace]
+resolver = "3"
+members = ["zephyr-mcumgr", "zephyr-mcumgr-cli"]
+
+[workspace.package]
+version = "0.0.1"
+authors = ["Finomnis <finomnis@gmail.com>"]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/Finomnis/zephyr-mcumgr-client"
+description = "Software suite for Zephyr's MCUmgr protocol"
+keywords = ["zephyr", "mcumgr", "smp"]
+categories = ["command-line-utilities"]
+
+exclude = ["/.gitignore", "/.github/"]
+
+[workspace.dependencies]
+serialport = { version = "4.8.1" }
