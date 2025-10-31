@@ -10,4 +10,8 @@ impl Connection {
             transport: Box::new(transport),
         }
     }
+
+    pub fn call(&mut self){
+        self.transport.
+    }
 }
