@@ -51,6 +51,12 @@ pub enum ReceiveError {
     #[error("received unexpected response")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::unexpected))]
     UnexpectedResponse,
+    #[error("received frame that exceeds configured MTU")]
+    #[diagnostic(code(zephyr_mcumgr::transport::recv::too_big))]
+    FrameTooBig,
+    #[error("received frame that exceeds configured MTU")]
+    #[diagnostic(code(zephyr_mcumgr::transport::recv::too_big))]
+    Base64DecodeError(#[from] base64::DecodeSliceError),
 }
 
 pub trait Transport {
@@ -59,7 +65,11 @@ pub trait Transport {
         header: [u8; SMP_HEADER_SIZE],
         data: &[u8],
     ) -> Result<(), SendError>;
-    fn recv_raw_frame(&mut self, buffer: &[u8; SMP_TRANSFER_BUFFER_SIZE]);
+
+    fn recv_raw_frame(
+        &mut self,
+        buffer: &mut [u8; SMP_TRANSFER_BUFFER_SIZE],
+    ) -> Result<usize, ReceiveError>;
 
     fn send_frame(
         &mut self,
@@ -98,6 +108,8 @@ pub trait Transport {
         group_id: u16,
         command_id: u8,
     ) -> Result<&'a [u8], ReceiveError> {
+        let len = self.recv_raw_frame(buffer)?;
+        println!("{:0x?}", &buffer[..len]);
         return Ok(&[]);
         // let mut header_data = [0u8; SMP_HEADER_SIZE];
 

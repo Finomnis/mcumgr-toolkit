@@ -15,7 +15,8 @@ keywords.workspace = true
 deku.workspace = true
 thiserror.workspace = true
 serialport.workspace = true
-miette = { workspace = true }
+miette.workspace = true
 rand.workspace = true
 base64.workspace = true
 crc.workspace = true
+ringbuf.workspace = true
