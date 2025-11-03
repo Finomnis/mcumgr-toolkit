@@ -1,5 +1,7 @@
 [package]
 name = "zephyr-mcumgr-cli"
+description = "Command-line interface for Zephyr's MCUmgr protocol"
+categories = ["command-line-utilities"]
 
 version.workspace = true
 authors.workspace = true
@@ -8,6 +10,9 @@ rust-version.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
-description.workspace = true
 keywords.workspace = true
-categories.workspace = true
+
+[dependencies]
+zephyr-mcumgr.workspace = true
+serialport = { workspace = true, features = ["usbportinfo-interface"] }
+miette = { workspace = true, features = ["fancy"] }

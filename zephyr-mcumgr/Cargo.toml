@@ -1,5 +1,6 @@
 [package]
 name = "zephyr-mcumgr"
+description = "Core library of the software suite for Zephyr's MCUmgr protocol"
 
 version.workspace = true
 authors.workspace = true
@@ -8,6 +9,16 @@ rust-version.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
-description.workspace = true
 keywords.workspace = true
-categories.workspace = true
+
+[dependencies]
+deku.workspace = true
+thiserror.workspace = true
+serialport.workspace = true
+miette.workspace = true
+rand.workspace = true
+base64.workspace = true
+crc.workspace = true
+ringbuf.workspace = true
+serde = { workspace = true, features = ["derive"] }
+ciborium.workspace = true
