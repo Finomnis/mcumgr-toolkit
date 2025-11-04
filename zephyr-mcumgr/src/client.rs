@@ -49,7 +49,7 @@ pub enum FileUploadError {
 }
 
 impl MCUmgrClient {
-    pub fn from_serial<T: Read + Write + 'static>(serial: T) -> Self {
+    pub fn from_serial<T: Send + Read + Write + 'static>(serial: T) -> Self {
         Self {
             connection: Connection::new(SerialTransport::new(serial)),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE,

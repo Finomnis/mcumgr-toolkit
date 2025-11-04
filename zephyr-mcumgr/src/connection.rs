@@ -9,7 +9,7 @@ use miette::Diagnostic;
 use thiserror::Error;
 
 pub struct Connection {
-    transport: Box<dyn Transport>,
+    transport: Box<dyn Transport + Send>,
     next_seqnum: u8,
     transport_buffer: [u8; u16::MAX as usize],
 }
@@ -69,7 +69,7 @@ pub enum ExecuteError {
 }
 
 impl Connection {
-    pub fn new<T: Transport + 'static>(transport: T) -> Self {
+    pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {
         Self {
             transport: Box::new(transport),
             next_seqnum: rand::random(),
