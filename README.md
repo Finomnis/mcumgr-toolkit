@@ -19,8 +19,23 @@ Specifically, it provides:
 
 ## Usage Example
 
-```rust
-- TODO -
+```rust no_run
+use zephyr_mcumgr::MCUmgrClient;
+
+fn main() {
+    let serial = serialport::new("COM42", 115200)
+        .timeout(std::time::Duration::from_millis(500))
+        .open()
+        .unwrap();
+
+    let mut client = MCUmgrClient::from_serial(serial);
+    client.use_auto_frame_size().unwrap();
+
+    println!("{:?}", client.os_echo("Hello world!").unwrap());
+}
+```
+```none
+"Hello world!"
 ```
 
 ## Using as a library
