@@ -12,7 +12,7 @@ fn main() -> miette::Result<()> {
         .into_diagnostic()?;
 
     let mut client = MCUmgrClient::from_serial(serial);
-    client.read_auto_frame_size()?;
+    client.use_auto_frame_size()?;
 
     println!("{:?}", client.os_echo("Hello world!")?);
 

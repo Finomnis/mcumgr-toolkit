@@ -61,7 +61,7 @@ impl MCUmgrClient {
         self
     }
 
-    pub fn read_auto_frame_size(&mut self) -> Result<(), ExecuteError> {
+    pub fn use_auto_frame_size(&mut self) -> Result<(), ExecuteError> {
         let mcumgr_params = self
             .connection
             .execute_cbor(&commands::os::MCUmgrParameters)?;
