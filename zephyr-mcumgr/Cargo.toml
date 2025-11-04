@@ -20,5 +20,6 @@ base64.workspace = true
 crc.workspace = true
 ringbuf.workspace = true
 serde = { workspace = true, features = ["derive"] }
+serde_bytes.workspace = true
 ciborium.workspace = true
 log.workspace = true

@@ -152,6 +152,8 @@ where
         header: [u8; SMP_HEADER_SIZE],
         data: &[u8],
     ) -> Result<(), SendError> {
+        log::debug!("Sending SMP Frame ({} bytes)", data.len());
+
         let checksum = {
             let mut digest = self.crc_algo.digest();
             digest.update(&header);

@@ -11,7 +11,7 @@ fn main() -> miette::Result<()> {
         .open()
         .into_diagnostic()?;
 
-    let mut client = MCUmgrClient::from_serial(serial);
+    let mut client = MCUmgrClient::from_serial(serial).with_smp_frame_size(4096);
 
     println!("{:?}", client.os_echo("Hello world!")?);
 
@@ -30,7 +30,15 @@ fn main() -> miette::Result<()> {
     client.fs_file_download("/internal/go.tiff", &mut data)?;
     let t1 = SystemTime::now();
     let duration = t1.duration_since(t0).unwrap().as_secs_f32();
-    println!("{} bytes/s", data.len() as f32 / duration);
+    println!("Download: {} bytes/s", data.len() as f32 / duration);
+
+    // let data = b"12345678";
+
+    let t0 = SystemTime::now();
+    client.fs_file_upload("/internal/go2.tiff", data.as_slice(), data.len() as u64)?;
+    let t1 = SystemTime::now();
+    let duration = t1.duration_since(t0).unwrap().as_secs_f32();
+    println!("Upload: {} bytes/s", data.len() as f32 / duration);
 
     Ok(())
 }
