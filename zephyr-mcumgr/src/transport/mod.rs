@@ -46,7 +46,7 @@ impl SmpHeader {
 }
 
 const SMP_HEADER_SIZE: usize = 8;
-pub const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
+const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
 
 mod smp_op {
     pub(super) const READ: u8 = 0;
@@ -55,32 +55,41 @@ mod smp_op {
     pub(super) const WRITE_RSP: u8 = 3;
 }
 
+/// Error while sending a command request
 #[derive(Error, Debug, Diagnostic)]
 pub enum SendError {
+    /// An error occurred in the underlying transport
     #[error("transport error")]
     #[diagnostic(code(zephyr_mcumgr::transport::send::transport))]
     TransportError(#[from] io::Error),
+    /// Unable to send data because it is too big
     #[error("given data slice was too big")]
     #[diagnostic(code(zephyr_mcumgr::transport::send::too_big))]
     DataTooBig,
 }
 
+/// Error while receiving a command response
 #[derive(Error, Debug, Diagnostic)]
 pub enum ReceiveError {
+    /// An error occurred in the underlying transport
     #[error("transport error")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::transport))]
     TransportError(#[from] io::Error),
+    /// We received a response that did not fit to our request
     #[error("received unexpected response")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::unexpected))]
     UnexpectedResponse,
+    /// The response we received is bigger than the configured MTU
     #[error("received frame that exceeds configured MTU")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::too_big))]
     FrameTooBig,
-    #[error("received frame that exceeds configured MTU")]
+    /// The response we received is not base64 encoded
+    #[error("failed to decode base64 data")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::too_big))]
     Base64DecodeError(#[from] base64::DecodeSliceError),
 }
 
+/// Defines the API of the SMP transport layer
 pub trait Transport {
     fn send_raw_frame(
         &mut self,
