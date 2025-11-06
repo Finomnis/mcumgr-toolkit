@@ -26,23 +26,23 @@ pub struct MCUmgrClient {
 #[derive(Error, Debug, Diagnostic)]
 pub enum FileDownloadError {
     /// The command failed in the SMP protocol layer.
-    #[error("command execution failed")]
+    #[error("Command execution failed")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::execute))]
     ExecuteError(#[from] ExecuteError),
     /// A device response contained an unexpected offset value.
-    #[error("received offset does not match requested offset")]
+    #[error("Received offset does not match requested offset")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::offset_mismatch))]
     UnexpectedOffset,
     /// The writer returned an error.
-    #[error("writer returned an error")]
+    #[error("Writer returned an error")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::writer))]
     WriterError(#[from] io::Error),
     /// The received data does not match the reported file size.
-    #[error("received data does not match reported size")]
+    #[error("Received data does not match reported size")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::size_mismatch))]
     SizeMismatch,
     /// The received data unexpectedly did not report the file size.
-    #[error("received data is missing file size information")]
+    #[error("Received data is missing file size information")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::missing_size))]
     MissingSize,
 }
@@ -51,11 +51,11 @@ pub enum FileDownloadError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum FileUploadError {
     /// The command failed in the SMP protocol layer.
-    #[error("command execution failed")]
+    #[error("Command execution failed")]
     #[diagnostic(code(zephyr_mcumgr::client::file_upload::execute))]
     ExecuteError(#[from] ExecuteError),
     /// The reader returned an error.
-    #[error("reader returned an error")]
+    #[error("Reader returned an error")]
     #[diagnostic(code(zephyr_mcumgr::client::file_upload::reader))]
     ReaderError(#[from] io::Error),
 }

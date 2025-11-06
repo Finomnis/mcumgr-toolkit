@@ -23,3 +23,4 @@ miette = { workspace = true, features = ["fancy"] }
 env_logger.workspace = true
 clap = { workspace = true, features = ["derive"] }
 log.workspace = true
+thiserror.workspace = true

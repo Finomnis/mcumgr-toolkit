@@ -59,11 +59,11 @@ mod smp_op {
 #[derive(Error, Debug, Diagnostic)]
 pub enum SendError {
     /// An error occurred in the underlying transport
-    #[error("transport error")]
+    #[error("Transport error")]
     #[diagnostic(code(zephyr_mcumgr::transport::send::transport))]
     TransportError(#[from] io::Error),
     /// Unable to send data because it is too big
-    #[error("given data slice was too big")]
+    #[error("Given data slice was too big")]
     #[diagnostic(code(zephyr_mcumgr::transport::send::too_big))]
     DataTooBig,
 }
@@ -72,19 +72,19 @@ pub enum SendError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum ReceiveError {
     /// An error occurred in the underlying transport
-    #[error("transport error")]
+    #[error("Transport error")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::transport))]
     TransportError(#[from] io::Error),
     /// We received a response that did not fit to our request
-    #[error("received unexpected response")]
+    #[error("Received unexpected response")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::unexpected))]
     UnexpectedResponse,
     /// The response we received is bigger than the configured MTU
-    #[error("received frame that exceeds configured MTU")]
+    #[error("Received frame that exceeds configured MTU")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::too_big))]
     FrameTooBig,
     /// The response we received is not base64 encoded
-    #[error("failed to decode base64 data")]
+    #[error("Failed to decode base64 data")]
     #[diagnostic(code(zephyr_mcumgr::transport::recv::base64_decode))]
     Base64DecodeError(#[from] base64::DecodeSliceError),
 }

@@ -1006,6 +1006,7 @@ dependencies = [
  "log",
  "miette",
  "serialport",
+ "thiserror",
  "zephyr-mcumgr",
 ]
 

@@ -70,23 +70,23 @@ impl Display for DeviceError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum ExecuteError {
     /// An error happend on SMP transport level while sending a request
-    #[error("sending failed")]
+    #[error("Sending failed")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::send))]
     SendFailed(#[from] SendError),
     /// An error happend on SMP transport level while receiving a response
-    #[error("receiving failed")]
+    #[error("Receiving failed")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::receive))]
     ReceiveFailed(#[from] ReceiveError),
     /// An error happened while CBOR encoding the request payload
-    #[error("cbor encoding failed")]
+    #[error("CBOR encoding failed")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::encode))]
     EncodeFailed,
     /// An error happened while CBOR decoding the response payload
-    #[error("cbor decoding failed")]
+    #[error("CBOR decoding failed")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::decode))]
     DecodeFailed,
     /// The device returned an SMP error
-    #[error("device returned error {0}")]
+    #[error("Device returned error {0}")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::device_error))]
     ErrorResponse(DeviceError),
 }
