@@ -18,7 +18,6 @@ jobs:
     strategy:
       matrix:
         target:
-          - aarch64-unknown-linux-gnu
           - x86_64-pc-windows-gnu
           - x86_64-unknown-linux-gnu
         rust:
@@ -83,8 +82,11 @@ jobs:
       - name: Install cargo-msrv
         run: cargo binstall --version 0.18.4 --no-confirm cargo-msrv
 
-      - name: Check MSRV
-        run: cargo msrv verify --log-target=stdout --output-format=json
+      - name: Check MSRV of zephyr-mcumgr
+        run: cargo msrv verify --path zephyr-mcumgr --log-target=stdout --output-format=json
+
+      - name: Check MSRV of zephyr-mcumgr-cli
+        run: cargo msrv verify --path zephyr-mcumgr-cli --log-target=stdout --output-format=json
 
   semver:
     name: Semantic Versioning
@@ -93,6 +95,10 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libudev-dev
+
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
 
