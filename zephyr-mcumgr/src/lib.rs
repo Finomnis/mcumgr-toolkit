@@ -4,7 +4,8 @@
 #![doc = include_str!("../../README.md")]
 #![doc(issue_tracker_base_url = "https://github.com/Finomnis/zephyr-mcumgr-client/issues")]
 
-mod client;
+/// A high level client for Zephyr's MCUmgr SMP functionality
+pub mod client;
 
 /// [MCUmgr command group](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html#specifications-of-management-groups-supported-by-zephyr) definitions
 pub mod commands;

@@ -14,53 +14,85 @@ use crate::{
 /// Matches Zephyr default value of [MCUMGR_TRANSPORT_NETBUF_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
 const ZEPHYR_DEFAULT_SMP_FRAME_SIZE: usize = 384;
 
+/// A high level client for Zephyr's MCUmgr SMP protocol.
+///
+/// This struct is the central entry point of this crate.
 pub struct MCUmgrClient {
     connection: Connection,
     smp_frame_size: usize,
 }
 
+/// Possible error values of [`MCUmgrClient::fs_file_download`].
 #[derive(Error, Debug, Diagnostic)]
 pub enum FileDownloadError {
+    /// The command failed in the SMP protocol layer.
     #[error("command execution failed")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::execute))]
     ExecuteError(#[from] ExecuteError),
+    /// A device response contained an unexpected offset value.
     #[error("received offset does not match requested offset")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::offset_mismatch))]
     UnexpectedOffset,
+    /// The writer returned an error.
     #[error("writer returned an error")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::writer))]
     WriterError(#[from] io::Error),
+    /// The received data does not match the reported file size.
     #[error("received data does not match reported size")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::size_mismatch))]
     SizeMismatch,
+    /// The received data unexpectedly did not report the file size.
     #[error("received data is missing file size information")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::missing_size))]
     MissingSize,
 }
 
+/// Possible error values of [`MCUmgrClient::fs_file_upload`].
 #[derive(Error, Debug, Diagnostic)]
 pub enum FileUploadError {
+    /// The command failed in the SMP protocol layer.
     #[error("command execution failed")]
     #[diagnostic(code(zephyr_mcumgr::client::file_upload::execute))]
     ExecuteError(#[from] ExecuteError),
-    #[error("writer returned an error")]
+    /// The reader returned an error.
+    #[error("reader returned an error")]
     #[diagnostic(code(zephyr_mcumgr::client::file_upload::reader))]
     ReaderError(#[from] io::Error),
 }
 
 impl MCUmgrClient {
-    pub fn from_serial<T: Send + Read + Write + 'static>(serial: T) -> Self {
+    /// Creates an Zephyr MCUmgr SMP client based on a configured and opened serial port.
+    ///
+    /// ```no_run
+    /// # use zephyr_mcumgr::MCUmgrClient;
+    /// # fn main() {
+    /// let serial = serialport::new("COM42", 115200)
+    ///     .timeout(std::time::Duration::from_millis(500))
+    ///     .open()
+    ///     .unwrap();
+    ///
+    /// let mut client = MCUmgrClient::new_from_serial(serial);
+    /// # }
+    /// ```
+    pub fn new_from_serial<T: Send + Read + Write + 'static>(serial: T) -> Self {
         Self {
             connection: Connection::new(SerialTransport::new(serial)),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE,
         }
     }
 
+    /// Configures the maximum SMP frame size that we can send to the device.
+    ///
+    /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
+    /// otherwise we might crash the device.
     pub fn with_frame_size(mut self, smp_frame_size: usize) -> Self {
         self.smp_frame_size = smp_frame_size;
         self
     }
 
+    /// Configures the maximum SMP frame size that we can send to the device automatically
+    /// by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
+    /// from the device.
     pub fn use_auto_frame_size(&mut self) -> Result<(), ExecuteError> {
         let mcumgr_params = self
             .connection
@@ -73,6 +105,9 @@ impl MCUmgrClient {
         Ok(())
     }
 
+    /// Sends a message to the device and expects the same message back as response.
+    ///
+    /// This can be used as a sanity check for whether the device is connected and responsive.
     pub fn os_echo(&mut self, msg: impl AsRef<str>) -> Result<String, ExecuteError> {
         self.connection
             .execute_command(&commands::os::Echo { d: msg.as_ref() })

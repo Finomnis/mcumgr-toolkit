@@ -28,7 +28,7 @@ fn main() {
         .open()
         .unwrap();
 
-    let mut client = MCUmgrClient::from_serial(serial);
+    let mut client = MCUmgrClient::new_from_serial(serial);
     client.use_auto_frame_size().unwrap();
 
     println!("{:?}", client.os_echo("Hello world!").unwrap());
