@@ -61,7 +61,7 @@ pub enum FileUploadError {
 }
 
 impl MCUmgrClient {
-    /// Creates an Zephyr MCUmgr SMP client based on a configured and opened serial port.
+    /// Creates a Zephyr MCUmgr SMP client based on a configured and opened serial port.
     ///
     /// ```no_run
     /// # use zephyr_mcumgr::MCUmgrClient;
