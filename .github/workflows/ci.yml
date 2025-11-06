@@ -255,22 +255,31 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Query crate version
-        run: echo "crate_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[0].version')" >> $GITHUB_ENV
+        run: echo "lib_crate_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[0].version')" >> $GITHUB_ENV
+
+      - name: Query crate version
+        run: echo "cli_crate_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[1].version')" >> $GITHUB_ENV
 
       - name: Query release tag version
         run: echo "release_tag_version=${{ github.event.release.name }}" >> $GITHUB_ENV
 
       - name: Print versions
-        run: echo "Crate - ${{ env.crate_version }}, Release - ${{ env.release_tag_version }}"
+        run: echo "Lib Crate - ${{ env.lib_crate_version }}, CLI Crate - ${{ env.cli_crate_version }}, Release - ${{ env.release_tag_version }}"
 
-      - name: Check version not empty
-        run: test -n "${{ env.crate_version }}"
+      - name: Check lib version not empty
+        run: test -n "${{ env.lib_crate_version }}"
 
-      - name: Check matching versions
-        run: test "${{ env.crate_version }}" = "${{ env.release_tag_version }}"
+      - name: Check cli version not empty
+        run: test -n "${{ env.cli_crate_version }}"
+
+      - name: Check matching version for lib
+        run: test "${{ env.lib_crate_version }}" = "${{ env.release_tag_version }}"
+
+      - name: Check matching version for cli
+        run: test "${{ env.cli_crate_version }}" = "${{ env.release_tag_version }}"
 
       - name: Cargo login
         run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
 
       - name: Cargo publish
-        run: cargo publish
+        run: cargo publish --workspace
