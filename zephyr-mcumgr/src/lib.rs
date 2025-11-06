@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 #![deny(unreachable_pub)]
 #![forbid(unsafe_code)]
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../README.md")]
 #![doc(issue_tracker_base_url = "https://github.com/Finomnis/zephyr-mcumgr-client/issues")]
 
 /// A high level client for Zephyr's MCUmgr SMP functionality
