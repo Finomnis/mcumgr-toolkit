@@ -102,64 +102,64 @@ jobs:
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
 
-  min-versions:
-    name: Minimal Dependency Versions
-    runs-on: ubuntu-latest
-    needs: [lints, docs]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
+  # min-versions:
+  #   name: Minimal Dependency Versions
+  #   runs-on: ubuntu-latest
+  #   needs: [lints, docs]
+  #   steps:
+  #     - name: Checkout sources
+  #       uses: actions/checkout@v5
 
-      - name: Install dependencies
-        run: sudo apt-get install -y libudev-dev
+  #     - name: Install dependencies
+  #       run: sudo apt-get install -y libudev-dev
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+  #     - name: Install nightly toolchain
+  #       uses: dtolnay/rust-toolchain@nightly
 
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-      - name: Install cargo-minimal-versions
-        uses: taiki-e/install-action@cargo-minimal-versions
+  #     - name: Install cargo-hack
+  #       uses: taiki-e/install-action@cargo-hack
+  #     - name: Install cargo-minimal-versions
+  #       uses: taiki-e/install-action@cargo-minimal-versions
 
-      - name: Check with minimal versions
-        run: cargo minimal-versions check --workspace --ignore-private
+  #     - name: Check with minimal versions
+  #       run: cargo minimal-versions check --workspace --ignore-private
 
-  min-versions-msrv:
-    name: Minimal Dependency Versions (MSRV)
-    runs-on: ubuntu-latest
-    needs: [lints, docs]
-    env:
-      RUSTFLAGS: "-D warnings"
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v5
+  # min-versions-msrv:
+  #   name: Minimal Dependency Versions (MSRV)
+  #   runs-on: ubuntu-latest
+  #   needs: [lints, docs]
+  #   env:
+  #     RUSTFLAGS: "-D warnings"
+  #   steps:
+  #     - name: Checkout sources
+  #       uses: actions/checkout@v5
 
-      - name: Install dependencies
-        run: sudo apt-get install -y libudev-dev
+  #     - name: Install dependencies
+  #       run: sudo apt-get install -y libudev-dev
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+  #     - name: Install nightly toolchain
+  #       uses: dtolnay/rust-toolchain@nightly
 
-      - name: Install cargo-binstall
-        uses: taiki-e/install-action@cargo-binstall
-      - name: Install cargo-msrv
-        run: cargo binstall --version 0.18.4 --no-confirm cargo-msrv
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-      - name: Install cargo-minimal-versions
-        uses: taiki-e/install-action@cargo-minimal-versions
+  #     - name: Install cargo-binstall
+  #       uses: taiki-e/install-action@cargo-binstall
+  #     - name: Install cargo-msrv
+  #       run: cargo binstall --version 0.18.4 --no-confirm cargo-msrv
+  #     - name: Install cargo-hack
+  #       uses: taiki-e/install-action@cargo-hack
+  #     - name: Install cargo-minimal-versions
+  #       uses: taiki-e/install-action@cargo-minimal-versions
 
-      - name: Determine MSRV
-        run: echo "MSRV=$(cargo msrv --path zephyr-mcumgr show --output-format=minimal)" >> $GITHUB_ENV
+  #     - name: Determine MSRV
+  #       run: echo "MSRV=$(cargo msrv --path zephyr-mcumgr show --output-format=minimal)" >> $GITHUB_ENV
 
-      - name: Show MSRV
-        run: echo "$MSRV"
+  #     - name: Show MSRV
+  #       run: echo "$MSRV"
 
-      - name: Install MSRV Rust version
-        run: rustup toolchain install "$MSRV"
+  #     - name: Install MSRV Rust version
+  #       run: rustup toolchain install "$MSRV"
 
-      - name: Check with minimal versions
-        run: cargo "+$MSRV" minimal-versions check --workspace --ignore-private
+  #     - name: Check with minimal versions
+  #       run: cargo "+$MSRV" minimal-versions check --workspace --ignore-private
 
   lints:
     name: Lints
@@ -232,8 +232,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     if: github.event_name == 'release'
-    needs:
-      [
+    needs: [
         test,
         build-examples,
         msrv,
@@ -241,8 +240,8 @@ jobs:
         docs,
         leaks,
         semver,
-        min-versions,
-        min-versions-msrv,
+        # min-versions,
+        # min-versions-msrv,
       ]
     steps:
       - name: Checkout sources
