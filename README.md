@@ -38,14 +38,14 @@ fn main() {
 "Hello world!"
 ```
 
-## Using as a library
+## Usage as a library
 
 To use this library in your project, enter your project directory and run:
 ```bash
 cargo add zephyr-mcumgr
 ```
 
-## Installing as command line tool
+## Installation as command line tool
 
 ```bash
 cargo install zephyr-mcumgr-cli
