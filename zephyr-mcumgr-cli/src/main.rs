@@ -1,47 +1,43 @@
 #![forbid(unsafe_code)]
 
-use std::time::{Duration, SystemTime};
+mod args;
 
+use std::time::Duration;
+
+use clap::Parser;
+use log;
 use miette::IntoDiagnostic;
+use miette::miette;
 use zephyr_mcumgr::MCUmgrClient;
 
 fn main() -> miette::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let serial = serialport::new("COM14", 115200)
-        .timeout(Duration::from_millis(500))
-        .open()
-        .into_diagnostic()?;
+    let args = args::App::parse();
 
-    let mut client = MCUmgrClient::new_from_serial(serial);
-    client.use_auto_frame_size()?;
+    let mut client;
+    if let Some(serial_name) = args.serial {
+        let serial = serialport::new(serial_name, args.baud)
+            .timeout(Duration::from_millis(args.timeout))
+            .open()
+            .into_diagnostic()?;
 
-    println!("{:?}", client.os_echo("Hello world!")?);
+        client = MCUmgrClient::new_from_serial(serial);
+        if client.use_auto_frame_size().is_err() {
+            log::warn!("Failed to read SMP frame size from device, using default! (might be slow)");
+        }
+    } else {
+        return Err(miette!("No backend selected!"));
+    }
 
-    // let t0 = SystemTime::now();
-    // let iters: usize = 1000;
-    // for _ in 0..iters {
-    //     client.os_echo("Hello world!")?;
-    // }
-    // let t1 = SystemTime::now();
-
-    // let duration = t1.duration_since(t0).unwrap().as_secs_f32();
-    // println!("{:?}", iters as f32 / duration);
-
-    let mut data = vec![];
-    let t0 = SystemTime::now();
-    client.fs_file_download("/internal/go.tiff", &mut data)?;
-    let t1 = SystemTime::now();
-    let duration = t1.duration_since(t0).unwrap().as_secs_f32();
-    println!("Download: {} bytes/s", data.len() as f32 / duration);
-
-    // let data = b"12345678";
-
-    let t0 = SystemTime::now();
-    client.fs_file_upload("/internal/go2.tiff", data.as_slice(), data.len() as u64)?;
-    let t1 = SystemTime::now();
-    let duration = t1.duration_since(t0).unwrap().as_secs_f32();
-    println!("Upload: {} bytes/s", data.len() as f32 / duration);
+    match args.group {
+        args::Group::Os { command } => match command {
+            args::OsCommand::Echo { msg } => println!("{}", client.os_echo(msg)?),
+        },
+        args::Group::Fs { command } => match command {
+            args::FsCommand::Foo => println!("Bar"),
+        },
+    }
 
     Ok(())
 }
