@@ -65,7 +65,7 @@ impl super::McuMgrCommand for TaskStatistics {
         false
     }
     fn group_id(&self) -> u16 {
-        8
+        0
     }
     fn command_id(&self) -> u8 {
         2

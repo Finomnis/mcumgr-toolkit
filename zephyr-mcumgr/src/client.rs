@@ -231,7 +231,7 @@ impl MCUmgrClient {
     /// Execute a raw [`commands::McuMgrCommand`].
     ///
     /// Only returns if no error happened, so the
-    /// user must not check for an `rc` or `err`
+    /// user does not need to check for an `rc` or `err`
     /// field in the response.
     pub fn raw_command<T: commands::McuMgrCommand>(
         &mut self,
