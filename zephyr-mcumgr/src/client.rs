@@ -9,7 +9,7 @@ use thiserror::Error;
 use crate::{
     commands::{self, fs::file_upload_max_data_chunk_size},
     connection::{Connection, ExecuteError},
-    transport::{ConfigurableTimeout, SerialTransport},
+    transport::serial::{ConfigurableTimeout, SerialTransport},
 };
 
 /// The default SMP frame size of Zephyr.

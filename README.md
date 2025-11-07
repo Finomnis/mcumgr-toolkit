@@ -21,14 +21,13 @@ Specifically, it provides:
 
 ```rust no_run
 use zephyr_mcumgr::MCUmgrClient;
+use std::time::Duration;
 
 fn main() {
-    let serial = serialport::new("COM42", 115200)
-        .timeout(std::time::Duration::from_millis(500))
-        .open()
-        .unwrap();
+    let serial = serialport::new("COM42", 115200).open().unwrap();
 
     let mut client = MCUmgrClient::new_from_serial(serial);
+    client.set_timeout(Duration::from_millis(500));
     client.use_auto_frame_size().unwrap();
 
     println!("{:?}", client.os_echo("Hello world!").unwrap());

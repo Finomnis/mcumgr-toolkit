@@ -1,4 +1,4 @@
-use std::{ops::DerefMut, time::Duration};
+use std::time::Duration;
 
 use base64::prelude::*;
 use ringbuf::{
@@ -8,10 +8,7 @@ use ringbuf::{
 };
 use serialport::SerialPort;
 
-use super::{
-    ConfigurableTimeout, ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError,
-    Transport,
-};
+use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport};
 
 /// A transport layer implementation for serial ports.
 pub struct SerialTransport<T> {
@@ -262,11 +259,23 @@ where
     }
 }
 
-impl ConfigurableTimeout for Box<dyn SerialPort> {
+/// Specifies that the serial transport has a configurable timeout
+pub trait ConfigurableTimeout {
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond within the set duration,
+    /// an error will be returned.
+    fn set_timeout(
+        &mut self,
+        duration: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+}
+
+impl<T: AsMut<dyn SerialPort> + ?Sized> ConfigurableTimeout for T {
     fn set_timeout(
         &mut self,
         timeout: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        SerialPort::set_timeout(self.deref_mut(), timeout).map_err(Into::into)
+        SerialPort::set_timeout(self.as_mut(), timeout).map_err(Into::into)
     }
 }
