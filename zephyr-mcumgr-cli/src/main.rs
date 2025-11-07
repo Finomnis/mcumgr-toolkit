@@ -1,6 +1,9 @@
 #![forbid(unsafe_code)]
 
 mod args;
+use args::Group;
+
+mod raw_command;
 
 use std::time::Duration;
 
@@ -24,6 +27,9 @@ pub enum CliError {
     #[error("Command execution failed")]
     #[diagnostic(code(zephyr_mcumgr::cli::execution_failed))]
     CommandExecutionFailed(#[from] ExecuteError),
+    #[error("Json encode failed")]
+    #[diagnostic(code(zephyr_mcumgr::cli::json_encode))]
+    JsonEncodeError(#[source] serde_json::Error),
 }
 
 fn cli_main() -> Result<(), CliError> {
@@ -51,7 +57,7 @@ fn cli_main() -> Result<(), CliError> {
     }
 
     match args.group {
-        args::Group::Os { command } => match command {
+        Group::Os { command } => match command {
             args::OsCommand::Echo { msg } => println!(
                 "{}",
                 client
@@ -59,7 +65,12 @@ fn cli_main() -> Result<(), CliError> {
                     .map_err(CliError::CommandExecutionFailed)?
             ),
         },
-        args::Group::Fs { command } => match command {},
+        Group::Fs { command } => match command {},
+        Group::Raw(command) => println!(
+            "{}",
+            serde_json::to_string_pretty(&client.raw_command(&command)?)
+                .map_err(CliError::JsonEncodeError)?
+        ),
     }
 
     Ok(())

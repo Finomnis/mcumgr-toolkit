@@ -28,9 +28,9 @@ pub trait McuMgrCommand: Serialize {
     /// the response type of the command
     type Response: for<'a> Deserialize<'a>;
     /// whether this command is a read or write operation
-    const WRITE_OPERATION: bool;
+    fn is_write_operation(&self) -> bool;
     /// the Group ID of the command
-    const GROUP_ID: u16;
+    fn group_id(&self) -> u16;
     /// the Command ID
-    const COMMAND_ID: u8;
+    fn command_id(&self) -> u8;
 }

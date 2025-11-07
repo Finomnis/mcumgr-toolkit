@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 
 /// Command line client for Zephyr's MCUmgr SMP protocol
 #[derive(Parser, Debug)]
@@ -34,6 +34,32 @@ pub enum OsCommand {
 #[derive(Debug, Subcommand)]
 pub enum FsCommand {}
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+pub enum RawCommandOp {
+    /// Perform a read command
+    Read,
+    /// Perform a write command
+    Write,
+}
+
+fn parse_raw_command_data(s: &str) -> Result<serde_json::Value, serde_json::Error> {
+    serde_json::from_str(s)
+}
+
+#[derive(Debug, Args)]
+pub struct RawCommand {
+    /// Whether this is a read or write command
+    #[arg(value_enum)]
+    pub op: RawCommandOp,
+    /// The Group ID of the command
+    pub group_id: u16,
+    /// The command ID
+    pub command_id: u8,
+    /// The payload of the command, as JSON
+    #[arg(value_parser=parse_raw_command_data, default_value = "{}")]
+    pub data: serde_json::Value,
+}
+
 #[derive(Debug, Subcommand)]
 pub enum Group {
     /// Default/OS Management
@@ -46,4 +72,6 @@ pub enum Group {
         #[command(subcommand)]
         command: FsCommand,
     },
+    /// Execute a raw SMP command
+    Raw(#[arg(flatten)] RawCommand),
 }

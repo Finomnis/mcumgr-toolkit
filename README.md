@@ -59,6 +59,14 @@ $ zephyr-mcumgr --serial COM42 os echo "Hello world!"
 Hello world!
 ```
 
+Or as a [raw command](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#echo-command):
+```none
+$ zephyr-msumgr --serial COM42 raw read 0 0 '{"d":"Hello World!"}'
+{
+  "r": "Hello World!"
+}
+```
+
 ## Contributions
 
 Contributions are welcome!

@@ -227,4 +227,16 @@ impl MCUmgrClient {
 
         Ok(())
     }
+
+    /// Execute a raw [`commands::McuMgrCommand`].
+    ///
+    /// Only returns if no error happened, so the
+    /// user must not check for an `rc` or `err`
+    /// field in the response.
+    pub fn raw_command<T: commands::McuMgrCommand>(
+        &mut self,
+        command: &T,
+    ) -> Result<T::Response, ExecuteError> {
+        self.connection.execute_command(command)
+    }
 }
