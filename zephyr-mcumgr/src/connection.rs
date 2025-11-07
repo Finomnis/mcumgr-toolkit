@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::Cursor};
+use std::{fmt::Display, io::Cursor, time::Duration};
 
 use crate::{
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
@@ -59,9 +59,9 @@ impl Display for DeviceError {
                     256.. => format!("MGMT_ERR_EPERUSER({rc})"),
                     _ => format!("Unknown({rc})"),
                 };
-                write!(f, "V1({err_str})")
+                write!(f, "{err_str}")
             }
-            DeviceError::V2 { group, rc } => write!(f, "V2(group={group},rc={rc})"),
+            DeviceError::V2 { group, rc } => write!(f, "group={group},rc={rc}"),
         }
     }
 }
@@ -86,7 +86,7 @@ pub enum ExecuteError {
     #[diagnostic(code(zephyr_mcumgr::connection::execute::decode))]
     DecodeFailed,
     /// The device returned an SMP error
-    #[error("Device returned error {0}")]
+    #[error("Device returned error code: {0}")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::device_error))]
     ErrorResponse(DeviceError),
 }
@@ -99,6 +99,17 @@ impl Connection {
             next_seqnum: rand::random(),
             transport_buffer: [0; u16::MAX as usize],
         }
+    }
+
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond to packets within the set
+    /// duration, an error will be raised.
+    pub fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.transport.set_timeout(timeout)
     }
 
     /// Executes a given CBOR based SMP command.

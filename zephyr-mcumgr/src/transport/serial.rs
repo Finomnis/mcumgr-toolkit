@@ -1,9 +1,12 @@
+use std::time::Duration;
+
 use base64::prelude::*;
 use ringbuf::{
     LocalRb,
     storage::Heap,
     traits::{Consumer, Observer, Producer},
 };
+use serialport::SerialPort;
 
 use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport};
 
@@ -168,7 +171,7 @@ where
 
 impl<T> Transport for SerialTransport<T>
 where
-    T: std::io::Write + std::io::Read,
+    T: std::io::Write + std::io::Read + ConfigurableTimeout,
 {
     fn send_raw_frame(
         &mut self,
@@ -246,5 +249,33 @@ where
         log::debug!("Received SMP Frame ({} bytes)", data.len());
 
         Ok(data)
+    }
+
+    fn set_timeout(
+        &mut self,
+        timeout: std::time::Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        ConfigurableTimeout::set_timeout(&mut self.serial, timeout)
+    }
+}
+
+/// Specifies that the serial transport has a configurable timeout
+pub trait ConfigurableTimeout {
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond within the set duration,
+    /// an error will be returned.
+    fn set_timeout(
+        &mut self,
+        duration: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+}
+
+impl<T: AsMut<dyn SerialPort> + ?Sized> ConfigurableTimeout for T {
+    fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        SerialPort::set_timeout(self.as_mut(), timeout).map_err(Into::into)
     }
 }

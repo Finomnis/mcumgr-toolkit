@@ -1,10 +1,10 @@
-use std::io;
+use std::{io, time::Duration};
 
 use miette::Diagnostic;
 use thiserror::Error;
 
-mod serial;
-pub use serial::SerialTransport;
+/// Serial port based transport
+pub mod serial;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct SmpHeader {
@@ -205,4 +205,13 @@ pub trait Transport {
 
         Ok(&buffer[SMP_HEADER_SIZE..SMP_HEADER_SIZE + data_size])
     }
+
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond to packets within the set
+    /// duration, an error will be raised.
+    fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
