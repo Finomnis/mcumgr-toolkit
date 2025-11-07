@@ -1,11 +1,17 @@
+use std::{ops::DerefMut, time::Duration};
+
 use base64::prelude::*;
 use ringbuf::{
     LocalRb,
     storage::Heap,
     traits::{Consumer, Observer, Producer},
 };
+use serialport::SerialPort;
 
-use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport};
+use super::{
+    ConfigurableTimeout, ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError,
+    Transport,
+};
 
 /// A transport layer implementation for serial ports.
 pub struct SerialTransport<T> {
@@ -168,7 +174,7 @@ where
 
 impl<T> Transport for SerialTransport<T>
 where
-    T: std::io::Write + std::io::Read,
+    T: std::io::Write + std::io::Read + ConfigurableTimeout,
 {
     fn send_raw_frame(
         &mut self,
@@ -246,5 +252,21 @@ where
         log::debug!("Received SMP Frame ({} bytes)", data.len());
 
         Ok(data)
+    }
+
+    fn set_timeout(
+        &mut self,
+        timeout: std::time::Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        ConfigurableTimeout::set_timeout(&mut self.serial, timeout)
+    }
+}
+
+impl ConfigurableTimeout for Box<dyn SerialPort> {
+    fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        SerialPort::set_timeout(self.deref_mut(), timeout).map_err(Into::into)
     }
 }

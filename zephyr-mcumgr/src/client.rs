@@ -1,4 +1,7 @@
-use std::io::{self, Read, Write};
+use std::{
+    io::{self, Read, Write},
+    time::Duration,
+};
 
 use miette::Diagnostic;
 use thiserror::Error;
@@ -6,7 +9,7 @@ use thiserror::Error;
 use crate::{
     commands::{self, fs::file_upload_max_data_chunk_size},
     connection::{Connection, ExecuteError},
-    transport::SerialTransport,
+    transport::{ConfigurableTimeout, SerialTransport},
 };
 
 /// The default SMP frame size of Zephyr.
@@ -74,7 +77,9 @@ impl MCUmgrClient {
     /// let mut client = MCUmgrClient::new_from_serial(serial);
     /// # }
     /// ```
-    pub fn new_from_serial<T: Send + Read + Write + 'static>(serial: T) -> Self {
+    pub fn new_from_serial<T: Send + Read + Write + ConfigurableTimeout + 'static>(
+        serial: T,
+    ) -> Self {
         Self {
             connection: Connection::new(SerialTransport::new(serial)),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE,
@@ -103,6 +108,17 @@ impl MCUmgrClient {
         log::debug!("Using frame size {}.", self.smp_frame_size);
 
         Ok(())
+    }
+
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond within the set duration,
+    /// an error will be returned.
+    pub fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.connection.set_timeout(timeout)
     }
 
     /// Sends a message to the device and expects the same message back as response.

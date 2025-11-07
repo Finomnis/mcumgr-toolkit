@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, time::Duration};
 
 use miette::Diagnostic;
 use thiserror::Error;
@@ -205,4 +205,25 @@ pub trait Transport {
 
         Ok(&buffer[SMP_HEADER_SIZE..SMP_HEADER_SIZE + data_size])
     }
+
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond within the set duration,
+    /// an error will be returned.
+    fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+}
+
+/// Specifies that the transport has a configurable timeout
+pub trait ConfigurableTimeout {
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond within the set duration,
+    /// an error will be returned.
+    fn set_timeout(
+        &mut self,
+        duration: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
