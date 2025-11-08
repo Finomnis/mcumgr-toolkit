@@ -1030,7 +1030,6 @@ dependencies = [
  "env_logger",
  "log",
  "miette",
- "serde",
  "serde_json",
  "serialport",
  "thiserror",
