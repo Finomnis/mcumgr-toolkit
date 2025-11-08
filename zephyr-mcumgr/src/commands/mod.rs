@@ -24,7 +24,9 @@ pub struct ErrResponse {
 }
 
 /// An MCUmgr command that can be executed through [`Connection::execute_command`](crate::connection::Connection::execute_command).
-pub trait McuMgrCommand: Serialize {
+pub trait McuMgrCommand {
+    /// the data payload type
+    type Payload: Serialize;
     /// the response type of the command
     type Response: for<'a> Deserialize<'a>;
     /// whether this command is a read or write operation
@@ -33,4 +35,6 @@ pub trait McuMgrCommand: Serialize {
     fn group_id(&self) -> u16;
     /// the Command ID
     fn command_id(&self) -> u8;
+    /// the data
+    fn data(&self) -> &Self::Payload;
 }

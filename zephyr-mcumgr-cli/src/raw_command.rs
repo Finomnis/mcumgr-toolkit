@@ -1,6 +1,7 @@
 use crate::args::RawCommandOp;
 
 impl zephyr_mcumgr::commands::McuMgrCommand for crate::args::RawCommand {
+    type Payload = serde_json::Value;
     type Response = serde_json::Value;
 
     fn is_write_operation(&self) -> bool {
@@ -17,13 +18,8 @@ impl zephyr_mcumgr::commands::McuMgrCommand for crate::args::RawCommand {
     fn command_id(&self) -> u8 {
         self.command_id
     }
-}
 
-impl serde::Serialize for crate::args::RawCommand {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.data.serialize(serializer)
+    fn data(&self) -> &serde_json::Value {
+        &self.data
     }
 }

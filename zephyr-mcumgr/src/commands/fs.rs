@@ -21,6 +21,7 @@ pub struct FileDownloadResponse {
 }
 
 impl<'a> super::McuMgrCommand for FileDownload<'a> {
+    type Payload = Self;
     type Response = FileDownloadResponse;
     fn is_write_operation(&self) -> bool {
         false
@@ -30,6 +31,9 @@ impl<'a> super::McuMgrCommand for FileDownload<'a> {
     }
     fn command_id(&self) -> u8 {
         0
+    }
+    fn data(&self) -> &Self {
+        self
     }
 }
 
@@ -76,6 +80,7 @@ pub struct FileUploadResponse {
 }
 
 impl<'a, 'b> super::McuMgrCommand for FileUpload<'a, 'b> {
+    type Payload = Self;
     type Response = FileUploadResponse;
     fn is_write_operation(&self) -> bool {
         true
@@ -85,5 +90,8 @@ impl<'a, 'b> super::McuMgrCommand for FileUpload<'a, 'b> {
     }
     fn command_id(&self) -> u8 {
         0
+    }
+    fn data(&self) -> &Self {
+        self
     }
 }

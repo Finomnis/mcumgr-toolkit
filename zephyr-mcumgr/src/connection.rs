@@ -118,7 +118,8 @@ impl Connection {
         request: &R,
     ) -> Result<R::Response, ExecuteError> {
         let mut cursor = Cursor::new(self.transport_buffer.as_mut_slice());
-        ciborium::into_writer(request, &mut cursor).map_err(|_| ExecuteError::EncodeFailed)?;
+        ciborium::into_writer(request.data(), &mut cursor)
+            .map_err(|_| ExecuteError::EncodeFailed)?;
         let data_size = cursor.position() as usize;
         let data = &self.transport_buffer[..data_size];
 

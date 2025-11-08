@@ -17,6 +17,7 @@ pub struct EchoResponse {
 }
 
 impl<'a> super::McuMgrCommand for Echo<'a> {
+    type Payload = Self;
     type Response = EchoResponse;
     fn is_write_operation(&self) -> bool {
         true
@@ -26,6 +27,9 @@ impl<'a> super::McuMgrCommand for Echo<'a> {
     }
     fn command_id(&self) -> u8 {
         0
+    }
+    fn data(&self) -> &Self {
+        self
     }
 }
 
@@ -60,6 +64,7 @@ pub struct TaskStatisticsResponse {
 }
 
 impl super::McuMgrCommand for TaskStatistics {
+    type Payload = Self;
     type Response = TaskStatisticsResponse;
     fn is_write_operation(&self) -> bool {
         false
@@ -69,6 +74,9 @@ impl super::McuMgrCommand for TaskStatistics {
     }
     fn command_id(&self) -> u8 {
         2
+    }
+    fn data(&self) -> &Self {
+        self
     }
 }
 
@@ -86,6 +94,7 @@ pub struct MCUmgrParametersResponse {
 }
 
 impl super::McuMgrCommand for MCUmgrParameters {
+    type Payload = Self;
     type Response = MCUmgrParametersResponse;
     fn is_write_operation(&self) -> bool {
         false
@@ -95,5 +104,8 @@ impl super::McuMgrCommand for MCUmgrParameters {
     }
     fn command_id(&self) -> u8 {
         6
+    }
+    fn data(&self) -> &Self {
+        self
     }
 }
