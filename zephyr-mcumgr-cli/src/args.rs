@@ -72,6 +72,12 @@ pub enum Group {
         #[command(subcommand)]
         command: FsCommand,
     },
+    /// Shell command execution
+    Shell {
+        /// The shell command to execute
+        #[arg(required = true, trailing_var_arg = true)]
+        argv: Vec<String>,
+    },
     /// Execute a raw SMP command
     Raw(#[command(flatten)] RawCommand),
 }

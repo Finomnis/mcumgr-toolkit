@@ -30,6 +30,9 @@ pub enum CliError {
     #[error("Json encode failed")]
     #[diagnostic(code(zephyr_mcumgr::cli::json_encode))]
     JsonEncodeError(#[source] serde_json::Error),
+    #[error("Shell command returned exit code '{0}'")]
+    #[diagnostic(code(zephyr_mcumgr::cli::shell_exit_code))]
+    ShellExitCode(i32),
 }
 
 fn cli_main() -> Result<(), CliError> {
@@ -66,6 +69,13 @@ fn cli_main() -> Result<(), CliError> {
             ),
         },
         Group::Fs { command } => match command {},
+        Group::Shell { argv } => {
+            let (returncode, output) = client.shell_execute(&argv)?;
+            println!("{output}");
+            if returncode != 0 {
+                return Err(CliError::ShellExitCode(returncode));
+            }
+        }
         Group::Raw(command) => {
             let response = client.raw_command(&command)?;
             let json_response =

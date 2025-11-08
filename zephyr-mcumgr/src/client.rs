@@ -228,6 +228,21 @@ impl MCUmgrClient {
         Ok(())
     }
 
+    /// Run a shell command.
+    ///
+    ///  # Arguments
+    ///
+    /// * `argv` - The shell command to be executed.
+    ///
+    /// # Return
+    ///
+    /// A tuple of (returncode, stdout) produced by the command execution.
+    pub fn shell_execute(&mut self, argv: &[String]) -> Result<(i32, String), ExecuteError> {
+        self.connection
+            .execute_command(&commands::shell::ShellCommandLineExecute { argv })
+            .map(|ret| (ret.ret, ret.o))
+    }
+
     /// Execute a raw [`commands::McuMgrCommand`].
     ///
     /// Only returns if no error happened, so the
