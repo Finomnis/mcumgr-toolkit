@@ -81,7 +81,7 @@ $ zephyr-mcumgr --serial COM42 raw read 0 0 '{"d":"Hello World!"}'
 
 Zephyr's default buffer sizes are quite small and reduce the read/write performance drastically.
 
-The central most important setting is [MCUMGR_TRANSPORT_NETBUF_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40). Its default of 384 bytes is very limiting, both for performance and as limiting factor of large responses, like `os task_statistics` or some shell commands.
+The central most important setting is [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40). Its default of 384 bytes is very limiting, both for performance and as limiting factor of large responses, like `os task_statistics` or some shell commands.
 
 Be aware that changing this value also requires an increase of `MCUMGR_TRANSPORT_WORKQUEUE_STACK_SIZE`, otherwise I got overflow crashes.
 
