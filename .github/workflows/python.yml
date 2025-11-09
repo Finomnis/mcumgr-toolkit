@@ -160,8 +160,8 @@ jobs:
           options: -v ${{ github.workspace }}:/io -w /io
           run: |
             apk add py3-pip
-            pip3 install -U pip
-            pip3 install zephyr_mcumgr --no-index --find-links /io/dist/ --force-reinstall
+            pip3 install -U pip --break-system-packages
+            pip3 install zephyr_mcumgr --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
             python3 -c "import zephyr_mcumgr"
       - name: Upload wheels
         uses: actions/upload-artifact@v4
