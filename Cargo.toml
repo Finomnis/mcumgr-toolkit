@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["zephyr-mcumgr", "zephyr-mcumgr-cli"]
+members = ["zephyr-mcumgr", "zephyr-mcumgr-cli", "zephyr-mcumgr-python"]
 
 [workspace.package]
 version = "0.0.1-alpha.5"
