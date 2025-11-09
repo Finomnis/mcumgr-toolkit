@@ -15,6 +15,7 @@ keywords.workspace = true
 [[bin]]
 name = "zephyr-mcumgr"
 path = "src/main.rs"
+doc = false
 
 [dependencies]
 zephyr-mcumgr.workspace = true

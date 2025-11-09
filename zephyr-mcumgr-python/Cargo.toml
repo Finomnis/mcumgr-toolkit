@@ -15,6 +15,7 @@ keywords.workspace = true
 name = "zephyr_mcumgr"
 # "cdylib" is necessary to produce a shared library for Python to import from.
 crate-type = ["cdylib"]
+doc = false
 
 [dependencies.pyo3]
 version = "0.27.1"
