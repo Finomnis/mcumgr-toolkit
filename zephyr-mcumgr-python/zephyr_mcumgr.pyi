@@ -33,7 +33,7 @@ class MCUmgrClient:
         by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         from the device.
         """
-    def set_timeout(self, timeout_ms: builtins.int) -> None:
+    def set_timeout_ms(self, timeout_ms: builtins.int) -> None:
         r"""
         Changes the communication timeout.
         
