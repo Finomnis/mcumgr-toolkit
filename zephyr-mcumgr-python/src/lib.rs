@@ -61,7 +61,8 @@ impl MCUmgrClient {
     /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
     /// otherwise we might crash the device.
     fn set_frame_size(&self, smp_frame_size: usize) -> PyResult<()> {
-        Ok(self.lock()?.set_frame_size(smp_frame_size))
+        self.lock()?.set_frame_size(smp_frame_size);
+        Ok(())
     }
 
     /// Configures the maximum SMP frame size that we can send to the device automatically
@@ -78,7 +79,7 @@ impl MCUmgrClient {
     /// duration, an error will be raised.
     pub fn set_timeout_ms(&self, timeout_ms: u64) -> PyResult<()> {
         let res = self.lock()?.set_timeout(Duration::from_millis(timeout_ms));
-        // Chenanigans because Box<dyn Error> does not implement Error
+        // Shenanigans because Box<dyn Error> does not implement Error
         let res = match &res {
             Ok(()) => Ok(()),
             Err(e) => Err(&**e),
