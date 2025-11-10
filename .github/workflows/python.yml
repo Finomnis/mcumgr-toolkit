@@ -22,10 +22,6 @@ jobs:
 
       - name: Generate python stubs
         working-directory: zephyr-mcumgr-python
-        run: cargo build
-
-      - name: Generate python stubs
-        working-directory: zephyr-mcumgr-python
         run: cargo run --bin stub_gen
 
       - run: git diff --exit-code
