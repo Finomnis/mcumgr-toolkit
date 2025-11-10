@@ -220,12 +220,12 @@ jobs:
       - name: Build
         env:
           RUSTFLAGS: "-Z sanitizer=address"
-        run: cargo build --target x86_64-unknown-linux-gnu --tests
+        run: cargo build --workspace --exclude zephyr-mcumgr-python --target x86_64-unknown-linux-gnu --tests
 
       - name: Run tests with leak sanitizer
         env:
           RUSTFLAGS: "-Z sanitizer=address"
-        run: cargo test
+        run: cargo test --workspace --exclude zephyr-mcumgr-python
           --target x86_64-unknown-linux-gnu --tests
           -- --test-threads 1
 

@@ -1,0 +1,249 @@
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+name: Python
+
+jobs:
+  check_stubs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libudev-dev python3-dev
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Generate python stubs
+        working-directory: zephyr-mcumgr-python
+        run: cargo run --bin stub_gen --no-default-features --features pyo3-embed
+
+      - run: git diff --exit-code
+
+  macos:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          architecture: x64
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build wheels - x86_64
+        uses: PyO3/maturin-action@v1
+        with:
+          target: x86_64
+          args: --release --out dist --sdist -m zephyr-mcumgr-python/Cargo.toml
+      - name: Install built wheel - x86_64
+        run: |
+          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
+          python -c "import zephyr_mcumgr"
+      - name: Build wheels - universal2
+        uses: PyO3/maturin-action@v1
+        with:
+          target: universal2-apple-darwin
+          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+      - name: Install built wheel - universal2
+        run: |
+          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
+          python -c "import zephyr_mcumgr"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [x64, x86]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          architecture: ${{ matrix.target }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+      - name: Install built wheel
+        run: |
+          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
+          python -c "import zephyr_mcumgr"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-${{ matrix.target }}
+          path: dist
+
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64, i686]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          architecture: x64
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+      - name: Install built wheel
+        if: matrix.target == 'x86_64'
+        run: |
+          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
+          python -c "import zephyr_mcumgr"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
+
+  linux-cross:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [aarch64, armv7, s390x, ppc64le, ppc64]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+      - uses: uraimo/run-on-arch-action@v3.0.1
+        if: matrix.target != 'ppc64'
+        name: Install built wheel
+        with:
+          arch: ${{ matrix.target }}
+          distro: ubuntu22.04
+          githubToken: ${{ github.token }}
+          install: |
+            apt-get update
+            apt-get install -y --no-install-recommends python3 python3-pip
+            pip3 install -U pip
+          run: |
+            ls -la dist/
+            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall
+            python3 -c "import zephyr_mcumgr"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-cross-${{ matrix.target }}
+          path: dist
+
+  musllinux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - i686-unknown-linux-musl
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          architecture: x64
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: musllinux_1_2
+          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+      - name: Install built wheel
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        uses: addnab/docker-run-action@v3
+        with:
+          image: alpine:latest
+          options: -v ${{ github.workspace }}:/io -w /io
+          run: |
+            apk add py3-pip
+            pip3 install -U pip --break-system-packages
+            pip3 install zephyr_mcumgr --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
+            python3 -c "import zephyr_mcumgr"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-${{ matrix.target }}
+          path: dist
+
+  musllinux-cross:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform:
+          - target: aarch64-unknown-linux-musl
+            arch: aarch64
+          - target: armv7-unknown-linux-musleabihf
+            arch: armv7
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: musllinux_1_2
+          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+      - uses: uraimo/run-on-arch-action@v3.0.1
+        name: Install built wheel
+        with:
+          arch: ${{ matrix.platform.arch }}
+          distro: alpine_latest
+          githubToken: ${{ github.token }}
+          install: |
+            apk add py3-pip
+            pip3 install -U pip --break-system-packages
+          run: |
+            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall --break-system-packages
+            python3 -c "import zephyr_mcumgr"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux-cross-${{ matrix.platform.arch }}
+          path: dist
+
+  release:
+    name: Publish version
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.event_name == 'release'
+    needs: [macos, windows, linux, linux-cross, musllinux, musllinux-cross]
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          path: wheels
+          pattern: wheels-*
+          merge-multiple: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          pip install --upgrade twine
+          twine upload --skip-existing wheels/*

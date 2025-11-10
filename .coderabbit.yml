@@ -5,6 +5,7 @@ reviews:
   high_level_summary_in_walkthrough: true
   poem: false
   in_progress_fortune: false
+  request_changes_workflow: true
   auto_review:
     enabled: true
     drafts: false

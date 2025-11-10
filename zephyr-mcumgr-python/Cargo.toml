@@ -17,10 +17,25 @@ keywords.workspace = true
 crate-type = ["cdylib", "rlib"]
 doc = false
 
+[[bin]]
+name = "stub_gen"
+path = "src/bin/stub_gen.rs"
+# Force-disable default (extension) mode for this binary
+# and enable the "pyo3-embed" feature instead
+required-features = ["pyo3-embed"]
+
+[features]
+# Default build = produce Python extension module (your current behavior)
+default = ["pyo3-ext"]
+
+# Feature that makes pyo3 behave as extension module
+pyo3-ext = ["pyo3/abi3-py310", "pyo3/extension-module"]
+
+# Feature for building the stub_gen binary (no abi3, no extension-module)
+pyo3-embed = []
+
 [dependencies.pyo3]
 version = "0.27.1"
-# "abi3-py310" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.10
-features = ["abi3-py310"]
 
 [dependencies.pyo3-stub-gen]
 version = "0.17.0"
