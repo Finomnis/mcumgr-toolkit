@@ -35,12 +35,10 @@ pyo3-ext = ["pyo3/abi3-py310", "pyo3/extension-module"]
 # Feature for building the stub_gen binary (no abi3, no extension-module)
 pyo3-embed = []
 
-[dependencies.pyo3]
-version = "0.27.1"
-
-[dependencies.pyo3-stub-gen]
-version = "0.17.0"
-
 [dependencies]
+pyo3 = "0.27.1"
+pyo3-stub-gen = "0.17.0"
+serde-pyobject = "0.8.0"
+serde_json.workspace = true
 zephyr-mcumgr.workspace = true
 serialport.workspace = true

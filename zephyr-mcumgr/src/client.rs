@@ -229,7 +229,7 @@ impl MCUmgrClient {
 
     /// Run a shell command.
     ///
-    ///  # Arguments
+    /// # Arguments
     ///
     /// * `argv` - The shell command to be executed.
     ///

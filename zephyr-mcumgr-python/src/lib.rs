@@ -2,15 +2,17 @@
 
 use pyo3::prelude::*;
 
-use ::zephyr_mcumgr::commands;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3_stub_gen::{
     define_stub_info_gatherer,
     derive::{gen_stub_pyclass, gen_stub_pymethods},
 };
-use std::error::Error;
 use std::sync::{Mutex, MutexGuard};
-use std::time::Duration;
+use std::{error::Error, time::Duration};
+
+use crate::raw_py_any_command::RawPyAnyCommand;
+
+mod raw_py_any_command;
 
 /// A high level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
@@ -74,8 +76,8 @@ impl MCUmgrClient {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    pub fn set_timeout(&self, timeout: Duration) -> PyResult<()> {
-        let res = self.lock()?.set_timeout(timeout);
+    pub fn set_timeout(&self, timeout_ms: u64) -> PyResult<()> {
+        let res = self.lock()?.set_timeout(Duration::from_millis(timeout_ms));
         // Chenanigans because Box<dyn Error> does not implement Error
         let res = match &res {
             Ok(()) => Ok(()),
@@ -97,7 +99,7 @@ impl MCUmgrClient {
 
     /// Run a shell command.
     ///
-    ///  # Arguments
+    /// # Arguments
     ///
     /// * `argv` - The shell command to be executed.
     ///
@@ -109,14 +111,34 @@ impl MCUmgrClient {
         convert_error(res)
     }
 
-    /// Execute a raw [`commands::McuMgrCommand`].
+    /// Execute a raw MCUmgrCommand.
     ///
     /// Only returns if no error happened, so the
     /// user does not need to check for an `rc` or `err`
     /// field in the response.
-    pub fn raw_command(&self, command: i32) -> PyResult<i32> {
-        //self.connection.execute_command(command)
-        Ok(42)
+    ///
+    /// Read Zephyr's [SMP Protocol Specification](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html)
+    /// for more information.
+    ///
+    /// # Arguments
+    ///
+    /// * `write_operation` - Whether the command is a read or write operation.
+    /// * `group_id` - The group ID of the command
+    /// * `command_id` - The command ID
+    /// * `data` - Anything that can be serialized as a proper packet payload.
+    ///
+    pub fn raw_command<'py>(
+        &self,
+        py: Python<'py>,
+        write_operation: bool,
+        group_id: u16,
+        command_id: u8,
+        data: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let command = RawPyAnyCommand::new(write_operation, group_id, command_id, data)?;
+        let result = self.lock()?.raw_command(&command);
+        let result = convert_error(result)?;
+        RawPyAnyCommand::convert_result(py, result)
     }
 }
 
