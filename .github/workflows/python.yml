@@ -22,7 +22,7 @@ jobs:
 
       - name: Generate python stubs
         working-directory: zephyr-mcumgr-python
-        run: cargo run --bin stub_gen
+        run: cargo run --bin stub_gen --no-default-features --features pyo3-embed
 
       - run: git diff --exit-code
 
