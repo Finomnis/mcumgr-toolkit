@@ -7,9 +7,12 @@ use pyo3_stub_gen::{
     define_stub_info_gatherer,
     derive::{gen_stub_pyclass, gen_stub_pymethods},
 };
-use std::error::Error;
 use std::sync::{Mutex, MutexGuard};
-use std::time::Duration;
+use std::{error::Error, time::Duration};
+
+use crate::raw_py_any_command::RawPyAnyCommand;
+
+mod raw_py_any_command;
 
 /// A high level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
@@ -53,12 +56,101 @@ impl MCUmgrClient {
         })
     }
 
+    /// Configures the maximum SMP frame size that we can send to the device.
+    ///
+    /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
+    /// otherwise we might crash the device.
+    fn set_frame_size(&self, smp_frame_size: usize) -> PyResult<()> {
+        self.lock()?.set_frame_size(smp_frame_size);
+        Ok(())
+    }
+
+    /// Configures the maximum SMP frame size that we can send to the device automatically
+    /// by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
+    /// from the device.
+    pub fn use_auto_frame_size(&self) -> PyResult<()> {
+        let res = self.lock()?.use_auto_frame_size();
+        convert_error(res)
+    }
+
+    /// Changes the communication timeout.
+    ///
+    /// When the device does not respond to packets within the set
+    /// duration, an error will be raised.
+    pub fn set_timeout_ms(&self, timeout_ms: u64) -> PyResult<()> {
+        let res = self.lock()?.set_timeout(Duration::from_millis(timeout_ms));
+        // Shenanigans because Box<dyn Error> does not implement Error
+        let res = match &res {
+            Ok(()) => Ok(()),
+            Err(e) => Err(&**e),
+        };
+        convert_error(res)
+    }
+
     /// Sends a message to the device and expects the same message back as response.
     ///
     /// This can be used as a sanity check for whether the device is connected and responsive.
     fn os_echo(&self, msg: &str) -> PyResult<String> {
         let res = self.lock()?.os_echo(msg);
         convert_error(res)
+    }
+
+    // TODO: file download
+    // TODO: file upload
+
+    /// Run a shell command.
+    ///
+    /// # Arguments
+    ///
+    /// * `argv` - The shell command to be executed.
+    ///
+    /// # Return
+    ///
+    /// A tuple of (returncode, stdout) produced by the command execution.
+    pub fn shell_execute(&self, argv: Vec<String>) -> PyResult<(i32, String)> {
+        let res = self.lock()?.shell_execute(&argv);
+        convert_error(res)
+    }
+
+    /// Execute a raw MCUmgrCommand.
+    ///
+    /// Only returns if no error happened, so the
+    /// user does not need to check for an `rc` or `err`
+    /// field in the response.
+    ///
+    /// Read Zephyr's [SMP Protocol Specification](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html)
+    /// for more information.
+    ///
+    /// # Arguments
+    ///
+    /// * `write_operation` - Whether the command is a read or write operation.
+    /// * `group_id` - The group ID of the command
+    /// * `command_id` - The command ID
+    /// * `data` - Anything that can be serialized as a proper packet payload.
+    ///
+    /// # Example
+    ///
+    /// ```python
+    /// client.raw_command(True, 0, 0, {"d": "Hello!"})
+    /// ```
+    ///
+    /// Response:
+    /// ```none
+    /// {'r': 'Hello!'}
+    /// ```
+    ///
+    pub fn raw_command<'py>(
+        &self,
+        py: Python<'py>,
+        write_operation: bool,
+        group_id: u16,
+        command_id: u8,
+        data: &Bound<'py, PyAny>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let command = RawPyAnyCommand::new(write_operation, group_id, command_id, data)?;
+        let result = self.lock()?.raw_command(&command);
+        let result = convert_error(result)?;
+        RawPyAnyCommand::convert_result(py, result)
     }
 }
 

@@ -27,6 +27,9 @@ Its primary design goals are:
 from zephyr_mcumgr import MCUmgrClient
 
 client = MCUmgrClient.new_from_serial("COM42")
+client.set_timeout_ms(500)
+client.use_auto_frame_size()
+
 print(client.os_echo("Hello world!"))
 ```
 

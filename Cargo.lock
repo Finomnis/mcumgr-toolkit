@@ -1272,6 +1272,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-pyobject"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5614e792b7c36d3feeb45b8287ea2dc615f063896e59258d11ef5015c18bdf6a"
+dependencies = [
+ "log",
+ "pyo3",
+ "serde",
+]
+
+[[package]]
 name = "serde_bytes"
 version = "0.11.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1908,6 +1919,8 @@ version = "0.0.2"
 dependencies = [
  "pyo3",
  "pyo3-stub-gen",
+ "serde-pyobject",
+ "serde_json",
  "serialport",
  "zephyr-mcumgr",
 ]

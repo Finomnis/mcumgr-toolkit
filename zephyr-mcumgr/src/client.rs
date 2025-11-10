@@ -90,9 +90,8 @@ impl MCUmgrClient {
     ///
     /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
     /// otherwise we might crash the device.
-    pub fn with_frame_size(mut self, smp_frame_size: usize) -> Self {
+    pub fn set_frame_size(&mut self, smp_frame_size: usize) {
         self.smp_frame_size = smp_frame_size;
-        self
     }
 
     /// Configures the maximum SMP frame size that we can send to the device automatically
@@ -194,7 +193,7 @@ impl MCUmgrClient {
     ///
     /// Uploading files with Zephyr's default parameters is slow.
     /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
-    /// to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::with_frame_size`]
+    /// to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
     /// or [`MCUmgrClient::use_auto_frame_size`].
     pub fn fs_file_upload<T: Read>(
         &mut self,
@@ -230,7 +229,7 @@ impl MCUmgrClient {
 
     /// Run a shell command.
     ///
-    ///  # Arguments
+    /// # Arguments
     ///
     /// * `argv` - The shell command to be executed.
     ///
