@@ -2,7 +2,6 @@
 # ruff: noqa: E501, F401
 
 import builtins
-import datetime
 import typing
 
 @typing.final
@@ -34,7 +33,7 @@ class MCUmgrClient:
         by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         from the device.
         """
-    def set_timeout(self, timeout: datetime.timedelta) -> None:
+    def set_timeout(self, timeout_ms: builtins.int) -> None:
         r"""
         Changes the communication timeout.
         
@@ -51,7 +50,7 @@ class MCUmgrClient:
         r"""
         Run a shell command.
         
-         # Arguments
+        # Arguments
         
         * `argv` - The shell command to be executed.
         
@@ -59,12 +58,22 @@ class MCUmgrClient:
         
         A tuple of (returncode, stdout) produced by the command execution.
         """
-    def raw_command(self, command: builtins.int) -> builtins.int:
+    def raw_command(self, write_operation: builtins.bool, group_id: builtins.int, command_id: builtins.int, data: typing.Any) -> typing.Any:
         r"""
-        Execute a raw [`commands::McuMgrCommand`].
+        Execute a raw MCUmgrCommand.
         
         Only returns if no error happened, so the
         user does not need to check for an `rc` or `err`
         field in the response.
+        
+        Read Zephyr's [SMP Protocol Specification](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html)
+        for more information.
+        
+        # Arguments
+        
+        * `write_operation` - Whether the command is a read or write operation.
+        * `group_id` - The group ID of the command
+        * `command_id` - The command ID
+        * `data` - Anything that can be serialized as a proper packet payload.
         """
 
