@@ -27,7 +27,7 @@ jobs:
       - run: git diff --exit-code
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
