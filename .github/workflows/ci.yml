@@ -262,7 +262,7 @@ jobs:
         run: echo "cli_crate_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[1].version')" >> $GITHUB_ENV
 
       - name: Query release tag version
-        run: echo "release_tag_version=${{ github.event.release.name }}" >> $GITHUB_ENV
+        run: echo "release_tag_version=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Print versions
         run: echo "Lib Crate - ${{ env.lib_crate_version }}, CLI Crate - ${{ env.cli_crate_version }}, Release - ${{ env.release_tag_version }}"
