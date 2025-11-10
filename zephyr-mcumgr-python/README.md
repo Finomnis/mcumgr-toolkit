@@ -7,9 +7,9 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Finomnis/zephyr-mcumgr-client/ci.yml?branch=main)](https://github.com/Finomnis/zephyr-mcumgr-client/actions/workflows/ci.yml?query=branch%3Amain)
 [![docs.rs](https://img.shields.io/docsrs/zephyr-mcumgr)](https://docs.rs/zephyr-mcumgr)
 
-This library provides a Rust based Python API for Zephyr's [MCUmgr protocol](https://docs.zephyrproject.org/latest/services/device_mgmt/mcumgr.html).
+This library provides a Rust-based Python API for Zephyr's [MCUmgr protocol](https://docs.zephyrproject.org/latest/services/device_mgmt/mcumgr.html).
 
-It might be compatible with other MCUmgr/SMP based systems, but it is developed with Zephyr in mind.
+It might be compatible with other MCUmgr/SMP-based systems, but it is developed with Zephyr in mind.
 
 Its primary design goals are:
 - Completeness
