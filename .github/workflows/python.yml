@@ -135,13 +135,15 @@ jobs:
         name: Install built wheel
         with:
           arch: ${{ matrix.target }}
-          distro: alpine_latest
+          distro: ubuntu22.04
           githubToken: ${{ github.token }}
           install: |
-            apk add py3-pip
-            pip3 install -U pip --break-system-packages
+            apt-get update
+            apt-get install -y --no-install-recommends python3 python3-pip
+            pip3 install -U pip
           run: |
-            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall --break-system-packages
+            ls -la /github/workspace/dist/
+            pip3 install zephyr_mcumgr --no-index --find-links /github/workspace/dist/ --force-reinstall
             python3 -c "import zephyr_mcumgr"
       - name: Upload wheels
         uses: actions/upload-artifact@v4
