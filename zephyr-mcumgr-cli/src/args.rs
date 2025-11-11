@@ -17,6 +17,10 @@ pub struct App {
     #[arg(short, long, default_value_t = 500)]
     pub timeout: u64,
 
+    /// Show progress bar for data transfer commands
+    #[arg(short, long)]
+    pub progress: bool,
+
     /// Command group
     #[command(subcommand)]
     pub group: Group,

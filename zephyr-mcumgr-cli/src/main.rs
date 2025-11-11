@@ -3,6 +3,8 @@
 mod args;
 use args::Group;
 
+mod progress;
+
 mod raw_command;
 
 use std::{
@@ -19,6 +21,8 @@ use zephyr_mcumgr::{
     client::{FileDownloadError, FileUploadError},
     connection::ExecuteError,
 };
+
+use crate::progress::with_progress_bar;
 
 /// Possible CLI errors.
 #[derive(Error, Debug, Diagnostic)]
@@ -105,11 +109,20 @@ fn cli_main() -> Result<(), CliError> {
                     data
                 };
 
-                client.fs_file_upload(remote, data.as_slice(), data.len() as u64, None)?;
+                with_progress_bar(
+                    args.progress,
+                    Some(data.len() as u64),
+                    Some(remote.clone()),
+                    |progress| {
+                        client.fs_file_upload(remote, data.as_slice(), data.len() as u64, progress)
+                    },
+                )?;
             }
             args::FsCommand::FileDownload { remote, local } => {
                 let mut data = vec![];
-                client.fs_file_download(remote, &mut data, None)?;
+                with_progress_bar(args.progress, None, Some(remote.clone()), |progress| {
+                    client.fs_file_download(remote, &mut data, progress)
+                })?;
                 if local == "-" {
                     std::io::stdout()
                         .lock()
