@@ -121,10 +121,7 @@ impl MCUmgrClient {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    pub fn set_timeout(
-        &mut self,
-        timeout: Duration,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn set_timeout(&mut self, timeout: Duration) -> Result<(), miette::Report> {
         self.connection.set_timeout(timeout)
     }
 

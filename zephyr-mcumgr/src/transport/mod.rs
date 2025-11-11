@@ -210,8 +210,5 @@ pub trait Transport {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    fn set_timeout(
-        &mut self,
-        timeout: Duration,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    fn set_timeout(&mut self, timeout: Duration) -> Result<(), miette::Report>;
 }

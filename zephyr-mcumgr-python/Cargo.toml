@@ -42,3 +42,4 @@ serde-pyobject = "0.8.0"
 serde_json.workspace = true
 zephyr-mcumgr.workspace = true
 serialport.workspace = true
+miette = { workspace = true, features = ["fancy"] }

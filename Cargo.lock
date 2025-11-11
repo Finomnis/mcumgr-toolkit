@@ -1966,6 +1966,7 @@ dependencies = [
 name = "zephyr-mcumgr-python"
 version = "0.1.0"
 dependencies = [
+ "miette",
  "pyo3",
  "pyo3-stub-gen",
  "serde-pyobject",

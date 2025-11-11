@@ -33,7 +33,7 @@ pub enum CliError {
     NoBackendSelected,
     #[error("Setting the timeout failed")]
     #[diagnostic(code(zephyr_mcumgr::cli::set_timeout_failed))]
-    SetTimeoutFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
+    SetTimeoutFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync + 'static>),
     #[error("Command execution failed")]
     #[diagnostic(code(zephyr_mcumgr::cli::execution_failed))]
     CommandExecutionFailed(#[from] ExecuteError),
@@ -73,7 +73,7 @@ fn cli_main() -> Result<(), CliError> {
 
     client
         .set_timeout(Duration::from_millis(args.timeout))
-        .map_err(CliError::SetTimeoutFailed)?;
+        .map_err(|e| CliError::SetTimeoutFailed(e.into()))?;
 
     if let Err(e) = client.use_auto_frame_size() {
         log::warn!("Failed to read SMP frame size from device, using slow default");

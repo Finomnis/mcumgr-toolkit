@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use miette::IntoDiagnostic;
 use pyo3::{prelude::*, types::PyBytes};
 
 use pyo3::exceptions::PyRuntimeError;
@@ -8,7 +9,7 @@ use pyo3_stub_gen::{
     derive::{gen_stub_pyclass, gen_stub_pymethods},
 };
 use std::sync::{Mutex, MutexGuard};
-use std::{error::Error, time::Duration};
+use std::time::Duration;
 
 use crate::raw_py_any_command::RawPyAnyCommand;
 
@@ -21,14 +22,16 @@ struct MCUmgrClient {
     client: Mutex<::zephyr_mcumgr::MCUmgrClient>,
 }
 
-fn convert_error<T, E: Error>(res: Result<T, E>) -> PyResult<T> {
-    res.map_err(|e| PyRuntimeError::new_err(format!("{e}")))
+fn err_to_pyerr<E: Into<miette::Report>>(err: E) -> PyErr {
+    let e: miette::Report = err.into();
+    PyRuntimeError::new_err(format!("{e:?}"))
 }
 
 impl MCUmgrClient {
     fn lock(&self) -> PyResult<MutexGuard<'_, ::zephyr_mcumgr::MCUmgrClient>> {
-        let res = self.client.lock();
-        convert_error(res)
+        self.client
+            .lock()
+            .map_err(|e| PyRuntimeError::new_err(format!("{e}")))
     }
 }
 
@@ -48,8 +51,9 @@ impl MCUmgrClient {
     fn new_from_serial(serial: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let serial = serialport::new(serial, baud_rate)
             .timeout(Duration::from_millis(timeout_ms))
-            .open();
-        let serial = convert_error(serial)?;
+            .open()
+            .into_diagnostic()
+            .map_err(err_to_pyerr)?;
         let client = ::zephyr_mcumgr::MCUmgrClient::new_from_serial(serial);
         Ok(MCUmgrClient {
             client: Mutex::new(client),
@@ -69,8 +73,7 @@ impl MCUmgrClient {
     /// by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// from the device.
     pub fn use_auto_frame_size(&self) -> PyResult<()> {
-        let res = self.lock()?.use_auto_frame_size();
-        convert_error(res)
+        self.lock()?.use_auto_frame_size().map_err(err_to_pyerr)
     }
 
     /// Changes the communication timeout.
@@ -78,21 +81,16 @@ impl MCUmgrClient {
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
     pub fn set_timeout_ms(&self, timeout_ms: u64) -> PyResult<()> {
-        let res = self.lock()?.set_timeout(Duration::from_millis(timeout_ms));
-        // Shenanigans because Box<dyn Error> does not implement Error
-        let res = match &res {
-            Ok(()) => Ok(()),
-            Err(e) => Err(&**e),
-        };
-        convert_error(res)
+        self.lock()?
+            .set_timeout(Duration::from_millis(timeout_ms))
+            .map_err(err_to_pyerr)
     }
 
     /// Sends a message to the device and expects the same message back as response.
     ///
     /// This can be used as a sanity check for whether the device is connected and responsive.
     fn os_echo(&self, msg: &str) -> PyResult<String> {
-        let res = self.lock()?.os_echo(msg);
-        convert_error(res)
+        self.lock()?.os_echo(msg).map_err(err_to_pyerr)
     }
 
     /// Load a file from the device.
@@ -141,7 +139,7 @@ impl MCUmgrClient {
             return Err(cb_error);
         }
 
-        convert_error(res)?;
+        res.map_err(err_to_pyerr)?;
         Ok(PyBytes::new(py, &data))
     }
 
@@ -190,7 +188,7 @@ impl MCUmgrClient {
             return Err(cb_error);
         }
 
-        convert_error(res)
+        res.map_err(err_to_pyerr)
     }
 
     /// Run a shell command.
@@ -203,8 +201,7 @@ impl MCUmgrClient {
     ///
     /// A tuple of (returncode, stdout) produced by the command execution.
     pub fn shell_execute(&self, argv: Vec<String>) -> PyResult<(i32, String)> {
-        let res = self.lock()?.shell_execute(&argv);
-        convert_error(res)
+        self.lock()?.shell_execute(&argv).map_err(err_to_pyerr)
     }
 
     /// Execute a raw MCUmgrCommand.
@@ -243,8 +240,7 @@ impl MCUmgrClient {
         data: &Bound<'py, PyAny>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let command = RawPyAnyCommand::new(write_operation, group_id, command_id, data)?;
-        let result = self.lock()?.raw_command(&command);
-        let result = convert_error(result)?;
+        let result = self.lock()?.raw_command(&command).map_err(err_to_pyerr)?;
         RawPyAnyCommand::convert_result(py, result)
     }
 }
