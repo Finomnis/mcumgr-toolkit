@@ -38,14 +38,14 @@ pub enum OsCommand {
 #[derive(Debug, Subcommand)]
 pub enum FsCommand {
     /// Uploads a file to the device
-    FileUpload {
+    Upload {
         /// The file to copy. '-' for stdin.
         local: String,
         /// The target path on the device.
         remote: String,
     },
     /// Downloads a file from the device
-    FileDownload {
+    Download {
         /// The file path on the device.
         remote: String,
         /// The target path. '-' for stdout.

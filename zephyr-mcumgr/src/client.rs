@@ -238,12 +238,6 @@ impl MCUmgrClient {
 
         let mut offset = 0;
 
-        if let Some(progress) = &mut progress {
-            if !progress(offset, size) {
-                return Err(FileUploadError::ProgressCallbackError);
-            };
-        }
-
         while offset < size {
             let current_chunk_size = (size - offset).min(data_buffer.len() as u64) as usize;
 

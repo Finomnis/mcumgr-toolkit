@@ -91,13 +91,13 @@ fn cli_main() -> Result<(), CliError> {
             ),
         },
         Group::Fs { command } => match command {
-            args::FsCommand::FileUpload { local, remote } => {
+            args::FsCommand::Upload { local, remote } => {
                 let data = read_input_file(&local)?;
                 with_progress_bar(args.progress, Some(&remote), |progress| {
                     client.fs_file_upload(remote.as_str(), &*data, data.len() as u64, progress)
                 })?;
             }
-            args::FsCommand::FileDownload { remote, local } => {
+            args::FsCommand::Download { remote, local } => {
                 let mut data = vec![];
                 with_progress_bar(args.progress, Some(&remote), |progress| {
                     client.fs_file_download(remote.as_str(), &mut data, progress)

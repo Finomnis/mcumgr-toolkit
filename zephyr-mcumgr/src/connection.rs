@@ -1,8 +1,8 @@
-use std::{fmt::Display, io::Cursor, time::Duration};
+use std::{io::Cursor, time::Duration};
 
 use crate::{
-    MCUmgrErr, MCUmgrGroup,
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
+    smp_errors::DeviceError,
     transport::{ReceiveError, SendError, Transport},
 };
 
@@ -17,41 +17,6 @@ pub struct Connection {
     transport: Box<dyn Transport + Send>,
     next_seqnum: u8,
     transport_buffer: [u8; u16::MAX as usize],
-}
-
-/// Errors the device can respond with when trying to execute an SMP command.
-///
-/// More information can be found [here](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html#minimal-response-smp-data).
-#[derive(Debug)]
-pub enum DeviceError {
-    /// MCUmgr SMP v1 error codes
-    V1 {
-        /// Error code
-        rc: i32,
-    },
-    /// MCUmgr SMP v2 error codes
-    V2 {
-        /// Group id
-        group: u16,
-        /// Group based error code
-        rc: i32,
-    },
-}
-
-impl Display for DeviceError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DeviceError::V1 { rc } => {
-                write!(f, "{}", MCUmgrErr::err_to_string(*rc))
-            }
-            DeviceError::V2 { group, rc } => write!(
-                f,
-                "group={},rc={}",
-                MCUmgrGroup::group_id_to_string(*group),
-                MCUmgrErr::err_to_string(*rc)
-            ),
-        }
-    }
 }
 
 /// Errors that can happen on SMP protocol level
