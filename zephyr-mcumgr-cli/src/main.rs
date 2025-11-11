@@ -4,14 +4,14 @@ mod args;
 use args::Group;
 
 mod progress;
+use progress::with_progress_bar;
+
+mod file_read_write;
+use file_read_write::{read_input_file, write_output_file};
 
 mod raw_command;
 
-use std::{
-    fs::File,
-    io::{Read, Write},
-    time::Duration,
-};
+use std::time::Duration;
 
 use clap::Parser;
 use miette::Diagnostic;
@@ -21,8 +21,6 @@ use zephyr_mcumgr::{
     client::{FileDownloadError, FileUploadError},
     connection::ExecuteError,
 };
-
-use crate::progress::with_progress_bar;
 
 /// Possible CLI errors.
 #[derive(Error, Debug, Diagnostic)]
@@ -94,28 +92,12 @@ fn cli_main() -> Result<(), CliError> {
         },
         Group::Fs { command } => match command {
             args::FsCommand::FileUpload { local, remote } => {
-                let data = if local == "-" {
-                    let mut data = Vec::new();
-                    std::io::stdin()
-                        .lock()
-                        .read_to_end(&mut data)
-                        .map_err(CliError::InputReadFailed)?;
-                    data
-                } else {
-                    let mut f = File::open(local).map_err(CliError::InputReadFailed)?;
-                    let mut data = vec![];
-                    f.read_to_end(&mut data)
-                        .map_err(CliError::InputReadFailed)?;
-                    data
-                };
-
+                let data = read_input_file(&local)?;
                 with_progress_bar(
                     args.progress,
                     Some(data.len() as u64),
                     Some(remote.clone()),
-                    |progress| {
-                        client.fs_file_upload(remote, data.as_slice(), data.len() as u64, progress)
-                    },
+                    |progress| client.fs_file_upload(remote, &*data, data.len() as u64, progress),
                 )?;
             }
             args::FsCommand::FileDownload { remote, local } => {
@@ -123,17 +105,7 @@ fn cli_main() -> Result<(), CliError> {
                 with_progress_bar(args.progress, None, Some(remote.clone()), |progress| {
                     client.fs_file_download(remote, &mut data, progress)
                 })?;
-                if local == "-" {
-                    std::io::stdout()
-                        .lock()
-                        .write_all(&data)
-                        .map_err(CliError::OutputWriteFailed)?;
-                } else {
-                    File::create(local)
-                        .map_err(CliError::OutputWriteFailed)?
-                        .write_all(&data)
-                        .map_err(CliError::OutputWriteFailed)?;
-                }
+                write_output_file(&local, &data)?;
             }
         },
         Group::Shell { argv } => {
