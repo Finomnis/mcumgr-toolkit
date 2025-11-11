@@ -123,7 +123,7 @@ impl MCUmgrErr {
 #[derive(FromRepr, Display, Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(i32)]
 #[allow(non_camel_case_types)]
-enum SettingsMgmtRetCode {
+pub enum SettingsMgmtRetCode {
     /** No error, this is implied if there is no ret value in the response. */
     SETTINGS_MGMT_ERR_OK = 0,
 
