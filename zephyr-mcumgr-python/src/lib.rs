@@ -100,6 +100,7 @@ impl MCUmgrClient {
     ///  # Arguments
     ///
     /// * `name` - The full path of the file on the device.
+    /// * `progress` - A callable object that takes (transmitted, total) values as parameters.
     ///
     /// # Return
     ///
@@ -110,13 +111,21 @@ impl MCUmgrClient {
     /// Downloading files with Zephyr's default parameters is slow.
     /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// to maybe `4096` or larger.
+    #[pyo3(signature = (name, progress=None))]
     pub fn fs_file_download<'py>(
         &self,
         py: Python<'py>,
         name: &str,
+        progress: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyBytes>> {
         let mut data = vec![];
-        let res = self.lock()?.fs_file_download(name, &mut data);
+        let res = if let Some(progress) = progress {
+            let mut cb = |current, total| progress.call((current, total), None).is_ok();
+            self.lock()?
+                .fs_file_download(name, &mut data, Some(&mut cb))
+        } else {
+            self.lock()?.fs_file_download(name, &mut data, None)
+        };
         convert_error(res)?;
         Ok(PyBytes::new(py, &data))
     }
@@ -127,6 +136,7 @@ impl MCUmgrClient {
     ///
     /// * `name` - The full path of the file on the device.
     /// * `data` - The file content.
+    /// * `progress` - A callable object that takes (transmitted, total) values as parameters.
     ///
     /// # Performance
     ///
@@ -134,9 +144,21 @@ impl MCUmgrClient {
     /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
     /// or [`MCUmgrClient::use_auto_frame_size`].
-    pub fn fs_file_upload<'py>(&self, name: &str, data: &Bound<'py, PyBytes>) -> PyResult<()> {
+    pub fn fs_file_upload<'py>(
+        &self,
+        name: &str,
+        data: &Bound<'py, PyBytes>,
+        progress: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<()> {
         let bytes: &[u8] = data.extract()?;
-        let res = self.lock()?.fs_file_upload(name, bytes, bytes.len() as u64);
+        let res = if let Some(progress) = progress {
+            let mut cb = |current, total| progress.call((current, total), None).is_ok();
+            self.lock()?
+                .fs_file_upload(name, bytes, bytes.len() as u64, Some(&mut cb))
+        } else {
+            self.lock()?
+                .fs_file_upload(name, bytes, bytes.len() as u64, None)
+        };
         convert_error(res)
     }
 

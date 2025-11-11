@@ -46,13 +46,14 @@ class MCUmgrClient:
         
         This can be used as a sanity check for whether the device is connected and responsive.
         """
-    def fs_file_download(self, name: builtins.str) -> bytes:
+    def fs_file_download(self, name: builtins.str, progress: typing.Optional[typing.Any] = None) -> bytes:
         r"""
         Load a file from the device.
         
          # Arguments
         
         * `name` - The full path of the file on the device.
+        * `progress` - A callable object that takes (transmitted, total) values as parameters.
         
         # Return
         
@@ -64,7 +65,7 @@ class MCUmgrClient:
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` or larger.
         """
-    def fs_file_upload(self, name: builtins.str, data: bytes) -> None:
+    def fs_file_upload(self, name: builtins.str, data: bytes, progress: typing.Optional[typing.Any]) -> None:
         r"""
         Write a file to the device.
         
@@ -72,6 +73,7 @@ class MCUmgrClient:
         
         * `name` - The full path of the file on the device.
         * `data` - The file content.
+        * `progress` - A callable object that takes (transmitted, total) values as parameters.
         
         # Performance
         

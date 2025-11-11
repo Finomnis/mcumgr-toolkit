@@ -48,6 +48,10 @@ pub enum FileDownloadError {
     #[error("Received data is missing file size information")]
     #[diagnostic(code(zephyr_mcumgr::client::file_download::missing_size))]
     MissingSize,
+    /// The progress callback returned an error.
+    #[error("Progress callback returned an error")]
+    #[diagnostic(code(zephyr_mcumgr::client::file_download::progress_cb_error))]
+    ProgressCallbackError,
 }
 
 /// Possible error values of [`MCUmgrClient::fs_file_upload`].
@@ -61,6 +65,10 @@ pub enum FileUploadError {
     #[error("Reader returned an error")]
     #[diagnostic(code(zephyr_mcumgr::client::file_upload::reader))]
     ReaderError(#[from] io::Error),
+    /// The progress callback returned an error.
+    #[error("Progress callback returned an error")]
+    #[diagnostic(code(zephyr_mcumgr::client::file_upload::progress_cb_error))]
+    ProgressCallbackError,
 }
 
 impl MCUmgrClient {
@@ -135,6 +143,7 @@ impl MCUmgrClient {
     ///
     /// * `name` - The full path of the file on the device.
     /// * `writer` - A [`Write`] object that the file content will be written to.
+    /// * `progress` - A callback that receives a pair of (transferred, total) bytes.
     ///
     /// # Performance
     ///
@@ -145,6 +154,7 @@ impl MCUmgrClient {
         &mut self,
         name: impl AsRef<str>,
         mut writer: T,
+        mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), FileDownloadError> {
         let name = name.as_ref();
         let response = self
@@ -158,8 +168,20 @@ impl MCUmgrClient {
 
         let mut offset = 0;
 
+        if let Some(progress) = &mut progress {
+            if !progress(offset, file_len) {
+                return Err(FileDownloadError::ProgressCallbackError);
+            };
+        }
+
         writer.write_all(&response.data)?;
         offset += response.data.len() as u64;
+
+        if let Some(progress) = &mut progress {
+            if !progress(offset, file_len) {
+                return Err(FileDownloadError::ProgressCallbackError);
+            };
+        }
 
         while offset < file_len {
             let response = self
@@ -172,6 +194,12 @@ impl MCUmgrClient {
 
             writer.write_all(&response.data)?;
             offset += response.data.len() as u64;
+
+            if let Some(progress) = &mut progress {
+                if !progress(offset, file_len) {
+                    return Err(FileDownloadError::ProgressCallbackError);
+                };
+            }
         }
 
         if offset != file_len {
@@ -188,6 +216,7 @@ impl MCUmgrClient {
     /// * `name` - The full path of the file on the device.
     /// * `reader` - A [`Read`] object that contains the file content.
     /// * `size` - The file size.
+    /// * `progress` - A callback that receives a pair of (transferred, total) bytes and returns false on error.
     ///
     /// # Performance
     ///
@@ -195,11 +224,12 @@ impl MCUmgrClient {
     /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
     /// or [`MCUmgrClient::use_auto_frame_size`].
-    pub fn fs_file_upload<T: Read>(
+    pub fn fs_file_upload<'a, T: Read>(
         &mut self,
         name: impl AsRef<str>,
         mut reader: T,
         size: u64,
+        mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), FileUploadError> {
         let name = name.as_ref();
 
@@ -207,6 +237,12 @@ impl MCUmgrClient {
         let mut data_buffer = vec![0u8; chunk_size_max].into_boxed_slice();
 
         let mut offset = 0;
+
+        if let Some(progress) = &mut progress {
+            if !progress(offset, size) {
+                return Err(FileUploadError::ProgressCallbackError);
+            };
+        }
 
         while offset < size {
             let current_chunk_size = (size - offset).min(data_buffer.len() as u64) as usize;
@@ -222,6 +258,12 @@ impl MCUmgrClient {
             })?;
 
             offset += chunk_buffer.len() as u64;
+
+            if let Some(progress) = &mut progress {
+                if !progress(offset, size) {
+                    return Err(FileUploadError::ProgressCallbackError);
+                };
+            }
         }
 
         Ok(())
