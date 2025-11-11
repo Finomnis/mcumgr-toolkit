@@ -120,13 +120,27 @@ impl MCUmgrClient {
         progress: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyBytes>> {
         let mut data = vec![];
+
+        let mut cb_error = None;
+
         let res = if let Some(progress) = progress {
-            let mut cb = |current, total| progress.call((current, total), None).is_ok();
+            let mut cb = |current, total| match progress.call((current, total), None) {
+                Ok(_) => true,
+                Err(e) => {
+                    cb_error = Some(e);
+                    false
+                }
+            };
             self.lock()?
                 .fs_file_download(name, &mut data, Some(&mut cb))
         } else {
             self.lock()?.fs_file_download(name, &mut data, None)
         };
+
+        if let Some(cb_error) = cb_error {
+            return Err(cb_error);
+        }
+
         convert_error(res)?;
         Ok(PyBytes::new(py, &data))
     }
@@ -154,14 +168,28 @@ impl MCUmgrClient {
         progress: Option<Bound<'py, PyAny>>,
     ) -> PyResult<()> {
         let bytes: &[u8] = data.extract()?;
+
+        let mut cb_error = None;
+
         let res = if let Some(progress) = progress {
-            let mut cb = |current, total| progress.call((current, total), None).is_ok();
+            let mut cb = |current, total| match progress.call((current, total), None) {
+                Ok(_) => true,
+                Err(e) => {
+                    cb_error = Some(e);
+                    false
+                }
+            };
             self.lock()?
                 .fs_file_upload(name, bytes, bytes.len() as u64, Some(&mut cb))
         } else {
             self.lock()?
                 .fs_file_upload(name, bytes, bytes.len() as u64, None)
         };
+
+        if let Some(cb_error) = cb_error {
+            return Err(cb_error);
+        }
+
         convert_error(res)
     }
 
