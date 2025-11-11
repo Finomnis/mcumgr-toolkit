@@ -8,16 +8,25 @@ use crate::CliError;
 pub fn read_input_file(filename: &str) -> Result<Box<[u8]>, CliError> {
     if filename == "-" {
         let mut data = Vec::new();
+
         std::io::stdin()
             .lock()
             .read_to_end(&mut data)
             .map_err(CliError::InputReadFailed)?;
+
         Ok(data.into_boxed_slice())
     } else {
-        let mut f = File::open(filename).map_err(CliError::InputReadFailed)?;
-        let mut data = vec![];
-        f.read_to_end(&mut data)
+        let mut file = File::open(filename).map_err(CliError::InputReadFailed)?;
+
+        let mut data = if let Ok(file_size) = file.metadata().map(|m| m.len() as usize) {
+            Vec::with_capacity(file_size)
+        } else {
+            Vec::new()
+        };
+
+        file.read_to_end(&mut data)
             .map_err(CliError::InputReadFailed)?;
+
         Ok(data.into_boxed_slice())
     }
 }
