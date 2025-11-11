@@ -144,6 +144,7 @@ impl MCUmgrClient {
     /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
     /// or [`MCUmgrClient::use_auto_frame_size`].
+    #[pyo3(signature = (name, data, progress=None))]
     pub fn fs_file_upload<'py>(
         &self,
         name: &str,

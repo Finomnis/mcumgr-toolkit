@@ -65,7 +65,7 @@ class MCUmgrClient:
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` or larger.
         """
-    def fs_file_upload(self, name: builtins.str, data: bytes, progress: typing.Optional[typing.Any]) -> None:
+    def fs_file_upload(self, name: builtins.str, data: bytes, progress: typing.Optional[typing.Any] = None) -> None:
         r"""
         Write a file to the device.
         
