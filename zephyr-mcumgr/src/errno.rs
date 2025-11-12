@@ -177,3 +177,26 @@ impl Errno {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_errno_to_string_success() {
+        assert_eq!(Errno::errno_to_string(0), "EOK");
+        assert_eq!(Errno::errno_to_string(1), "EOK");
+    }
+
+    #[test]
+    fn test_errno_to_string_known_codes() {
+        assert_eq!(Errno::errno_to_string(-1), "EPERM");
+        assert_eq!(Errno::errno_to_string(-2), "ENOENT");
+        assert_eq!(Errno::errno_to_string(-22), "EINVAL");
+    }
+
+    #[test]
+    fn test_errno_to_string_unknown_code() {
+        assert_eq!(Errno::errno_to_string(-999), "EUNKNOWN(-999)");
+    }
+}
