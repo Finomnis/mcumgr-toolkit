@@ -20,7 +20,7 @@ Specifically, it provides:
 Its primary design goals are:
 - Completeness
   - cover all use cases of Zephyr's MCUmgr
-  - to see the implementation status, see this [tracking issue](https://github.com/Finomnis/zephyr-mcumgr-client/issues/32)
+  - for implementation progress, see this [tracking issue](https://github.com/Finomnis/zephyr-mcumgr-client/issues/32)
 - Performance
   - use static memory and large buffers to prioritize performance
     over memory footprint
