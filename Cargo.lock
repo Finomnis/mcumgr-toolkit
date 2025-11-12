@@ -1931,7 +1931,7 @@ checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 
 [[package]]
 name = "zephyr-mcumgr"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "base64",
  "ciborium",
@@ -1949,7 +1949,7 @@ dependencies = [
 
 [[package]]
 name = "zephyr-mcumgr-cli"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "clap",
  "env_logger",
@@ -1964,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "zephyr-mcumgr-python"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "miette",
  "pyo3",

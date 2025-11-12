@@ -84,7 +84,7 @@ class MCUmgrClient:
         to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
         or [`MCUmgrClient::use_auto_frame_size`].
         """
-    def shell_execute(self, argv: typing.Sequence[builtins.str]) -> tuple[builtins.int, builtins.str]:
+    def shell_execute(self, argv: typing.Sequence[builtins.str]) -> builtins.str:
         r"""
         Run a shell command.
         
@@ -94,7 +94,7 @@ class MCUmgrClient:
         
         # Return
         
-        A tuple of (returncode, stdout) produced by the command execution.
+        The command output
         """
     def raw_command(self, write_operation: builtins.bool, group_id: builtins.int, command_id: builtins.int, data: typing.Any) -> typing.Any:
         r"""

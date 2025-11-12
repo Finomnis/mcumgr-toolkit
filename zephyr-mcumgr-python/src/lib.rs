@@ -3,6 +3,7 @@
 use miette::IntoDiagnostic;
 use pyo3::{prelude::*, types::PyBytes};
 
+use ::zephyr_mcumgr::Errno;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3_stub_gen::{
     define_stub_info_gatherer,
@@ -199,9 +200,20 @@ impl MCUmgrClient {
     ///
     /// # Return
     ///
-    /// A tuple of (returncode, stdout) produced by the command execution.
-    pub fn shell_execute(&self, argv: Vec<String>) -> PyResult<(i32, String)> {
-        self.lock()?.shell_execute(&argv).map_err(err_to_pyerr)
+    /// The command output
+    ///
+    pub fn shell_execute(&self, argv: Vec<String>) -> PyResult<String> {
+        let (exitcode, data) = self.lock()?.shell_execute(&argv).map_err(err_to_pyerr)?;
+
+        if exitcode < 0 {
+            return Err(PyRuntimeError::new_err(format!(
+                "Shell command returned error exit code: {}\n{}",
+                Errno::errno_to_string(exitcode),
+                data
+            )));
+        }
+
+        Ok(data)
     }
 
     /// Execute a raw MCUmgrCommand.
