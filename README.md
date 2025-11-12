@@ -20,6 +20,7 @@ Specifically, it provides:
 Its primary design goals are:
 - Completeness
   - cover all use cases of Zephyr's MCUmgr
+  - to see the implementation status, see this [tracking issue](https://github.com/Finomnis/zephyr-mcumgr-client/issues/32)
 - Performance
   - use static memory and large buffers to prioritize performance
     over memory footprint
@@ -84,7 +85,7 @@ Zephyr's default buffer sizes are quite small and reduce the read/write performa
 
 The central most important setting is [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40). Its default of 384 bytes is very limiting, both for performance and as limiting factor of large responses, like `os task_statistics` or some shell commands.
 
-Be aware that changing this value also requires an increase of `MCUMGR_TRANSPORT_WORKQUEUE_STACK_SIZE`, otherwise I got overflow crashes.
+Be aware that changing this value also requires an increase of `MCUMGR_TRANSPORT_WORKQUEUE_STACK_SIZE` to prevent overflow crashes.
 
 In practice, I found that the following values work quite well (on i.MX RT1060)
 and give me 410 KB/s read and 120 KB/s write throughput, which is an order of magnitude faster than the default settings.
