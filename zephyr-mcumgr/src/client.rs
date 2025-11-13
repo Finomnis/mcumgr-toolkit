@@ -290,13 +290,13 @@ impl MCUmgrClient {
     ) -> Result<commands::fs::FileHashChecksumResponse, ExecuteError> {
         let offset = match range.start_bound() {
             std::ops::Bound::Included(pos) => *pos,
-            std::ops::Bound::Excluded(pos) => *pos + 1,
+            std::ops::Bound::Excluded(pos) => pos.saturating_add(1),
             std::ops::Bound::Unbounded => 0,
         };
 
         let length = match range.end_bound() {
-            std::ops::Bound::Included(pos) => Some(*pos + 1 - offset),
-            std::ops::Bound::Excluded(pos) => Some(*pos - offset),
+            std::ops::Bound::Included(pos) => Some(pos.saturating_add(1).saturating_sub(offset)),
+            std::ops::Bound::Excluded(pos) => Some(pos.saturating_sub(offset)),
             std::ops::Bound::Unbounded => None,
         };
 
