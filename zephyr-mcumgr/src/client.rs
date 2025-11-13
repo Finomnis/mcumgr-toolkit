@@ -274,7 +274,7 @@ impl MCUmgrClient {
 
     /// Computes the hash/checksum of a file
     ///
-    /// For available algorithms, see [`fs_supported_hash_checksum_types`].
+    /// For available algorithms, see [`fs_supported_hash_checksum_types()`](MCUmgrClient::fs_supported_hash_checksum_types).
     ///
     /// # Arguments
     ///
