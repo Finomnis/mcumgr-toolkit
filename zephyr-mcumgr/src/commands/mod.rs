@@ -56,7 +56,7 @@ fn is_default<T: Default + PartialEq>(val: &T) -> bool {
 /// - `$commandid`: The MCUmgr command ID (u8)
 macro_rules! impl_mcumgr_command {
     (@direction read) => {false};
-    (@direction write) => {false};
+    (@direction write) => {true};
     (($direction:tt, $groupid:ident, $commandid:literal): $request:ty => $response:ty) => {
         impl McuMgrCommand for $request {
             type Payload = Self;
