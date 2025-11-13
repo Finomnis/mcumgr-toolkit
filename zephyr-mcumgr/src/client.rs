@@ -295,8 +295,8 @@ impl MCUmgrClient {
         };
 
         let length = match range.end_bound() {
-            std::ops::Bound::Included(pos) => Some(*pos + 1 - offset),
-            std::ops::Bound::Excluded(pos) => Some(*pos - offset),
+            std::ops::Bound::Included(pos) => Some((*pos + 1).saturating_sub(offset)),
+            std::ops::Bound::Excluded(pos) => Some(pos.saturating_sub(offset)),
             std::ops::Bound::Unbounded => None,
         };
 
