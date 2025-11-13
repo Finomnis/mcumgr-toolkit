@@ -6,7 +6,7 @@ use crate::{
     transport::{ReceiveError, SendError, Transport},
 };
 
-use miette::Diagnostic;
+use miette::{Diagnostic, IntoDiagnostic};
 use thiserror::Error;
 
 /// An SMP protocol layer connection to a device.
@@ -33,11 +33,11 @@ pub enum ExecuteError {
     /// An error happened while CBOR encoding the request payload
     #[error("CBOR encoding failed")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::encode))]
-    EncodeFailed,
+    EncodeFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync>),
     /// An error happened while CBOR decoding the response payload
     #[error("CBOR decoding failed")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::decode))]
-    DecodeFailed,
+    DecodeFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync>),
     /// The device returned an SMP error
     #[error("Device returned error code: {0}")]
     #[diagnostic(code(zephyr_mcumgr::connection::execute::device_error))]
@@ -69,7 +69,9 @@ impl Connection {
     ) -> Result<R::Response, ExecuteError> {
         let mut cursor = Cursor::new(self.transport_buffer.as_mut_slice());
         ciborium::into_writer(request.data(), &mut cursor)
-            .map_err(|_| ExecuteError::EncodeFailed)?;
+            .into_diagnostic()
+            .map_err(Into::into)
+            .map_err(ExecuteError::EncodeFailed)?;
         let data_size = cursor.position() as usize;
         let data = &self.transport_buffer[..data_size];
 
@@ -104,8 +106,10 @@ impl Connection {
                 .collect::<String>()
         );
 
-        let err: ErrResponse =
-            ciborium::from_reader(Cursor::new(response)).map_err(|_| ExecuteError::DecodeFailed)?;
+        let err: ErrResponse = ciborium::from_reader(Cursor::new(response))
+            .into_diagnostic()
+            .map_err(Into::into)
+            .map_err(ExecuteError::DecodeFailed)?;
 
         if let Some(ErrResponseV2 { rc, group }) = err.err {
             return Err(ExecuteError::ErrorResponse(DeviceError::V2 { group, rc }));
@@ -115,8 +119,10 @@ impl Connection {
             return Err(ExecuteError::ErrorResponse(DeviceError::V1 { rc }));
         }
 
-        let decoded_response: R::Response =
-            ciborium::from_reader(Cursor::new(response)).map_err(|_| ExecuteError::DecodeFailed)?;
+        let decoded_response: R::Response = ciborium::from_reader(Cursor::new(response))
+            .into_diagnostic()
+            .map_err(Into::into)
+            .map_err(ExecuteError::DecodeFailed)?;
 
         Ok(decoded_response)
     }
