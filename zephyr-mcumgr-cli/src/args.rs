@@ -59,7 +59,7 @@ pub enum FsCommand {
         /// The target path on the device.
         remote: String,
     },
-    /// Shows informations about a file
+    /// Shows status details about a file
     Status {
         /// The path of the file on the device
         name: String,
