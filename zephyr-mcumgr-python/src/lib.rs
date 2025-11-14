@@ -8,6 +8,7 @@ use pyo3_stub_gen::{
     define_stub_info_gatherer,
     derive::{gen_stub_pyclass, gen_stub_pymethods},
 };
+use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 
@@ -225,6 +226,26 @@ impl MCUmgrClient {
             .fs_file_hash_checksum(name, algorithm, offset, length)
             .map(|val| FileHashChecksum::from_response(py, val))
             .map_err(err_to_pyerr)
+    }
+
+    /// Queries which hash/checksum algorithms are available on the target
+    pub fn fs_supported_hash_checksum_types(
+        &self,
+    ) -> PyResult<HashMap<String, HashChecksumProperties>> {
+        self.lock()?
+            .fs_supported_hash_checksum_types()
+            .map(|val| {
+                let iter = val
+                    .into_iter()
+                    .map(|(key, value)| (key, HashChecksumProperties::from(value)));
+                iter.collect()
+            })
+            .map_err(err_to_pyerr)
+    }
+
+    /// Close all device files MCUmgr has currently open
+    pub fn fs_file_close(&self) -> PyResult<()> {
+        self.lock()?.fs_file_close().map_err(err_to_pyerr)
     }
 
     /// Run a shell command.

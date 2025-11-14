@@ -2,6 +2,7 @@
 # ruff: noqa: E501, F401
 
 import builtins
+import enum
 import typing
 
 @typing.final
@@ -39,6 +40,22 @@ class FileStatus:
     def length(self) -> builtins.int:
         r"""
         length of file (in bytes)
+        """
+
+@typing.final
+class HashChecksumProperties:
+    r"""
+    Properties of a hash/checksum algorithm
+    """
+    @property
+    def format(self) -> HashChecksumDataFormat:
+        r"""
+        format that the hash/checksum returns
+        """
+    @property
+    def size(self) -> builtins.int:
+        r"""
+        size (in bytes) of output hash/checksum response
         """
 
 @typing.final
@@ -138,6 +155,14 @@ class MCUmgrClient:
         * `offset` - How many bytes of the file to skip
         * `length` - How many bytes to read after `offset`. None for the entire file.
         """
+    def fs_supported_hash_checksum_types(self) -> builtins.dict[builtins.str, HashChecksumProperties]:
+        r"""
+        Queries which hash/checksum algorithms are available on the target
+        """
+    def fs_file_close(self) -> None:
+        r"""
+        Close all device files MCUmgr has currently open
+        """
     def shell_execute(self, argv: typing.Sequence[builtins.str]) -> builtins.str:
         r"""
         Run a shell command.
@@ -179,4 +204,18 @@ class MCUmgrClient:
         {'r': 'Hello!'}
         ```
         """
+
+@typing.final
+class HashChecksumDataFormat(enum.Enum):
+    r"""
+    Data format of the hash/checksum type
+    """
+    Numerical = ...
+    r"""
+    Data is a number
+    """
+    ByteArray = ...
+    r"""
+    Data is a bytes array
+    """
 

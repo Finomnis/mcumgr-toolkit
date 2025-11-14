@@ -1,5 +1,5 @@
 use pyo3::{prelude::*, types::PyBytes};
-use pyo3_stub_gen::derive::gen_stub_pyclass;
+use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum};
 
 use ::zephyr_mcumgr::commands;
 
@@ -50,6 +50,44 @@ impl FileHashChecksum {
             offset: value.off,
             length: value.len,
             output,
+        }
+    }
+}
+
+/// Data format of the hash/checksum type
+#[gen_stub_pyclass_enum]
+#[pyclass(frozen, eq, eq_int)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum HashChecksumDataFormat {
+    /// Data is a number
+    Numerical = 0,
+    /// Data is a bytes array
+    ByteArray = 1,
+}
+
+/// Properties of a hash/checksum algorithm
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+pub struct HashChecksumProperties {
+    /// format that the hash/checksum returns
+    #[pyo3(get)]
+    pub format: HashChecksumDataFormat,
+    /// size (in bytes) of output hash/checksum response
+    #[pyo3(get)]
+    pub size: u32,
+}
+impl From<commands::fs::SupportedFileHashChecksumTypesEntry> for HashChecksumProperties {
+    fn from(value: commands::fs::SupportedFileHashChecksumTypesEntry) -> Self {
+        Self {
+            format: match value.format {
+                commands::fs::SupportedFileHashChecksumDataFormat::Numerical => {
+                    HashChecksumDataFormat::Numerical
+                }
+                commands::fs::SupportedFileHashChecksumDataFormat::ByteArray => {
+                    HashChecksumDataFormat::ByteArray
+                }
+            },
+            size: value.size,
         }
     }
 }
