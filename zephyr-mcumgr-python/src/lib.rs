@@ -14,6 +14,8 @@ use std::time::Duration;
 use crate::raw_py_any_command::RawPyAnyCommand;
 
 mod raw_py_any_command;
+mod return_types;
+pub use return_types::*;
 
 /// A high level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
@@ -189,6 +191,40 @@ impl MCUmgrClient {
         }
 
         res.map_err(err_to_pyerr)
+    }
+
+    /// Queries the file status
+    pub fn fs_file_status(&self, name: &str) -> PyResult<FileStatus> {
+        self.lock()?
+            .fs_file_status(name)
+            .map(Into::into)
+            .map_err(err_to_pyerr)
+    }
+
+    /// Computes the hash/checksum of a file
+    ///
+    /// For available algorithms, see [`fs_supported_hash_checksum_types()`](MCUmgrClient::fs_supported_hash_checksum_types).
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The absolute path of the file on the device
+    /// * `algorithm` - The hash/checksum algorithm to use, or default if None
+    /// * `offset` - How many bytes of the file to skip
+    /// * `length` - How many bytes to read after `offset`. None for the entire file.
+    ///
+    #[pyo3(signature = (name, algorithm=None, offset=0, length=None))]
+    pub fn fs_file_hash_checksum<'py>(
+        &self,
+        py: Python<'py>,
+        name: &str,
+        algorithm: Option<&str>,
+        offset: u64,
+        length: Option<u64>,
+    ) -> PyResult<FileHashChecksum> {
+        self.lock()?
+            .fs_file_hash_checksum(name, algorithm, offset, length)
+            .map(|val| FileHashChecksum::from_response(py, val))
+            .map_err(err_to_pyerr)
     }
 
     /// Run a shell command.

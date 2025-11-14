@@ -21,6 +21,10 @@ pub struct App {
     #[arg(short, long)]
     pub progress: bool,
 
+    /// Increase the verbosity of some commands
+    #[arg(short, long)]
+    pub verbose: bool,
+
     /// Command group
     #[command(subcommand)]
     pub group: Group,

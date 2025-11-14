@@ -5,6 +5,43 @@ import builtins
 import typing
 
 @typing.final
+class FileHashChecksum:
+    r"""
+    Return value of [`MCUmgrClient::fs_file_hash_checksum`].
+    """
+    @property
+    def type(self) -> builtins.str:
+        r"""
+        type of hash/checksum that was performed
+        """
+    @property
+    def offset(self) -> builtins.int:
+        r"""
+        offset that hash/checksum calculation started at
+        """
+    @property
+    def length(self) -> builtins.int:
+        r"""
+        length of input data used for hash/checksum generation (in bytes)
+        """
+    @property
+    def output(self) -> bytes:
+        r"""
+        output hash/checksum
+        """
+
+@typing.final
+class FileStatus:
+    r"""
+    Return value of [`MCUmgrClient::fs_file_status`].
+    """
+    @property
+    def length(self) -> builtins.int:
+        r"""
+        length of file (in bytes)
+        """
+
+@typing.final
 class MCUmgrClient:
     r"""
     A high level client for Zephyr's MCUmgr SMP functionality
@@ -83,6 +120,23 @@ class MCUmgrClient:
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
         or [`MCUmgrClient::use_auto_frame_size`].
+        """
+    def fs_file_status(self, name: builtins.str) -> FileStatus:
+        r"""
+        Queries the file status
+        """
+    def fs_file_hash_checksum(self, name: builtins.str, algorithm: typing.Optional[builtins.str] = None, offset: builtins.int = 0, length: typing.Optional[builtins.int] = None) -> FileHashChecksum:
+        r"""
+        Computes the hash/checksum of a file
+        
+        For available algorithms, see [`fs_supported_hash_checksum_types()`](MCUmgrClient::fs_supported_hash_checksum_types).
+        
+        # Arguments
+        
+        * `name` - The absolute path of the file on the device
+        * `algorithm` - The hash/checksum algorithm to use, or default if None
+        * `offset` - How many bytes of the file to skip
+        * `length` - How many bytes to read after `offset`. None for the entire file.
         """
     def shell_execute(self, argv: typing.Sequence[builtins.str]) -> builtins.str:
         r"""
