@@ -25,3 +25,7 @@ serde_repr.workspace = true
 ciborium.workspace = true
 log.workspace = true
 strum_macros.workspace = true
+
+[dev-dependencies]
+proptest = "1.9.0"
+rand = "0.9.2"
