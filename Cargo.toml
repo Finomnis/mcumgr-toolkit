@@ -3,7 +3,7 @@ resolver = "3"
 members = ["zephyr-mcumgr", "zephyr-mcumgr-cli", "zephyr-mcumgr-python"]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Finomnis <finomnis@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
@@ -16,7 +16,7 @@ keywords = ["zephyr", "mcumgr", "smp"]
 exclude = ["/.gitignore", "/.github/"]
 
 [workspace.dependencies]
-zephyr-mcumgr = { version = "0.2.0", path = "./zephyr-mcumgr" }
+zephyr-mcumgr = { version = "0.2.1", path = "./zephyr-mcumgr" }
 serialport = { version = "4.7.3", default-features = false }
 thiserror = "2.0.17"
 miette = "7.6.0"
@@ -26,10 +26,11 @@ crc = "3.3.0"
 ringbuf = "0.4.8"
 serde = "1.0.228"
 serde_bytes = "0.11.19"
+serde_json = "1.0.145"
+serde_repr = "0.1.20"
 ciborium = "0.2.2"
 log = "0.4.28"
 env_logger = "0.11.8"
 clap = "4.5.51"
-serde_json = "1.0.145"
 strum_macros = "0.27.2"
 indicatif = "0.18.3"

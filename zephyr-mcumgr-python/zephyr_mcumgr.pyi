@@ -2,7 +2,61 @@
 # ruff: noqa: E501, F401
 
 import builtins
+import enum
 import typing
+
+@typing.final
+class FileChecksum:
+    r"""
+    Return value of [`MCUmgrClient::fs_file_checksum`].
+    """
+    @property
+    def type(self) -> builtins.str:
+        r"""
+        type of hash/checksum that was performed
+        """
+    @property
+    def offset(self) -> builtins.int:
+        r"""
+        offset that hash/checksum calculation started at
+        """
+    @property
+    def length(self) -> builtins.int:
+        r"""
+        length of input data used for hash/checksum generation (in bytes)
+        """
+    @property
+    def output(self) -> bytes:
+        r"""
+        output hash/checksum
+        """
+
+@typing.final
+class FileChecksumProperties:
+    r"""
+    Properties of a hash/checksum algorithm
+    """
+    @property
+    def format(self) -> FileChecksumDataFormat:
+        r"""
+        format that the hash/checksum returns
+        """
+    @property
+    def size(self) -> builtins.int:
+        r"""
+        size (in bytes) of output hash/checksum response
+        """
+
+@typing.final
+class FileStatus:
+    r"""
+    Return value of [`MCUmgrClient::fs_file_status`].
+    """
+    @property
+    def length(self) -> builtins.int:
+        r"""
+        length of file (in bytes)
+        """
 
 @typing.final
 class MCUmgrClient:
@@ -84,6 +138,31 @@ class MCUmgrClient:
         to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
         or [`MCUmgrClient::use_auto_frame_size`].
         """
+    def fs_file_status(self, name: builtins.str) -> FileStatus:
+        r"""
+        Queries the file status
+        """
+    def fs_file_checksum(self, name: builtins.str, algorithm: typing.Optional[builtins.str] = None, offset: builtins.int = 0, length: typing.Optional[builtins.int] = None) -> FileChecksum:
+        r"""
+        Computes the hash/checksum of a file
+        
+        For available algorithms, see [`fs_supported_checksum_types()`](MCUmgrClient::fs_supported_checksum_types).
+        
+        # Arguments
+        
+        * `name` - The absolute path of the file on the device
+        * `algorithm` - The hash/checksum algorithm to use, or default if None
+        * `offset` - How many bytes of the file to skip
+        * `length` - How many bytes to read after `offset`. None for the entire file.
+        """
+    def fs_supported_checksum_types(self) -> builtins.dict[builtins.str, FileChecksumProperties]:
+        r"""
+        Queries which hash/checksum algorithms are available on the target
+        """
+    def fs_file_close(self) -> None:
+        r"""
+        Close all device files MCUmgr has currently open
+        """
     def shell_execute(self, argv: typing.Sequence[builtins.str]) -> builtins.str:
         r"""
         Run a shell command.
@@ -125,4 +204,18 @@ class MCUmgrClient:
         {'r': 'Hello!'}
         ```
         """
+
+@typing.final
+class FileChecksumDataFormat(enum.Enum):
+    r"""
+    Data format of the hash/checksum type
+    """
+    Numerical = ...
+    r"""
+    Data is a number
+    """
+    ByteArray = ...
+    r"""
+    Data is a bytes array
+    """
 

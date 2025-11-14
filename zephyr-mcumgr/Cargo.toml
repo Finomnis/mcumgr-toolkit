@@ -21,6 +21,7 @@ crc.workspace = true
 ringbuf.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_bytes.workspace = true
+serde_repr.workspace = true
 ciborium.workspace = true
 log.workspace = true
 strum_macros.workspace = true

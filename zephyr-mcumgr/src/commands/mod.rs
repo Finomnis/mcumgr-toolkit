@@ -41,6 +41,11 @@ pub trait McuMgrCommand {
     fn data(&self) -> &Self::Payload;
 }
 
+/// Checks if a value is the default value
+fn is_default<T: Default + PartialEq>(val: &T) -> bool {
+    val == &T::default()
+}
+
 /// Implements the [`McuMgrCommand`] trait for a request/response pair.
 ///
 /// # Parameters
@@ -50,12 +55,14 @@ pub trait McuMgrCommand {
 /// - `$groupid`: The MCUmgr group
 /// - `$commandid`: The MCUmgr command ID (u8)
 macro_rules! impl_mcumgr_command {
-    ($request:ty, $response:ty, $iswrite:literal, $groupid:ident, $commandid:literal) => {
+    (@direction read) => {false};
+    (@direction write) => {true};
+    (($direction:tt, $groupid:ident, $commandid:literal): $request:ty => $response:ty) => {
         impl McuMgrCommand for $request {
             type Payload = Self;
             type Response = $response;
             fn is_write_operation(&self) -> bool {
-                $iswrite
+                impl_mcumgr_command!(@direction $direction)
             }
             fn group_id(&self) -> u16 {
                 $crate::MCUmgrGroup::$groupid as u16
@@ -70,41 +77,15 @@ macro_rules! impl_mcumgr_command {
     };
 }
 
-impl_mcumgr_command!(os::Echo<'_>, os::EchoResponse, true, MGMT_GROUP_ID_OS, 0);
-impl_mcumgr_command!(
-    os::TaskStatistics,
-    os::TaskStatisticsResponse,
-    false,
-    MGMT_GROUP_ID_OS,
-    2
-);
-impl_mcumgr_command!(
-    os::MCUmgrParameters,
-    os::MCUmgrParametersResponse,
-    false,
-    MGMT_GROUP_ID_OS,
-    6
-);
+impl_mcumgr_command!((write, MGMT_GROUP_ID_OS, 0): os::Echo<'_> => os::EchoResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 2): os::TaskStatistics => os::TaskStatisticsResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 6): os::MCUmgrParameters => os::MCUmgrParametersResponse);
 
-impl_mcumgr_command!(
-    fs::FileUpload<'_, '_>,
-    fs::FileUploadResponse,
-    true,
-    MGMT_GROUP_ID_FS,
-    0
-);
-impl_mcumgr_command!(
-    fs::FileDownload<'_>,
-    fs::FileDownloadResponse,
-    false,
-    MGMT_GROUP_ID_FS,
-    0
-);
+impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 0): fs::FileUpload<'_, '_> => fs::FileUploadResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 0): fs::FileDownload<'_> => fs::FileDownloadResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 1): fs::FileStatus<'_> => fs::FileStatusResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 2): fs::FileChecksum<'_, '_> => fs::FileChecksumResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 3): fs::SupportedFileChecksumTypes => fs::SupportedFileChecksumTypesResponse);
+impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 4): fs::FileClose => ());
 
-impl_mcumgr_command!(
-    shell::ShellCommandLineExecute<'_>,
-    shell::ShellCommandLineExecuteResponse,
-    true,
-    MGMT_GROUP_ID_SHELL,
-    0
-);
+impl_mcumgr_command!((write, MGMT_GROUP_ID_SHELL, 0): shell::ShellCommandLineExecute<'_> => shell::ShellCommandLineExecuteResponse);

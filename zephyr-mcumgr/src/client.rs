@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::{self, Read, Write},
     time::Duration,
 };
@@ -258,6 +259,57 @@ impl MCUmgrClient {
         }
 
         Ok(())
+    }
+
+    /// Queries the file status
+    pub fn fs_file_status(
+        &mut self,
+        name: impl AsRef<str>,
+    ) -> Result<commands::fs::FileStatusResponse, ExecuteError> {
+        self.connection.execute_command(&commands::fs::FileStatus {
+            name: name.as_ref(),
+        })
+    }
+
+    /// Computes the hash/checksum of a file
+    ///
+    /// For available algorithms, see [`fs_supported_checksum_types()`](MCUmgrClient::fs_supported_checksum_types).
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The absolute path of the file on the device
+    /// * `algorithm` - The hash/checksum algorithm to use, or default if None
+    /// * `offset` - How many bytes of the file to skip
+    /// * `length` - How many bytes to read after `offset`. None for the entire file.
+    ///
+    pub fn fs_file_checksum(
+        &mut self,
+        name: impl AsRef<str>,
+        algorithm: Option<impl AsRef<str>>,
+        offset: u64,
+        length: Option<u64>,
+    ) -> Result<commands::fs::FileChecksumResponse, ExecuteError> {
+        self.connection
+            .execute_command(&commands::fs::FileChecksum {
+                name: name.as_ref(),
+                r#type: algorithm.as_ref().map(AsRef::as_ref),
+                off: offset,
+                len: length,
+            })
+    }
+
+    /// Queries which hash/checksum algorithms are available on the target
+    pub fn fs_supported_checksum_types(
+        &mut self,
+    ) -> Result<HashMap<String, commands::fs::FileChecksumProperties>, ExecuteError> {
+        self.connection
+            .execute_command(&commands::fs::SupportedFileChecksumTypes)
+            .map(|val| val.types)
+    }
+
+    /// Close all device files MCUmgr has currently open
+    pub fn fs_file_close(&mut self) -> Result<(), ExecuteError> {
+        self.connection.execute_command(&commands::fs::FileClose)
     }
 
     /// Run a shell command.

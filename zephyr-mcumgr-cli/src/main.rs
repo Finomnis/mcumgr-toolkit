@@ -9,6 +9,7 @@ use progress::with_progress_bar;
 mod file_read_write;
 use file_read_write::{read_input_file, write_output_file};
 
+mod formatting;
 mod raw_command;
 
 use std::time::Duration;
@@ -21,6 +22,8 @@ use zephyr_mcumgr::{
     client::{FileDownloadError, FileUploadError},
     connection::ExecuteError,
 };
+
+use crate::formatting::structured_print;
 
 /// Possible CLI errors.
 #[derive(Error, Debug, Diagnostic)]
@@ -91,12 +94,6 @@ fn cli_main() -> Result<(), CliError> {
             ),
         },
         Group::Fs { command } => match command {
-            args::FsCommand::Upload { local, remote } => {
-                let data = read_input_file(&local)?;
-                with_progress_bar(args.progress, Some(&remote), |progress| {
-                    client.fs_file_upload(remote.as_str(), &*data, data.len() as u64, progress)
-                })?;
-            }
             args::FsCommand::Download { remote, local } => {
                 let mut data = vec![];
                 with_progress_bar(args.progress, Some(&remote), |progress| {
@@ -104,6 +101,57 @@ fn cli_main() -> Result<(), CliError> {
                 })?;
                 write_output_file(&local, &data)?;
             }
+            args::FsCommand::Upload { local, remote } => {
+                let data = read_input_file(&local)?;
+                with_progress_bar(args.progress, Some(&remote), |progress| {
+                    client.fs_file_upload(remote.as_str(), &*data, data.len() as u64, progress)
+                })?;
+            }
+            args::FsCommand::Status { name } => {
+                let status = client.fs_file_status(&name)?;
+                structured_print(Some(name), args.json, |s| {
+                    s.key_value("length", status.len);
+                })?;
+            }
+            args::FsCommand::Checksum {
+                name,
+                algo,
+                offset,
+                length,
+            } => {
+                let checksum = client.fs_file_checksum(&name, algo, offset, length)?;
+
+                if args.json || args.verbose {
+                    structured_print(Some(name), args.json, |s| {
+                        s.key_value("checksum", checksum.output.hex());
+                        s.key_value("type", checksum.r#type);
+                        s.key_value("data offset", checksum.off);
+                        s.key_value("data length", checksum.len);
+                    })?;
+                } else {
+                    println!("{}  {}", checksum.output.hex(), name);
+                }
+            }
+            args::FsCommand::SupportedChecksums => {
+                let checksums = client.fs_supported_checksum_types()?;
+
+                if args.json || args.verbose {
+                    structured_print(None, args.json, |s| {
+                        for (algo, properties) in checksums {
+                            s.sublist(algo, |s| {
+                                s.key_value("format", properties.format.to_string());
+                                s.key_value("size", properties.size);
+                            });
+                        }
+                    })?;
+                } else {
+                    println!(
+                        "{}",
+                        checksums.keys().cloned().collect::<Vec<_>>().join(",")
+                    );
+                }
+            }
+            args::FsCommand::Close => client.fs_file_close()?,
         },
         Group::Shell { argv } => {
             let (returncode, output) = client.shell_execute(&argv)?;
