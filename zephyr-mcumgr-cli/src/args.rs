@@ -75,7 +75,7 @@ pub enum FsCommand {
         /// How many bytes in the file to skip
         #[arg(long, default_value_t = 0)]
         offset: u64,
-        /// How much bytes to read from the file; if not specified, read all
+        /// How many bytes to read from the file; if not specified, read all
         #[arg(long)]
         length: Option<u64>,
     },
