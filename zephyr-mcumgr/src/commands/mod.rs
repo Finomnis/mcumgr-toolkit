@@ -132,4 +132,10 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn is_default() {
+        assert!(super::is_default(&0));
+        assert!(!super::is_default(&5));
+    }
 }
