@@ -109,7 +109,7 @@ impl MCUmgrClient {
     pub fn use_auto_frame_size(&mut self) -> Result<(), ExecuteError> {
         let mcumgr_params = self
             .connection
-            .execute_command(&commands::os::MCUmgrParameters)?;
+            .execute_command(&commands::os::MCUmgrParameters {})?;
 
         self.smp_frame_size = mcumgr_params.buf_size as usize;
 

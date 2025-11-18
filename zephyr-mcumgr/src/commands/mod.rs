@@ -8,7 +8,7 @@ pub mod shell;
 use serde::{Deserialize, Serialize};
 
 /// SMP version 2 group based error message
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct ErrResponseV2 {
     /// group of the group-based error code
     pub group: u16,
@@ -17,7 +17,7 @@ pub struct ErrResponseV2 {
 }
 
 /// [SMP error message](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html#minimal-response-smp-data)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct ErrResponse {
     /// SMP version 1 error code
     pub rc: Option<i32>,
@@ -77,7 +77,7 @@ macro_rules! impl_mcumgr_command {
     };
 }
 
-impl_mcumgr_command!((write, MGMT_GROUP_ID_OS, 0): os::Echo<'_> => os::EchoResponse);
+impl_mcumgr_command!((read, MGMT_GROUP_ID_OS, 0): os::Echo<'_> => os::EchoResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 2): os::TaskStatistics => os::TaskStatisticsResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 6): os::MCUmgrParameters => os::MCUmgrParametersResponse);
 
@@ -89,3 +89,54 @@ impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 3): fs::SupportedFileChecksumType
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 4): fs::FileClose => ());
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SHELL, 0): shell::ShellCommandLineExecute<'_> => shell::ShellCommandLineExecuteResponse);
+
+#[cfg(test)]
+macro_rules! command_encode_decode_test {
+    (@is_write 0) => {false};
+    (@is_write 2) => {true};
+    ($name:ident, ($op:tt, $group_id:literal, $command_id:literal), $request:expr, $encoded_req:expr ,$encoded_res:expr, $response:expr $(,)?) => {
+        #[test]
+        fn $name() {
+            use $crate::commands::McuMgrCommand;
+
+            let expected_is_write = command_encode_decode_test!(@is_write $op);
+            assert_eq!($request.is_write_operation(), expected_is_write);
+            assert_eq!($request.group_id(), $group_id);
+            assert_eq!($request.command_id(), $command_id);
+
+            let mut encoded_request = vec![];
+            ::ciborium::into_writer(&$request.data(), &mut encoded_request).unwrap();
+
+            let mut expected_encoded_request = vec![];
+            ::ciborium::into_writer(&$encoded_req.unwrap(), &mut expected_encoded_request).unwrap();
+
+            assert_eq!(
+                encoded_request.iter().map(|x|format!("{:02x}", x)).collect::<String>(),
+                expected_encoded_request.iter().map(|x|format!("{:02x}", x)).collect::<String>(),
+                "encoding mismatch"
+            );
+
+            let mut encoded_response = vec![];
+            ::ciborium::into_writer(&$encoded_res.unwrap(), &mut encoded_response).unwrap();
+
+            // Compile time type check
+            fn types_match<T: $crate::commands::McuMgrCommand>(
+                _req: T,
+                _res: <T as $crate::commands::McuMgrCommand>::Response,
+            ) {
+            }
+            types_match($request, $response);
+
+            let response = ::ciborium::from_reader(encoded_response.as_slice()).unwrap();
+            let expected_response = $response;
+
+            assert_eq!(response, expected_response, "decoding mismatch");
+
+            // As a type hint for ciborium
+            types_match($request, response);
+        }
+    };
+}
+
+#[cfg(test)]
+use command_encode_decode_test;

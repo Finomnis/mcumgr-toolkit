@@ -3,25 +3,25 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 /// [Echo](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#echo-command) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct Echo<'a> {
     /// string to be replied by echo service
     pub d: &'a str,
 }
 
 /// Response for [`Echo`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct EchoResponse {
     /// replying echo string
     pub r: String,
 }
 
 /// [Task statistics](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#task-statistics-command) command
-#[derive(Debug, Serialize)]
-pub struct TaskStatistics;
+#[derive(Debug, Serialize, Eq, PartialEq)]
+pub struct TaskStatistics {}
 
 /// Statistics of an MCU task/thread
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct TaskStatisticsEntry {
     /// task priority
     pub prio: i32,
@@ -40,21 +40,105 @@ pub struct TaskStatisticsEntry {
 }
 
 /// Response for [`TaskStatistics`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct TaskStatisticsResponse {
     /// Dictionary of task names with their respective statistics
     pub tasks: HashMap<String, TaskStatisticsEntry>,
 }
 
 /// [MCUmgr Parameters](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#mcumgr-parameters) command
-#[derive(Debug, Serialize)]
-pub struct MCUmgrParameters;
+#[derive(Debug, Serialize, Eq, PartialEq)]
+pub struct MCUmgrParameters {}
 
 /// Response for [`MCUmgrParameters`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct MCUmgrParametersResponse {
     /// Single SMP buffer size, this includes SMP header and CBOR payload
     pub buf_size: u32,
     /// Number of SMP buffers supported
     pub buf_count: u32,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::command_encode_decode_test;
+    use super::*;
+    use ciborium::cbor;
+
+    command_encode_decode_test! {
+        echo,
+        (0, 0, 0),
+        Echo{d: "Hello World!"},
+        cbor!({"d" => "Hello World!"}),
+        cbor!({"r" => "Hello World!"}),
+        EchoResponse{r: "Hello World!".to_string()},
+    }
+
+    command_encode_decode_test! {
+        task_statistics_empty,
+        (0, 0, 2),
+        TaskStatistics{},
+        cbor!({}),
+        cbor!({"tasks" => {}}),
+        TaskStatisticsResponse{ tasks: HashMap::new() },
+    }
+
+    command_encode_decode_test! {
+        task_statistics,
+        (0, 0, 2),
+        TaskStatistics{},
+        cbor!({}),
+        cbor!({"tasks" => {
+            "task_a" => {
+                "prio" => 20,
+                "tid" => 5,
+                "state" => 10,
+            },
+            "task_b" => {
+                "prio"         => 30,
+                "tid"          => 31,
+                "state"        => 32,
+                "stkuse"       => 33,
+                "stksiz"       => 34,
+                "cswcnt"       => 35,
+                "runtime"      => 36,
+                "last_checkin" => 0,
+                "next_checkin" => 0,
+            },
+        }}),
+        TaskStatisticsResponse{ tasks: HashMap::from([
+            (
+                "task_a".to_string(),
+                TaskStatisticsEntry{
+                    prio: 20,
+                    tid: 5,
+                    state: 10,
+                    stkuse: None,
+                    stksiz: None,
+                    cswcnt: None,
+                    runtime: None,
+                },
+            ), (
+                "task_b".to_string(),
+                TaskStatisticsEntry{
+                    prio: 30,
+                    tid: 31,
+                    state: 32,
+                    stkuse: Some(33),
+                    stksiz: Some(34),
+                    cswcnt: Some(35),
+                    runtime: Some(36),
+                },
+            ),
+        ]) },
+    }
+
+    command_encode_decode_test! {
+        mcumgr_parameters,
+        (0, 0, 6),
+        MCUmgrParameters{},
+        cbor!({}),
+        cbor!({"buf_size" => 42, "buf_count" => 69}),
+        MCUmgrParametersResponse{buf_size: 42, buf_count: 69 },
+    }
 }
