@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::commands::macros::impl_serialize_as_empty_map;
+
 /// [Echo](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#echo-command) command
 #[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct Echo<'a> {
@@ -17,8 +19,9 @@ pub struct EchoResponse {
 }
 
 /// [Task statistics](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#task-statistics-command) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
-pub struct TaskStatistics {}
+#[derive(Debug, Eq, PartialEq)]
+pub struct TaskStatistics;
+impl_serialize_as_empty_map!(TaskStatistics);
 
 /// Statistics of an MCU task/thread
 #[derive(Debug, Deserialize, Eq, PartialEq)]
@@ -47,8 +50,9 @@ pub struct TaskStatisticsResponse {
 }
 
 /// [MCUmgr Parameters](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#mcumgr-parameters) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
-pub struct MCUmgrParameters {}
+#[derive(Debug, Eq, PartialEq)]
+pub struct MCUmgrParameters;
+impl_serialize_as_empty_map!(MCUmgrParameters);
 
 /// Response for [`MCUmgrParameters`] command
 #[derive(Debug, Deserialize, Eq, PartialEq)]
@@ -61,7 +65,7 @@ pub struct MCUmgrParametersResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::super::command_encode_decode_test;
+    use super::super::macros::command_encode_decode_test;
     use super::*;
     use ciborium::cbor;
 
@@ -77,7 +81,7 @@ mod tests {
     command_encode_decode_test! {
         task_statistics_empty,
         (0, 0, 2),
-        TaskStatistics{},
+        TaskStatistics,
         cbor!({}),
         cbor!({"tasks" => {}}),
         TaskStatisticsResponse{ tasks: HashMap::new() },
@@ -86,7 +90,7 @@ mod tests {
     command_encode_decode_test! {
         task_statistics,
         (0, 0, 2),
-        TaskStatistics{},
+        TaskStatistics,
         cbor!({}),
         cbor!({"tasks" => {
             "task_a" => {
@@ -136,7 +140,7 @@ mod tests {
     command_encode_decode_test! {
         mcumgr_parameters,
         (0, 0, 6),
-        MCUmgrParameters{},
+        MCUmgrParameters,
         cbor!({}),
         cbor!({"buf_size" => 42, "buf_count" => 69}),
         MCUmgrParametersResponse{buf_size: 42, buf_count: 69 },
