@@ -70,6 +70,10 @@ pub enum FileUploadError {
     #[error("Progress callback returned an error")]
     #[diagnostic(code(zephyr_mcumgr::client::file_upload::progress_cb_error))]
     ProgressCallbackError,
+    /// The current SMP frame size is too small for this command.
+    #[error("SMP frame size too small for this command")]
+    #[diagnostic(code(zephyr_mcumgr::client::file_upload::framesize_too_small))]
+    FrameSizeTooSmall(#[source] io::Error),
 }
 
 impl MCUmgrClient {
@@ -231,7 +235,8 @@ impl MCUmgrClient {
     ) -> Result<(), FileUploadError> {
         let name = name.as_ref();
 
-        let chunk_size_max = file_upload_max_data_chunk_size(self.smp_frame_size);
+        let chunk_size_max = file_upload_max_data_chunk_size(self.smp_frame_size, name)
+            .map_err(FileUploadError::FrameSizeTooSmall)?;
         let mut data_buffer = vec![0u8; chunk_size_max].into_boxed_slice();
 
         let mut offset = 0;

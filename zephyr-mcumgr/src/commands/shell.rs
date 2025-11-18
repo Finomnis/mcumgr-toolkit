@@ -23,7 +23,7 @@ mod tests {
     use ciborium::cbor;
 
     command_encode_decode_test! {
-        echo,
+        shell,
         (2, 9, 0),
         ShellCommandLineExecute{
             argv: &[

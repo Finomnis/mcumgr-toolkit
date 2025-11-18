@@ -7,7 +7,7 @@ use strum_macros::Display;
 use super::is_default;
 
 /// [File Download](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-download) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct FileDownload<'a> {
     /// offset to start download at
     pub off: u64,
@@ -16,7 +16,7 @@ pub struct FileDownload<'a> {
 }
 
 /// Response for [`FileDownload`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct FileDownloadResponse {
     /// offset the response is for
     pub off: u64,
@@ -26,28 +26,89 @@ pub struct FileDownloadResponse {
     pub len: Option<u64>,
 }
 
+fn data_too_large_error() -> std::io::Error {
+    std::io::Error::new(
+        std::io::ErrorKind::UnexpectedEof,
+        Box::<dyn std::error::Error + Send + Sync>::from("Serialized data too large".to_string()),
+    )
+}
+
+struct CountingWriter {
+    bytes_written: usize,
+}
+impl CountingWriter {
+    fn new() -> Self {
+        Self { bytes_written: 0 }
+    }
+}
+impl std::io::Write for CountingWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let len = buf.len();
+        self.bytes_written = self
+            .bytes_written
+            .checked_add(len)
+            .ok_or_else(data_too_large_error)?;
+        Ok(len)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 /// Computes how large [`FileUpload::data`] is allowed to be.
-///
-/// Taken from Zephyr's [MCUMGR_GRP_FS_DL_CHUNK_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/grp/fs_mgmt/include/mgmt/mcumgr/grp/fs_mgmt/fs_mgmt_config.h#L45).
 ///
 /// # Arguments
 ///
-/// * `smp_frame_size` - The max allowed size of an SMP frame.
-pub const fn file_upload_max_data_chunk_size(smp_frame_size: usize) -> usize {
-    const MCUMGR_GRP_FS_MAX_OFFSET_LEN: usize = std::mem::size_of::<u64>();
+/// * `smp_frame_size`  - The max allowed size of an SMP frame.
+/// * `filename`        - The filename we transfer to.
+pub fn file_upload_max_data_chunk_size(
+    smp_frame_size: usize,
+    filename: &str,
+) -> std::io::Result<usize> {
     const MGMT_HDR_SIZE: usize = 8; // Size of SMP header
-    const CBOR_AND_OTHER_HDR: usize = MGMT_HDR_SIZE
-        + (9 + 1)
-        + (1 + 3 + MCUMGR_GRP_FS_MAX_OFFSET_LEN)
-        + (1 + 4 + MCUMGR_GRP_FS_MAX_OFFSET_LEN)
-        + (1 + 2 + 1)
-        + (1 + 3 + MCUMGR_GRP_FS_MAX_OFFSET_LEN);
 
-    smp_frame_size - CBOR_AND_OTHER_HDR
+    let mut size_counter = CountingWriter::new();
+    ciborium::into_writer(
+        &FileUpload {
+            off: u64::MAX,
+            name: filename,
+            data: &[0u8],
+            len: Some(u64::MAX),
+        },
+        &mut size_counter,
+    )
+    .map_err(|_| data_too_large_error())?;
+
+    let size_with_one_byte = size_counter.bytes_written;
+    let size_without_data = size_with_one_byte - 1;
+
+    let estimated_data_size = smp_frame_size
+        .checked_sub(MGMT_HDR_SIZE)
+        .ok_or_else(data_too_large_error)?
+        .checked_sub(size_without_data)
+        .ok_or_else(data_too_large_error)?;
+
+    if estimated_data_size == 0 {
+        return Err(data_too_large_error());
+    }
+
+    let data_length_bytes = estimated_data_size.ilog2() / 8 + 1;
+
+    // Remove data length entry from estimated data size
+    let actual_data_size = estimated_data_size
+        .checked_sub(data_length_bytes as usize)
+        .ok_or_else(data_too_large_error)?;
+
+    if actual_data_size == 0 {
+        return Err(data_too_large_error());
+    }
+
+    Ok(actual_data_size)
 }
 
 /// [File Upload](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-upload) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct FileUpload<'a, 'b> {
     /// offset to start/continue upload at
     pub off: u64,
@@ -62,28 +123,28 @@ pub struct FileUpload<'a, 'b> {
 }
 
 /// Response for [`FileUpload`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct FileUploadResponse {
     /// offset of last successfully written data
     pub off: u64,
 }
 
 /// [File Status](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-status) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct FileStatus<'a> {
     /// absolute path to a file
     pub name: &'a str,
 }
 
 /// Response for [`FileStatus`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct FileStatusResponse {
     /// length of file (in bytes)
     pub len: u64,
 }
 
 /// [File Hash/Checksum](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-hash-checksum) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct FileChecksum<'a, 'b> {
     /// absolute path to a file
     pub name: &'a str,
@@ -99,7 +160,7 @@ pub struct FileChecksum<'a, 'b> {
 }
 
 /// Response for [`FileChecksum`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct FileChecksumResponse {
     /// type of hash/checksum that was performed
     pub r#type: String,
@@ -113,7 +174,7 @@ pub struct FileChecksumResponse {
 }
 
 /// Hash data of [`FileChecksumResponse`]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum FileChecksumData {
     /// hash bytes
@@ -134,11 +195,11 @@ impl FileChecksumData {
 }
 
 /// [Supported file hash/checksum types](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#supported-file-hash-checksum-types) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct SupportedFileChecksumTypes;
 
 /// Response for [`SupportedFileChecksumTypes`] command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct SupportedFileChecksumTypesResponse {
     /// names and properties of the hash/checksum types
     pub r#types: HashMap<String, FileChecksumProperties>,
@@ -156,7 +217,7 @@ pub enum FileChecksumDataFormat {
 }
 
 /// Properties of a hash/checksum algorithm
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct FileChecksumProperties {
     /// format that the hash/checksum returns
     pub format: FileChecksumDataFormat,
@@ -165,5 +226,99 @@ pub struct FileChecksumProperties {
 }
 
 /// [File Close](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-close) command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct FileClose;
+
+#[cfg(test)]
+mod tests {
+    use super::super::macros::command_encode_decode_test;
+    use super::*;
+    use ciborium::cbor;
+
+    #[test]
+    fn file_upload_max_data_chunk_size() {
+        for smp_frame_size in 57..1300 {
+            let smp_payload_size = smp_frame_size - 8 /* SMP frame header */;
+
+            let filename = "test.txt";
+            let max_data_size =
+                super::file_upload_max_data_chunk_size(smp_frame_size, filename).unwrap();
+
+            let cmd = FileUpload {
+                off: u64::MAX,
+                data: &vec![0; max_data_size],
+                name: filename,
+                len: Some(u64::MAX),
+            };
+
+            let mut cbor_data = vec![];
+            ciborium::into_writer(&cmd, &mut cbor_data).unwrap();
+            println!(
+                "{}",
+                cbor_data
+                    .iter()
+                    .map(|x| format!("{:02x}", x))
+                    .collect::<String>()
+            );
+            assert!(
+                smp_payload_size - 1 <= cbor_data.len() && cbor_data.len() <= smp_payload_size,
+                "Failed at frame size {}: actual={}, max={}",
+                smp_frame_size,
+                cbor_data.len(),
+                smp_payload_size,
+            );
+        }
+    }
+
+    command_encode_decode_test! {
+        file_download_with_len,
+        (0, 8, 0),
+        FileDownload{
+            off: 42,
+            name: "foo.txt",
+        },
+        cbor!({
+            "off" => 42,
+            "name" => "foo.txt",
+        }),
+        cbor!({
+            "off" => 42,
+            "data" => ciborium::Value::Bytes(vec![1,2,3,4,5]),
+            "len" => 100,
+        }),
+        FileDownloadResponse{
+            off: 42,
+            data: vec![1,2,3,4,5],
+            len: Some(100),
+        },
+    }
+    command_encode_decode_test! {
+        file_download_without_len,
+        (0, 8, 0),
+        FileDownload{
+            off: 69,
+            name: "bla.txt",
+        },
+        cbor!({
+            "off" => 69,
+            "name" => "bla.txt",
+        }),
+        cbor!({
+            "off" => 50,
+            "data" => ciborium::Value::Bytes(vec![10]),
+        }),
+        FileDownloadResponse{
+            off: 50,
+            data: vec![10],
+            len: None,
+        },
+    }
+    // command_encode_decode_test! {
+    //     file_upload,
+    //     (0, 0, 0),
+    //     FileUpload{d: "Hello World!"},
+    //     cbor!({"d" => "Hello World!"}),
+    //     cbor!({"r" => "Hello World!"}),
+    //     FileUploadResponse{r: "Hello World!".to_string()},
+    // }
+}
