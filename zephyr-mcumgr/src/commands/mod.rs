@@ -4,6 +4,8 @@ pub mod fs;
 pub mod os;
 /// [Shell management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_9.html) group commands
 pub mod shell;
+/// [Zephyr management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_63.html) group commands
+pub mod zephyr;
 
 mod macros;
 use macros::impl_mcumgr_command;
@@ -61,6 +63,8 @@ impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 3): fs::SupportedFileChecksumType
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 4): fs::FileClose => fs::FileCloseResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SHELL, 0): shell::ShellCommandLineExecute<'_> => shell::ShellCommandLineExecuteResponse);
+
+impl_mcumgr_command!((write, ZEPHYR_MGMT_GRP_BASIC, 0): zephyr::EraseStorage => zephyr::EraseStorageResponse);
 
 #[cfg(test)]
 mod tests {

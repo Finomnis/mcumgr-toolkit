@@ -163,6 +163,9 @@ fn cli_main() -> Result<(), CliError> {
                 println!("Exit code: {returncode}")
             }
         }
+        Group::Zephyr { command } => match command {
+            args::ZephyrCommand::EraseStorage => client.zephyr_erase_storage()?,
+        },
         Group::Raw(command) => {
             let response = client.raw_command(&command)?;
             let json_response =

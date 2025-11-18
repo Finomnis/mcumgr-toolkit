@@ -175,6 +175,10 @@ class MCUmgrClient:
         
         The command output
         """
+    def zephyr_erase_storage(self) -> None:
+        r"""
+        Erase the `storage_partition` flash partition.
+        """
     def raw_command(self, write_operation: builtins.bool, group_id: builtins.int, command_id: builtins.int, data: typing.Any) -> typing.Any:
         r"""
         Execute a raw MCUmgrCommand.

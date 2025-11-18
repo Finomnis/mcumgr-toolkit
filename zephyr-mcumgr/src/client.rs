@@ -334,6 +334,13 @@ impl MCUmgrClient {
             .map(|ret| (ret.ret, ret.o))
     }
 
+    /// Erase the `storage_partition` flash partition.
+    pub fn zephyr_erase_storage(&mut self) -> Result<(), ExecuteError> {
+        self.connection
+            .execute_command(&commands::zephyr::EraseStorage)
+            .map(Into::into)
+    }
+
     /// Execute a raw [`commands::McuMgrCommand`].
     ///
     /// Only returns if no error happened, so the
