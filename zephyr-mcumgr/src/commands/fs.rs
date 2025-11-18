@@ -270,6 +270,16 @@ mod tests {
         }
     }
 
+    #[test]
+    fn file_upload_max_data_chunk_size_too_small() {
+        for smp_frame_size in 0..57 {
+            let filename = "test.txt";
+            let max_data_size = super::file_upload_max_data_chunk_size(smp_frame_size, filename);
+
+            assert!(max_data_size.is_err());
+        }
+    }
+
     command_encode_decode_test! {
         file_download_with_len,
         (0, 8, 0),
