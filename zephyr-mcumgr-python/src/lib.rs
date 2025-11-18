@@ -270,6 +270,11 @@ impl MCUmgrClient {
         Ok(data)
     }
 
+    /// Erase the `storage_partition` flash partition.
+    pub fn zephyr_erase_storage(&self) -> PyResult<()> {
+        self.lock()?.zephyr_erase_storage().map_err(err_to_pyerr)
+    }
+
     /// Execute a raw MCUmgrCommand.
     ///
     /// Only returns if no error happened, so the

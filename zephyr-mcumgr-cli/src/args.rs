@@ -85,6 +85,12 @@ pub enum FsCommand {
     Close,
 }
 
+#[derive(Debug, Subcommand)]
+pub enum ZephyrCommand {
+    /// Erase the `storage_partition` flash partition
+    EraseStorage,
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum RawCommandOp {
     /// Perform a read command
@@ -128,6 +134,11 @@ pub enum Group {
         /// The shell command to execute
         #[arg(required = true, trailing_var_arg = true)]
         argv: Vec<String>,
+    },
+    /// Zephyr Management
+    Zephyr {
+        #[command(subcommand)]
+        command: ZephyrCommand,
     },
     /// Execute a raw SMP command
     Raw(#[command(flatten)] RawCommand),
