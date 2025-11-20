@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::commands::macros::impl_serialize_as_empty_map;
+use crate::commands::macros::{
+    impl_deserialize_from_empty_map_and_into_unit, impl_serialize_as_empty_map,
+};
 
 /// [Echo](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#echo-command) command
 #[derive(Debug, Serialize, Eq, PartialEq)]
@@ -48,6 +50,30 @@ pub struct TaskStatisticsResponse {
     /// Dictionary of task names with their respective statistics
     pub tasks: HashMap<String, TaskStatisticsEntry>,
 }
+
+/// [Date-Time Get](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#date-time-get) command
+#[derive(Debug, Eq, PartialEq)]
+pub struct DateTimeGet;
+impl_serialize_as_empty_map!(DateTimeGet);
+
+/// Response for [`DateTimeGet`] command
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub struct DateTimeGetResponse {
+    /// String in format: `yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ`.
+    pub datetime: String,
+}
+
+/// [Date-Time Set](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#date-time-set) command
+#[derive(Serialize, Debug, Eq, PartialEq)]
+pub struct DateTimeSet<'a> {
+    /// String in format: `yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ`.
+    pub datetime: &'a str,
+}
+
+/// Response for [`DateTimeSet`] command
+#[derive(Default, Debug, Eq, PartialEq)]
+pub struct DateTimeSetResponse;
+impl_deserialize_from_empty_map_and_into_unit!(DateTimeSetResponse);
 
 /// [MCUmgr Parameters](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#mcumgr-parameters) command
 #[derive(Debug, Eq, PartialEq)]
@@ -135,6 +161,32 @@ mod tests {
                 },
             ),
         ]) },
+    }
+
+    command_encode_decode_test! {
+        datetime_get,
+        (0, 0, 4),
+        DateTimeGet,
+        cbor!({}),
+        cbor!({
+            "datetime" => "2025-11-20T11:56:05.366345+01:00"
+        }),
+        DateTimeGetResponse{
+            datetime: "2025-11-20T11:56:05.366345+01:00".to_string(),
+        },
+    }
+
+    command_encode_decode_test! {
+        datetime_set,
+        (2, 0, 4),
+        DateTimeSet{
+            datetime: "2025-11-20T12:03:56.642Z"
+        },
+        cbor!({
+            "datetime" => "2025-11-20T12:03:56.642Z"
+        }),
+        cbor!({}),
+        DateTimeSetResponse,
     }
 
     command_encode_decode_test! {
