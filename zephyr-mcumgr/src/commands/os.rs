@@ -26,7 +26,7 @@ pub struct TaskStatistics;
 impl_serialize_as_empty_map!(TaskStatistics);
 
 /// Statistics of an MCU task/thread
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct TaskStatisticsEntry {
     /// task priority
     pub prio: i32,
