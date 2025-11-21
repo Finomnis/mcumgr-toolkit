@@ -141,6 +141,25 @@ mod tests {
     use super::*;
     use ciborium::cbor;
 
+    #[test]
+    fn thread_state_flags_to_string() {
+        assert_eq!(
+            ThreadStateFlags::pretty_print(0xff),
+            "dummy | pending | sleeping | dead | suspended | aborting | suspending | queued"
+        );
+
+        assert_eq!(ThreadStateFlags::pretty_print(0b00000001), "dummy");
+        assert_eq!(ThreadStateFlags::pretty_print(0b00000010), "pending");
+        assert_eq!(ThreadStateFlags::pretty_print(0b00000100), "sleeping");
+        assert_eq!(ThreadStateFlags::pretty_print(0b00001000), "dead");
+        assert_eq!(ThreadStateFlags::pretty_print(0b00010000), "suspended");
+        assert_eq!(ThreadStateFlags::pretty_print(0b00100000), "aborting");
+        assert_eq!(ThreadStateFlags::pretty_print(0b01000000), "suspending");
+        assert_eq!(ThreadStateFlags::pretty_print(0b10000000), "queued");
+
+        assert_eq!(ThreadStateFlags::pretty_print(0), "");
+    }
+
     command_encode_decode_test! {
         echo,
         (0, 0, 0),
