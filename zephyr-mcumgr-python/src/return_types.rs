@@ -38,7 +38,7 @@ pub struct FileChecksum {
     pub length: u64,
     /// output hash/checksum
     #[pyo3(get)]
-    #[serde(serialize_with = "crate::repr_macro::serialize_pybytes")]
+    #[serde(serialize_with = "crate::repr_macro::serialize_pybytes_as_hex")]
     pub output: Py<PyBytes>,
 }
 generate_repr_from_serialize!(FileChecksum);

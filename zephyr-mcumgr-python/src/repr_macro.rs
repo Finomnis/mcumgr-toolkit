@@ -25,18 +25,20 @@ macro_rules! generate_repr_from_serialize {
     };
 }
 
-pub fn serialize_pybytes<S>(pybytes: &Py<PyBytes>, serializer: S) -> Result<S::Ok, S::Error>
+pub fn serialize_pybytes_as_hex<S>(pybytes: &Py<PyBytes>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
     Python::attach(|py| {
         let bytes = pybytes.bind(py);
 
-        // Borrow the raw bytes
-        let data = bytes.as_bytes();
-
-        // Use serde_bytes to produce a compact, binary-friendly representation
-        serde_bytes::serialize(data, serializer)
+        serializer.serialize_str(
+            &bytes
+                .as_bytes()
+                .iter()
+                .map(|x| format!("{x:02x}"))
+                .collect::<String>(),
+        )
     })
 }
 
