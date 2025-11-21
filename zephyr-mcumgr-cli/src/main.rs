@@ -123,12 +123,16 @@ fn cli_main() -> Result<(), CliError> {
                                 if let (Some(stkuse), Some(stksiz)) = (stats.stkuse, stats.stksiz) {
                                     s.key_value(
                                         "Stack Usage",
-                                        format!(
-                                            "{} / {} bytes ({} %)",
-                                            stkuse,
-                                            stksiz,
-                                            stkuse * 100 / stksiz,
-                                        ),
+                                        if stksiz != 0 {
+                                            format!(
+                                                "{} / {} bytes ({} %)",
+                                                stkuse,
+                                                stksiz,
+                                                stkuse * 100 / stksiz,
+                                            )
+                                        } else {
+                                            format!("{stkuse} / {stksiz} bytes")
+                                        },
                                     );
                                 }
                                 if let Some(cswcnt) = stats.cswcnt {
