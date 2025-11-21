@@ -20,6 +20,7 @@ use thiserror::Error;
 use zephyr_mcumgr::{
     Errno, MCUmgrClient,
     client::{FileDownloadError, FileUploadError},
+    commands::os::ThreadStateFlags,
     connection::ExecuteError,
 };
 
@@ -92,6 +93,55 @@ fn cli_main() -> Result<(), CliError> {
                     .os_echo(msg)
                     .map_err(CliError::CommandExecutionFailed)?
             ),
+            args::OsCommand::TaskStatistics => {
+                let tasks_map = client.os_task_statistics()?;
+
+                let mut tasks = tasks_map.iter().collect::<Vec<_>>();
+                tasks.sort_by_key(|(name, stats)| (stats.prio, (*name).clone()));
+
+                if args.json {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&tasks_map)
+                            .map_err(CliError::JsonEncodeError)?
+                    );
+                } else {
+                    structured_print(None, args.json, |s| {
+                        for (name, stats) in tasks {
+                            s.sublist(name, |s| {
+                                s.key_value("Priority", stats.prio);
+                                s.key_value("Task ID", stats.tid);
+                                s.key_value("State", {
+                                    let pretty_state =
+                                        ThreadStateFlags::pretty_print(stats.state as u8);
+                                    if pretty_state.is_empty() {
+                                        format!("{}", stats.state)
+                                    } else {
+                                        format!("{} ({})", stats.state, pretty_state)
+                                    }
+                                });
+                                if let (Some(stkuse), Some(stksiz)) = (stats.stkuse, stats.stksiz) {
+                                    s.key_value(
+                                        "Stack Usage",
+                                        if stksiz != 0 {
+                                            let pct = stkuse * 100 / stksiz;
+                                            format!("{stkuse} / {stksiz} bytes ({pct} %)")
+                                        } else {
+                                            format!("{stkuse} / {stksiz} bytes")
+                                        },
+                                    );
+                                }
+                                if let Some(cswcnt) = stats.cswcnt {
+                                    s.key_value("Context Switches", cswcnt);
+                                }
+                                if let Some(runtime) = stats.runtime {
+                                    s.key_value("Runtime", format!("{} ticks", runtime));
+                                }
+                            });
+                        }
+                    })?;
+                }
+            }
         },
         Group::Fs { command } => match command {
             args::FsCommand::Download { remote, local } => {

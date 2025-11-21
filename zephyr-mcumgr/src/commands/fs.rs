@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use serde_repr::Deserialize_repr;
-use strum_macros::Display;
+use strum::Display;
 
 use crate::commands::macros::{
     impl_deserialize_from_empty_map_and_into_unit, impl_serialize_as_empty_map,

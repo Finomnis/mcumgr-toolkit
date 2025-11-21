@@ -139,6 +139,31 @@ impl MCUmgrClient {
             .map(|resp| resp.r)
     }
 
+    /// Queries live task statistics
+    ///
+    /// # Note
+    ///
+    /// Converts `stkuse` and `stksiz` to bytes.
+    /// Zephyr originally reports them as number of 4 byte words.
+    ///
+    /// # Return
+    ///
+    /// A map of task names with their respective statistics
+    pub fn os_task_statistics(
+        &mut self,
+    ) -> Result<HashMap<String, commands::os::TaskStatisticsEntry>, ExecuteError> {
+        self.connection
+            .execute_command(&commands::os::TaskStatistics)
+            .map(|resp| {
+                let mut tasks = resp.tasks;
+                for (_, stats) in tasks.iter_mut() {
+                    stats.stkuse = stats.stkuse.map(|val| val * 4);
+                    stats.stksiz = stats.stksiz.map(|val| val * 4);
+                }
+                tasks
+            })
+    }
+
     /// Load a file from the device.
     ///
     ///  # Arguments

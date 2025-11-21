@@ -1,4 +1,4 @@
-use strum_macros::{Display, FromRepr};
+use strum::{Display, FromRepr};
 
 /// See [`errno.h`](https://github.com/zephyrproject-rtos/zephyr/blob/main/lib/libc/minimal/include/errno.h).
 #[derive(FromRepr, Display, Debug, Copy, Clone, PartialEq, Eq)]

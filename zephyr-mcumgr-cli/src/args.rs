@@ -41,6 +41,8 @@ pub enum OsCommand {
         /// The message to echo
         msg: String,
     },
+    /// Queries live task statistics
+    TaskStatistics,
 }
 
 #[derive(Debug, Subcommand)]
