@@ -24,7 +24,7 @@ pub mod transport;
 pub mod smp_errors;
 
 /// See [`enum mcumgr_group_t`](https://docs.zephyrproject.org/latest/doxygen/html/mgmt__defines_8h.html).
-#[derive(strum_macros::FromRepr, strum_macros::Display, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(strum::FromRepr, strum::Display, Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]
 #[allow(non_camel_case_types)]
 #[allow(missing_docs)]

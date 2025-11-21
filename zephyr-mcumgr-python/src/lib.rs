@@ -96,6 +96,28 @@ impl MCUmgrClient {
         self.lock()?.os_echo(msg).map_err(err_to_pyerr)
     }
 
+    /// Queries live task statistics
+    ///
+    /// # Note
+    ///
+    /// Converts `stkuse` and `stksiz` to bytes.
+    /// Zephyr originally reports them as number of 4 byte words.
+    ///
+    /// # Return
+    ///
+    /// A map of task names with their respective statistics
+    fn os_task_statistics(&self) -> PyResult<HashMap<String, TaskStatistics>> {
+        self.lock()?
+            .os_task_statistics()
+            .map(|tasks| {
+                tasks
+                    .into_iter()
+                    .map(|(name, stats)| (name, stats.into()))
+                    .collect()
+            })
+            .map_err(err_to_pyerr)
+    }
+
     /// Load a file from the device.
     ///
     ///  # Arguments

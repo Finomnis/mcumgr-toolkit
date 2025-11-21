@@ -100,6 +100,19 @@ class MCUmgrClient:
         
         This can be used as a sanity check for whether the device is connected and responsive.
         """
+    def os_task_statistics(self) -> builtins.dict[builtins.str, TaskStatistics]:
+        r"""
+        Queries live task statistics
+        
+        # Note
+        
+        Converts `stkuse` and `stksiz` to bytes.
+        Zephyr originally reports them as number of 4 byte words.
+        
+        # Return
+        
+        A map of task names with their respective statistics
+        """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[typing.Any] = None) -> bytes:
         r"""
         Load a file from the device.
@@ -207,6 +220,47 @@ class MCUmgrClient:
         ```none
         {'r': 'Hello!'}
         ```
+        """
+
+@typing.final
+class TaskStatistics:
+    r"""
+    Statistics of an MCU task/thread
+    """
+    @property
+    def prio(self) -> builtins.int:
+        r"""
+        task priority
+        """
+    @property
+    def tid(self) -> builtins.int:
+        r"""
+        numeric task ID
+        """
+    @property
+    def state(self) -> builtins.int:
+        r"""
+        numeric task state
+        """
+    @property
+    def stkuse(self) -> typing.Optional[builtins.int]:
+        r"""
+        task’s/thread’s stack usage
+        """
+    @property
+    def stksiz(self) -> typing.Optional[builtins.int]:
+        r"""
+        task’s/thread’s stack size
+        """
+    @property
+    def cswcnt(self) -> typing.Optional[builtins.int]:
+        r"""
+        task’s/thread’s context switches
+        """
+    @property
+    def runtime(self) -> typing.Optional[builtins.int]:
+        r"""
+        task’s/thread’s runtime in “ticks”
         """
 
 @typing.final

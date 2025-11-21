@@ -91,3 +91,44 @@ impl From<commands::fs::FileChecksumProperties> for FileChecksumProperties {
         }
     }
 }
+
+/// Statistics of an MCU task/thread
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+pub struct TaskStatistics {
+    /// task priority
+    #[pyo3(get)]
+    pub prio: i32,
+    /// numeric task ID
+    #[pyo3(get)]
+    pub tid: u32,
+    /// numeric task state
+    #[pyo3(get)]
+    pub state: u32,
+    /// task’s/thread’s stack usage
+    #[pyo3(get)]
+    pub stkuse: Option<u64>,
+    /// task’s/thread’s stack size
+    #[pyo3(get)]
+    pub stksiz: Option<u64>,
+    /// task’s/thread’s context switches
+    #[pyo3(get)]
+    pub cswcnt: Option<u64>,
+    /// task’s/thread’s runtime in “ticks”
+    #[pyo3(get)]
+    pub runtime: Option<u64>,
+}
+
+impl From<commands::os::TaskStatisticsEntry> for TaskStatistics {
+    fn from(value: commands::os::TaskStatisticsEntry) -> Self {
+        Self {
+            prio: value.prio,
+            tid: value.tid,
+            state: value.state,
+            stkuse: value.stkuse,
+            stksiz: value.stksiz,
+            cswcnt: value.cswcnt,
+            runtime: value.runtime,
+        }
+    }
+}

@@ -44,6 +44,52 @@ pub struct TaskStatisticsEntry {
     pub runtime: Option<u64>,
 }
 
+/// Bit meanings of [`TaskStatisticsEntry::state`]
+#[derive(strum::Display, strum::AsRefStr, strum::EnumIter, Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(u8)]
+#[strum(serialize_all = "snake_case")]
+pub enum ThreadStateBit {
+    /** Not a real thread */
+    DUMMY = 1 << 0,
+
+    /** Thread is waiting on an object */
+    PENDING = 1 << 1,
+
+    /** Thread is sleeping */
+    SLEEPING = 1 << 2,
+
+    /** Thread has terminated */
+    DEAD = 1 << 3,
+
+    /** Thread is suspended */
+    SUSPENDED = 1 << 4,
+
+    /** Thread is in the process of aborting */
+    ABORTING = 1 << 5,
+
+    /** Thread is in the process of suspending */
+    SUSPENDING = 1 << 6,
+
+    /** Thread is present in the ready queue */
+    QUEUED = 1 << 7,
+}
+
+impl ThreadStateBit {
+    /// Converts the thread state to a human readable string
+    pub fn pretty_print(thread_state: u8) -> String {
+        use strum::IntoEnumIterator;
+
+        let mut bit_names = vec![];
+        for bit in Self::iter() {
+            if (thread_state & bit as u8) != 0 {
+                bit_names.push(format!("{bit}"));
+            }
+        }
+
+        bit_names.join(" | ")
+    }
+}
+
 /// Response for [`TaskStatistics`] command
 #[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct TaskStatisticsResponse {

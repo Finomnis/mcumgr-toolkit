@@ -1,4 +1,4 @@
-use strum_macros::{Display, FromRepr};
+use strum::{Display, FromRepr};
 
 use crate::MCUmgrGroup;
 
