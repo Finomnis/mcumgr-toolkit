@@ -14,9 +14,9 @@ It might be compatible with other MCUmgr/SMP-based systems, but it is developed 
 
 Specifically, it provides:
 
-- A Rust library that supports all Zephyr MCUmgr commands
-- A CLI tool that allows most of the commands to be run via command line
-- A Python interface for the library
+- A [Rust library](https://crates.io/crates/zephyr-mcumgr) that supports all Zephyr MCUmgr commands
+- A [CLI tool](https://crates.io/crates/zephyr-mcumgr-cli) that allows most of the commands to be run via command line
+- A [Python interface](https://pypi.org/project/zephyr-mcumgr/) for the library
 
 Its primary design goals are:
 - Completeness
@@ -84,7 +84,7 @@ $ zephyr-mcumgr --serial COM42 raw read 0 0 '{"d":"Hello World!"}'
 
 Zephyr's default buffer sizes are quite small and reduce the read/write performance drastically.
 
-The central most important setting is [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40). Its default of 384 bytes is very limiting, both for performance and as limiting factor of large responses, like `os task_statistics` or some shell commands.
+The central most important setting is [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40). Its default of 384 bytes is very limiting, both for performance and as cutoff for large responses, like `os task_statistics` or some shell commands.
 
 Be aware that changing this value also requires an increase of `MCUMGR_TRANSPORT_WORKQUEUE_STACK_SIZE` to prevent overflow crashes.
 
