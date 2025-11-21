@@ -177,7 +177,7 @@ impl MCUmgrClient {
     where
         Tz::Offset: std::fmt::Display,
     {
-        let datetime = format!("{}", value.format("%Y-%m-%dT%H:%M:%S.%.6f%z"));
+        let datetime = format!("{}", value.format("%Y-%m-%dT%H:%M:%S%.6f%z"));
 
         self.connection
             .execute_command(&commands::os::DateTimeSet {
