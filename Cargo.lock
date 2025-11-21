@@ -2094,7 +2094,9 @@ dependencies = [
  "miette",
  "pyo3",
  "pyo3-stub-gen",
+ "serde",
  "serde-pyobject",
+ "serde_bytes",
  "serialport",
  "zephyr-mcumgr",
 ]

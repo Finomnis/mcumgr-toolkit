@@ -2,15 +2,20 @@ use pyo3::{prelude::*, types::PyBytes};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum};
 
 use ::zephyr_mcumgr::commands;
+use serde::Serialize;
+
+use crate::repr_macro::generate_repr_from_serialize;
 
 /// Return value of [`MCUmgrClient::fs_file_status`].
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
+#[derive(Serialize)]
 pub struct FileStatus {
     /// length of file (in bytes)
     #[pyo3(get)]
     pub length: u64,
 }
+generate_repr_from_serialize!(FileStatus);
 impl From<commands::fs::FileStatusResponse> for FileStatus {
     fn from(value: commands::fs::FileStatusResponse) -> Self {
         Self { length: value.len }
@@ -20,6 +25,7 @@ impl From<commands::fs::FileStatusResponse> for FileStatus {
 /// Return value of [`MCUmgrClient::fs_file_checksum`].
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
+#[derive(Serialize)]
 pub struct FileChecksum {
     /// type of hash/checksum that was performed
     #[pyo3(name = "type", get)]
@@ -32,8 +38,11 @@ pub struct FileChecksum {
     pub length: u64,
     /// output hash/checksum
     #[pyo3(get)]
+    #[serde(serialize_with = "crate::repr_macro::serialize_pybytes")]
     pub output: Py<PyBytes>,
 }
+generate_repr_from_serialize!(FileChecksum);
+
 impl FileChecksum {
     pub(crate) fn from_response<'py>(
         py: Python<'py>,
@@ -57,17 +66,19 @@ impl FileChecksum {
 /// Data format of the hash/checksum type
 #[gen_stub_pyclass_enum]
 #[pyclass(frozen, eq, eq_int)]
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Serialize)]
 pub enum FileChecksumDataFormat {
     /// Data is a number
     Numerical = 0,
     /// Data is a bytes array
     ByteArray = 1,
 }
+generate_repr_from_serialize!(FileChecksumDataFormat);
 
 /// Properties of a hash/checksum algorithm
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
+#[derive(Serialize)]
 pub struct FileChecksumProperties {
     /// format that the hash/checksum returns
     #[pyo3(get)]
@@ -76,6 +87,8 @@ pub struct FileChecksumProperties {
     #[pyo3(get)]
     pub size: u32,
 }
+generate_repr_from_serialize!(FileChecksumProperties);
+
 impl From<commands::fs::FileChecksumProperties> for FileChecksumProperties {
     fn from(value: commands::fs::FileChecksumProperties) -> Self {
         Self {
@@ -95,6 +108,7 @@ impl From<commands::fs::FileChecksumProperties> for FileChecksumProperties {
 /// Statistics of an MCU task/thread
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
+#[derive(Serialize)]
 pub struct TaskStatistics {
     /// task priority
     #[pyo3(get)]
@@ -118,6 +132,7 @@ pub struct TaskStatistics {
     #[pyo3(get)]
     pub runtime: Option<u64>,
 }
+generate_repr_from_serialize!(TaskStatistics);
 
 impl From<commands::os::TaskStatisticsEntry> for TaskStatistics {
     fn from(value: commands::os::TaskStatisticsEntry) -> Self {

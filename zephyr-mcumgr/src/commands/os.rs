@@ -44,11 +44,11 @@ pub struct TaskStatisticsEntry {
     pub runtime: Option<u64>,
 }
 
-/// Bit meanings of [`TaskStatisticsEntry::state`]
+/// Flags inside of [`TaskStatisticsEntry::state`]
 #[derive(strum::Display, strum::AsRefStr, strum::EnumIter, Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 #[strum(serialize_all = "snake_case")]
-pub enum ThreadStateBit {
+pub enum ThreadStateFlags {
     /** Not a real thread */
     DUMMY = 1 << 0,
 
@@ -74,7 +74,7 @@ pub enum ThreadStateBit {
     QUEUED = 1 << 7,
 }
 
-impl ThreadStateBit {
+impl ThreadStateFlags {
     /// Converts the thread state to a human readable string
     pub fn pretty_print(thread_state: u8) -> String {
         use strum::IntoEnumIterator;

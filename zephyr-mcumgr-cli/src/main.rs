@@ -20,7 +20,7 @@ use thiserror::Error;
 use zephyr_mcumgr::{
     Errno, MCUmgrClient,
     client::{FileDownloadError, FileUploadError},
-    commands::os::ThreadStateBit,
+    commands::os::ThreadStateFlags,
     connection::ExecuteError,
 };
 
@@ -113,7 +113,7 @@ fn cli_main() -> Result<(), CliError> {
                                 s.key_value("Task ID", stats.tid);
                                 s.key_value("State", {
                                     let pretty_state =
-                                        ThreadStateBit::pretty_print(stats.state as u8);
+                                        ThreadStateFlags::pretty_print(stats.state as u8);
                                     if pretty_state.is_empty() {
                                         format!("{}", stats.state)
                                     } else {

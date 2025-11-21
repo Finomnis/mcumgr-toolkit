@@ -15,6 +15,7 @@ use std::time::Duration;
 use crate::raw_py_any_command::RawPyAnyCommand;
 
 mod raw_py_any_command;
+mod repr_macro;
 mod return_types;
 pub use return_types::*;
 
