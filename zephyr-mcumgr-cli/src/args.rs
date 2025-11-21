@@ -51,8 +51,8 @@ pub enum OsCommand {
         #[arg(long)]
         utc: bool,
     },
-    // /// Retrieve the device's RTC datetime
-    // GetDatetime {},
+    /// Retrieve the device's RTC datetime
+    GetDatetime,
 }
 
 #[derive(Debug, Subcommand)]

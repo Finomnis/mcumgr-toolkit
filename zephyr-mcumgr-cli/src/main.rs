@@ -172,7 +172,19 @@ fn cli_main() -> Result<(), CliError> {
                     .os_set_datetime(datetime_value)
                     .map_err(CliError::CommandExecutionFailed)?;
 
-                println!("Set device time to: {}", datetime_value.format("%F %T"));
+                if args.verbose {
+                    println!("Set device time to: {}", datetime_value.format("%F %T"));
+                }
+            }
+            args::OsCommand::GetDatetime => {
+                let datetime = client
+                    .os_get_datetime()
+                    .map_err(CliError::CommandExecutionFailed)?;
+                if args.verbose {
+                    println!("Device time: {}", datetime);
+                } else {
+                    println!("{:?}", datetime);
+                }
             }
         },
         Group::Fs { command } => match command {
