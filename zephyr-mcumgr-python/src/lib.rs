@@ -157,6 +157,7 @@ impl MCUmgrClient {
         &self,
         py: Python<'py>,
         name: &str,
+        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]]", imports=("builtins", "collections.abc", "typing")))]
         progress: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyBytes>> {
         let mut data = vec![];
@@ -205,6 +206,7 @@ impl MCUmgrClient {
         &self,
         name: &str,
         data: &Bound<'py, PyBytes>,
+        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]]", imports=("builtins", "collections.abc", "typing")))]
         progress: Option<Bound<'py, PyAny>>,
     ) -> PyResult<()> {
         let bytes: &[u8] = data.extract()?;

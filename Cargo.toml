@@ -40,5 +40,5 @@ pyo3-stub-gen = "0.18.0"
 serde-pyobject = "0.8.0"
 
 [patch.crates-io]
-pyo3-stub-gen = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', branch = 'fix_local_defined_struct' }
-pyo3-stub-gen-derive = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', branch = 'fix_local_defined_struct' }
+pyo3-stub-gen = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', rev = '5f8ea857b59cffb4ad3a56b1941e3196cb310341' }
+pyo3-stub-gen-derive = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', rev = '5f8ea857b59cffb4ad3a56b1941e3196cb310341' }

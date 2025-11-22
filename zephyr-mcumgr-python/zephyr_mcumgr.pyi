@@ -2,6 +2,7 @@
 # ruff: noqa: E501, F401
 
 import builtins
+import collections.abc
 import datetime
 import enum
 import typing
@@ -101,7 +102,7 @@ class MCUmgrClient:
         
         This can be used as a sanity check for whether the device is connected and responsive.
         """
-    def os_task_statistics(self) -> builtins.dict[builtins.str, 'TaskStatistics']:
+    def os_task_statistics(self) -> 'builtins.dict[builtins.str, TaskStatistics]':
         r"""
         Queries live task statistics
         
@@ -122,7 +123,7 @@ class MCUmgrClient:
         r"""
         Retrieves the device RTC's datetime.
         """
-    def fs_file_download(self, name: builtins.str, progress: typing.Optional[typing.Any] = None) -> bytes:
+    def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""
         Load a file from the device.
         
@@ -142,7 +143,7 @@ class MCUmgrClient:
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` or larger.
         """
-    def fs_file_upload(self, name: builtins.str, data: bytes, progress: typing.Optional[typing.Any] = None) -> None:
+    def fs_file_upload(self, name: builtins.str, data: bytes, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> None:
         r"""
         Write a file to the device.
         
@@ -177,7 +178,7 @@ class MCUmgrClient:
         * `offset` - How many bytes of the file to skip
         * `length` - How many bytes to read after `offset`. None for the entire file.
         """
-    def fs_supported_checksum_types(self) -> builtins.dict[builtins.str, 'FileChecksumProperties']:
+    def fs_supported_checksum_types(self) -> 'builtins.dict[builtins.str, FileChecksumProperties]':
         r"""
         Queries which hash/checksum algorithms are available on the target
         """
