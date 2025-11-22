@@ -5,7 +5,32 @@ build-backend = "maturin"
 [project]
 name = "zephyr-mcumgr"
 requires-python = ">=3.10"
-dynamic = ["version", "description", "readme", "authors", "license", "keywords"]
+
+# Keep these dynamic as you requested
+dynamic = ["version", "description", "readme", "authors", "keywords"]
+
+# Dual-license using SPDX expression
+license = { text = "MIT OR Apache-2.0" }
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Finomnis/zephyr-mcumgr-client"
+Repository = "https://github.com/Finomnis/zephyr-mcumgr-client"
+Documentation = "https://finomnis.github.io/zephyr-mcumgr-client"
+Issues = "https://github.com/Finomnis/zephyr-mcumgr-client/issues"
 
 [tool.maturin]
 module-name = "zephyr_mcumgr"
