@@ -38,7 +38,7 @@ print(client.os_echo("Hello world!"))
 Hello world!
 ```
 
-The API documentation of `MCUmgrClient` can be found [here](https://finomnis.github.io/zephyr-mcumgr-client).
+For more information, take a look at the [API reference](https://finomnis.github.io/zephyr-mcumgr-client).
 
 ## Performance
 
