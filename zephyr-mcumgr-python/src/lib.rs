@@ -10,15 +10,19 @@ use pyo3_stub_gen::{
     derive::{gen_stub_pyclass, gen_stub_pymethods},
 };
 use std::collections::HashMap;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use crate::raw_py_any_command::RawPyAnyCommand;
 
-mod raw_py_any_command;
-mod repr_macro;
+mod locked_client;
+use locked_client::LockedClient;
+
 mod return_types;
 pub use return_types::*;
+
+mod raw_py_any_command;
+mod repr_macro;
 
 /// A high level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
@@ -34,37 +38,7 @@ fn err_to_pyerr<E: Into<miette::Report>>(err: E) -> PyErr {
 
 impl MCUmgrClient {
     fn lock(&self) -> PyResult<LockedClient<'_>> {
-        let client = self
-            .client
-            .lock()
-            .map_err(|e| PyRuntimeError::new_err(format!("{e}")))?;
-        if client.is_none() {
-            return Err(PyRuntimeError::new_err("Client already closed"));
-        }
-        Ok(LockedClient { client })
-    }
-}
-
-struct LockedClient<'a> {
-    client: MutexGuard<'a, Option<::zephyr_mcumgr::MCUmgrClient>>,
-}
-
-impl<'a> std::ops::Deref for LockedClient<'a> {
-    type Target = ::zephyr_mcumgr::MCUmgrClient;
-
-    fn deref(&self) -> &Self::Target {
-        // This *will* panic if invariant is broken, but only then.
-        self.client
-            .as_ref()
-            .expect("LockedClient invariant: Option<MCUmgrClient> is always Some while guarded")
-    }
-}
-
-impl<'a> std::ops::DerefMut for LockedClient<'a> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.client
-            .as_mut()
-            .expect("LockedClient invariant: Option<MCUmgrClient> is always Some while guarded")
+        LockedClient::lock(&self.client)
     }
 }
 
@@ -443,7 +417,7 @@ impl MCUmgrClient {
         _exc_value: Py<PyAny>,
         _traceback: Py<PyAny>,
     ) -> PyResult<bool> {
-        self.lock()?.client.take();
+        self.lock()?.close();
         Ok(false)
     }
 }
