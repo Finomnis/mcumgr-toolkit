@@ -1,10 +1,11 @@
 /// Information about the bootloader
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BootloaderInfo {
     /// MCUboot bootloader
     MCUboot {
         /// Bootloader mode
         ///
-        /// See [TODO] for more information.
+        /// See [`MCUbootMode`] for more information.
         mode: i32,
         /// Bootloader has downgrade prevention enabled
         no_downgrade: bool,
