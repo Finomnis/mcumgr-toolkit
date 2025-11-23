@@ -72,7 +72,7 @@ pub enum OsCommand {
     },
     /// Fetch parameters from the MCUmgr library
     McumgrParameters,
-    /// Fetch information on the running image, similiar to `uname`
+    /// Fetch information on the running image, similar to `uname`
     ///
     /// Run this without flags to get a structured overview
     /// of all available information.

@@ -433,6 +433,8 @@ mod zephyr_mcumgr {
     #[pymodule_export]
     use super::return_types::FileStatus;
     #[pymodule_export]
+    use super::return_types::MCUmgrParametersResponse;
+    #[pymodule_export]
     use super::return_types::TaskStatistics;
 
     #[pymodule_init]
