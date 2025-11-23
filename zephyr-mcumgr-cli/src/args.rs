@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 /// Command line client for Zephyr's MCUmgr SMP protocol
@@ -68,6 +70,89 @@ pub enum OsCommand {
         #[arg(long)]
         bootmode: Option<u8>,
     },
+    /// Fetch parameters from the MCUmgr library
+    McumgrParameters,
+    /// Fetch information on the running image, similar to `uname`
+    ///
+    /// Run this without flags to get a structured overview
+    /// of all available information.
+    ///
+    /// Specify one or more flags to get the raw output
+    /// without any post-processing.
+    ApplicationInfo(#[command(flatten)] ApplicationInfoFlags),
+}
+
+#[derive(Debug, Args)]
+pub struct ApplicationInfoFlags {
+    /// Kernel name
+    #[arg(short = 's', long)]
+    kernel_name: bool,
+    /// Node name
+    #[arg(short = 'n', long)]
+    node_name: bool,
+    /// Kernel release
+    #[arg(short = 'r', long)]
+    kernel_release: bool,
+    /// Kernel version
+    #[arg(short = 'v', long)]
+    kernel_version: bool,
+    /// Build date and time (requires CONFIG_MCUMGR_GRP_OS_INFO_BUILD_DATE_TIME)
+    #[arg(short = 'b', long)]
+    build_time: bool,
+    /// Machine
+    #[arg(short = 'm', long)]
+    machine: bool,
+    /// Processor
+    #[arg(short = 'p', long)]
+    processor: bool,
+    /// Hardware platform
+    #[arg(short = 'i', long)]
+    hardware_platform: bool,
+    /// Operating system
+    #[arg(short = 'o', long)]
+    operating: bool,
+    /// All fields (shorthand for all above options)
+    #[arg(short = 'a', long)]
+    all: bool,
+}
+
+impl ApplicationInfoFlags {
+    pub fn accumulate(&self) -> HashSet<char> {
+        let mut flags = HashSet::new();
+
+        if self.kernel_name {
+            flags.insert('s');
+        }
+        if self.node_name {
+            flags.insert('n');
+        }
+        if self.kernel_release {
+            flags.insert('r');
+        }
+        if self.kernel_version {
+            flags.insert('v');
+        }
+        if self.build_time {
+            flags.insert('b');
+        }
+        if self.machine {
+            flags.insert('m');
+        }
+        if self.processor {
+            flags.insert('p');
+        }
+        if self.hardware_platform {
+            flags.insert('i');
+        }
+        if self.operating {
+            flags.insert('o');
+        }
+        if self.all {
+            flags.insert('a');
+        }
+
+        flags
+    }
 }
 
 #[derive(Debug, Subcommand)]

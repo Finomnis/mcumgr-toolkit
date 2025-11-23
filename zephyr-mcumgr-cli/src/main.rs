@@ -62,6 +62,9 @@ pub enum CliError {
     #[error("Failed to parse datetime string")]
     #[diagnostic(code(zephyr_mcumgr::cli::chrono_parse))]
     ChronoParseFailed(#[from] chrono::ParseError),
+    #[error("App info output contained an unexpected number of fields: {0}")]
+    #[diagnostic(code(zephyr_mcumgr::cli::appinfo_fieldcount))]
+    AppInfoUnexpectedFieldCount(usize),
 }
 
 fn cli_main() -> Result<(), CliError> {
@@ -179,6 +182,50 @@ fn cli_main() -> Result<(), CliError> {
             }
             args::OsCommand::SystemReset { force, bootmode } => {
                 client.os_system_reset(force, bootmode)?;
+            }
+            args::OsCommand::McumgrParameters => {
+                let params = client.os_mcumgr_parameters()?;
+
+                structured_print(Some("MCUmgr Parameters".to_string()), args.json, |s| {
+                    s.key_value("buf_size", params.buf_size);
+                    s.key_value("buf_count", params.buf_count);
+                })?;
+            }
+            args::OsCommand::ApplicationInfo(flags) => {
+                let flags = flags.accumulate();
+
+                if flags.is_empty() {
+                    // Fetch everything and do a detailed print
+
+                    let output = client.os_application_info(Some("a"))?;
+                    let output = output.split(' ').collect::<Vec<_>>();
+
+                    let contains_build_time = match output.len() {
+                        8 => false,
+                        9 => true,
+                        n => return Err(CliError::AppInfoUnexpectedFieldCount(n)),
+                    };
+
+                    let mut iter = output.into_iter();
+
+                    structured_print(Some("OS/Application Info".to_string()), args.json, |s| {
+                        s.key_value("Kernel name", iter.next());
+                        s.key_value("Node name", iter.next());
+                        s.key_value("Kernel release", iter.next());
+                        s.key_value("Kernel version", iter.next());
+                        if contains_build_time {
+                            s.key_value("Build time", iter.next());
+                        }
+                        s.key_value("Machine", iter.next());
+                        s.key_value("Processor", iter.next());
+                        s.key_value("Hardware platform", iter.next());
+                        s.key_value("Operating system", iter.next());
+                    })?;
+                } else {
+                    let output =
+                        client.os_application_info(Some(&flags.iter().collect::<String>()))?;
+                    println!("{output}");
+                }
             }
         },
         Group::Fs { command } => match command {

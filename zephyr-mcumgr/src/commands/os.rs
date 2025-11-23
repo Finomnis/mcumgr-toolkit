@@ -161,20 +161,6 @@ pub struct DateTimeSet {
 pub struct DateTimeSetResponse;
 impl_deserialize_from_empty_map_and_into_unit!(DateTimeSetResponse);
 
-/// [MCUmgr Parameters](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#mcumgr-parameters) command
-#[derive(Debug, Eq, PartialEq)]
-pub struct MCUmgrParameters;
-impl_serialize_as_empty_map!(MCUmgrParameters);
-
-/// Response for [`MCUmgrParameters`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
-pub struct MCUmgrParametersResponse {
-    /// Single SMP buffer size, this includes SMP header and CBOR payload
-    pub buf_size: u32,
-    /// Number of SMP buffers supported
-    pub buf_count: u32,
-}
-
 /// [System Reset](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#system-reset) command
 #[derive(Serialize, Debug, Eq, PartialEq)]
 pub struct SystemReset {
@@ -194,6 +180,37 @@ pub struct SystemReset {
 #[derive(Default, Debug, Eq, PartialEq)]
 pub struct SystemResetResponse;
 impl_deserialize_from_empty_map_and_into_unit!(SystemResetResponse);
+
+/// [MCUmgr Parameters](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#mcumgr-parameters) command
+#[derive(Debug, Eq, PartialEq)]
+pub struct MCUmgrParameters;
+impl_serialize_as_empty_map!(MCUmgrParameters);
+
+/// Response for [`MCUmgrParameters`] command
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub struct MCUmgrParametersResponse {
+    /// Single SMP buffer size, this includes SMP header and CBOR payload
+    pub buf_size: u32,
+    /// Number of SMP buffers supported
+    pub buf_count: u32,
+}
+
+/// [OS/Application Info](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info) command
+#[derive(Serialize, Debug, Eq, PartialEq)]
+pub struct ApplicationInfo<'a> {
+    /// Format specifier of returned response
+    ///
+    /// For more info, see [the SMP documentation](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info-request).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<&'a str>,
+}
+
+/// Response for [`ApplicationInfo`] command
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub struct ApplicationInfoResponse {
+    /// Text response including requested parameters
+    pub output: String,
+}
 
 #[cfg(test)]
 mod tests {
@@ -388,5 +405,37 @@ mod tests {
         cbor!({}),
         cbor!({"buf_size" => 42, "buf_count" => 69}),
         MCUmgrParametersResponse{buf_size: 42, buf_count: 69 },
+    }
+
+    command_encode_decode_test! {
+        application_info_without_format,
+        (0, 0, 7),
+        ApplicationInfo{
+            format: None,
+        },
+        cbor!({}),
+        cbor!({
+            "output" => "foo",
+        }),
+        ApplicationInfoResponse{
+            output: "foo".to_string(),
+        }
+    }
+
+    command_encode_decode_test! {
+        application_info_with_format,
+        (0, 0, 7),
+        ApplicationInfo{
+            format: Some("abc"),
+        },
+        cbor!({
+            "format" => "abc",
+        }),
+        cbor!({
+            "output" => "bar",
+        }),
+        ApplicationInfoResponse{
+            output: "bar".to_string(),
+        }
     }
 }

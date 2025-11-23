@@ -201,6 +201,31 @@ impl MCUmgrClient {
             .map(Into::into)
     }
 
+    /// Fetch parameters from the MCUmgr library
+    pub fn os_mcumgr_parameters(
+        &mut self,
+    ) -> Result<commands::os::MCUmgrParametersResponse, ExecuteError> {
+        self.connection
+            .execute_command(&commands::os::MCUmgrParameters)
+    }
+
+    /// Fetch information on the running image
+    ///
+    /// Similar to Linux's `uname` command.
+    ///
+    /// # Arguments
+    ///
+    /// * `format` - Format specifier for the returned response
+    ///
+    /// For more information about the format specifier fields, see
+    /// the [SMP documentation](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info-request).
+    ///
+    pub fn os_application_info(&mut self, format: Option<&str>) -> Result<String, ExecuteError> {
+        self.connection
+            .execute_command(&commands::os::ApplicationInfo { format })
+            .map(|resp| resp.output)
+    }
+
     /// Load a file from the device.
     ///
     /// # Arguments

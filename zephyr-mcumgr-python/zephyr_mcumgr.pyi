@@ -142,6 +142,23 @@ class MCUmgrClient:
         
         Note that `boot_mode` only works if [`MCUMGR_GRP_OS_RESET_BOOT_MODE`](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_MCUMGR_GRP_OS_RESET_BOOT_MODE) is enabled.
         """
+    def os_mcumgr_parameters(self) -> 'MCUmgrParametersResponse':
+        r"""
+        Fetch parameters from the MCUmgr library
+        """
+    def os_application_info(self, format: typing.Optional[builtins.str] = None) -> builtins.str:
+        r"""
+        Fetch information on the running image
+        
+        Similar to Linux's `uname` command.
+        
+        ### Arguments
+        
+        * `format` - Format specifier for the returned response
+        
+        For more information about the format specifier fields, see
+        the [SMP documentation](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info-request).
+        """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""
         Load a file from the device.
@@ -245,6 +262,22 @@ class MCUmgrClient:
         client.raw_command(True, 0, 0, {"d": "Hello!"})
         # Returns: {'r': 'Hello!'}
         ```
+        """
+
+@typing.final
+class MCUmgrParametersResponse:
+    r"""
+    Return value of `MCUmgrClient.os_mcumgr_parameters`.
+    """
+    @property
+    def buf_size(self) -> builtins.int:
+        r"""
+        Single SMP buffer size, this includes SMP header and CBOR payload
+        """
+    @property
+    def buf_count(self) -> builtins.int:
+        r"""
+        Number of SMP buffers supported
         """
 
 @typing.final
