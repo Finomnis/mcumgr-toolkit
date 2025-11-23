@@ -212,6 +212,33 @@ pub struct ApplicationInfoResponse {
     pub output: String,
 }
 
+/// [Bootloader Information](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#bootloader-information) command
+#[derive(Debug, Eq, PartialEq)]
+pub struct BootloaderInfo;
+impl_serialize_as_empty_map!(BootloaderInfo);
+
+/// Response for [`BootloaderInfo`] command
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub struct BootloaderInfoResponse {
+    /// String representing bootloader name
+    pub bootloader: String,
+}
+
+/// [Bootloader Information MCUboot Mode](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#bootloader-information-mcuboot) subcommand
+#[derive(Serialize, Debug, Eq, PartialEq)]
+#[serde(tag = "query", rename = "mode")]
+pub struct BootloaderInfoMcubootMode {}
+
+/// Response for [`BootloaderInfoMcubootMode`] command
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub struct BootloaderInfoMcubootModeResponse {
+    /// The bootloader mode
+    pub mode: i32,
+    /// MCUboot has downgrade prevention enabled
+    #[serde(default, rename = "no-downgrade")]
+    pub no_downgrade: bool,
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::macros::command_encode_decode_test;
@@ -436,6 +463,52 @@ mod tests {
         }),
         ApplicationInfoResponse{
             output: "bar".to_string(),
+        }
+    }
+
+    command_encode_decode_test! {
+        bootloader_info,
+        (0, 0, 8),
+        BootloaderInfo,
+        cbor!({}),
+        cbor!({
+            "bootloader" => "MCUboot",
+        }),
+        BootloaderInfoResponse{
+            bootloader: "MCUboot".to_string(),
+        }
+    }
+
+    command_encode_decode_test! {
+        bootloader_info_mcuboot_mode,
+        (0, 0, 8),
+        BootloaderInfoMcubootMode{},
+        cbor!({
+            "query" => "mode",
+        }),
+        cbor!({
+            "mode" => 5,
+            "no-downgrade" => true,
+        }),
+        BootloaderInfoMcubootModeResponse{
+            mode: 5,
+            no_downgrade: true,
+        }
+    }
+
+    command_encode_decode_test! {
+        bootloader_info_mcuboot_mode_default_values,
+        (0, 0, 8),
+        BootloaderInfoMcubootMode{},
+        cbor!({
+            "query" => "mode",
+        }),
+        cbor!({
+            "mode" => -1,
+        }),
+        BootloaderInfoMcubootModeResponse{
+            mode: -1,
+            no_downgrade: false,
         }
     }
 }

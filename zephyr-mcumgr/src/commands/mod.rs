@@ -58,6 +58,8 @@ impl_mcumgr_command!((write, MGMT_GROUP_ID_OS, 4): os::DateTimeSet => os::DateTi
 impl_mcumgr_command!((write, MGMT_GROUP_ID_OS, 5): os::SystemReset => os::SystemResetResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 6): os::MCUmgrParameters => os::MCUmgrParametersResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 7): os::ApplicationInfo<'_> => os::ApplicationInfoResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 8): os::BootloaderInfo => os::BootloaderInfoResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 8): os::BootloaderInfoMcubootMode => os::BootloaderInfoMcubootModeResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 0): fs::FileUpload<'_, '_> => fs::FileUploadResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 0): fs::FileDownload<'_> => fs::FileDownloadResponse);
