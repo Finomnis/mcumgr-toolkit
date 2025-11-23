@@ -27,11 +27,11 @@ Its primary design goals are:
 ```python no_run
 from zephyr_mcumgr import MCUmgrClient
 
-client = MCUmgrClient.new_from_serial("COM42")
-client.set_timeout_ms(500)
-client.use_auto_frame_size()
+with MCUmgrClient.serial("/dev/ttyACM0") as client:
+    client.set_timeout_ms(500)
+    client.use_auto_frame_size()
 
-print(client.os_echo("Hello world!"))
+    print(client.os_echo("Hello world!"))
 ```
 
 ```none

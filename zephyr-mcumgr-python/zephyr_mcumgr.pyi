@@ -66,7 +66,7 @@ class MCUmgrClient:
     A high level client for Zephyr's MCUmgr SMP functionality
     """
     @staticmethod
-    def new_from_serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> 'MCUmgrClient':
+    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> 'MCUmgrClient':
         r"""
         Creates a new serial port based Zephyr MCUmgr SMP client.
         
@@ -262,6 +262,11 @@ class MCUmgrClient:
         client.raw_command(True, 0, 0, {"d": "Hello!"})
         # Returns: {'r': 'Hello!'}
         ```
+        """
+    def __enter__(self) -> 'MCUmgrClient': ...
+    def __exit__(self, _exc_type: typing.Any, _exc_value: typing.Any, _traceback: typing.Any) -> builtins.bool:
+        r"""
+        Closes the connection
         """
 
 @typing.final
