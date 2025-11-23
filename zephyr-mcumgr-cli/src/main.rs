@@ -198,29 +198,32 @@ fn cli_main() -> Result<(), CliError> {
                 if flags.is_empty() {
                     // Fetch everything and do a detailed print
 
-                    let output = client.os_application_info(Some("a"))?;
-                    let output = output.split(' ').collect::<Vec<_>>();
-
-                    let contains_build_time = match output.len() {
-                        8 => false,
-                        9 => true,
-                        n => return Err(CliError::AppInfoUnexpectedFieldCount(n)),
+                    let kernel_name = client.os_application_info(Some("s"))?;
+                    let node_name = client.os_application_info(Some("n"))?;
+                    let kernel_release = client.os_application_info(Some("r"))?;
+                    let kernel_version = client.os_application_info(Some("v"))?;
+                    let build_time = match client.os_application_info(Some("b")) {
+                        Ok(val) => Some(val),
+                        Err(ExecuteError::ErrorResponse(_)) => None,
+                        Err(e) => Err(e)?,
                     };
-
-                    let mut iter = output.into_iter();
+                    let machine = client.os_application_info(Some("m"))?;
+                    let processor = client.os_application_info(Some("p"))?;
+                    let hardware_platform = client.os_application_info(Some("i"))?;
+                    let operating_system = client.os_application_info(Some("o"))?;
 
                     structured_print(Some("OS/Application Info".to_string()), args.json, |s| {
-                        s.key_value("Kernel name", iter.next());
-                        s.key_value("Node name", iter.next());
-                        s.key_value("Kernel release", iter.next());
-                        s.key_value("Kernel version", iter.next());
-                        if contains_build_time {
-                            s.key_value("Build time", iter.next());
+                        s.key_value("Kernel name", kernel_name);
+                        s.key_value("Node name", node_name);
+                        s.key_value("Kernel release", kernel_release);
+                        s.key_value("Kernel version", kernel_version);
+                        if let Some(build_time) = build_time {
+                            s.key_value("Build time", build_time);
                         }
-                        s.key_value("Machine", iter.next());
-                        s.key_value("Processor", iter.next());
-                        s.key_value("Hardware platform", iter.next());
-                        s.key_value("Operating system", iter.next());
+                        s.key_value("Machine", machine);
+                        s.key_value("Processor", processor);
+                        s.key_value("Hardware platform", hardware_platform);
+                        s.key_value("Operating system", operating_system);
                     })?;
                 } else {
                     let output =
