@@ -394,6 +394,8 @@ impl MCUmgrClient {
 ///
 #[pymodule]
 mod zephyr_mcumgr {
+    use pyo3::prelude::*;
+
     #[pymodule_export]
     use super::MCUmgrClient;
     #[pymodule_export]
@@ -406,6 +408,12 @@ mod zephyr_mcumgr {
     use super::return_types::FileStatus;
     #[pymodule_export]
     use super::return_types::TaskStatistics;
+
+    #[pymodule_init]
+    fn init(_m: &Bound<'_, PyModule>) -> PyResult<()> {
+        pyo3_log::init();
+        Ok(())
+    }
 }
 
 // Define a function to gather stub information.

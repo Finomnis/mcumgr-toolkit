@@ -38,6 +38,7 @@ pyo3-embed = []
 [dependencies]
 pyo3 = { workspace = true, features = ["chrono"] }
 pyo3-stub-gen.workspace = true
+pyo3-log.workspace = true
 serde-pyobject.workspace = true
 serde.workspace = true
 ciborium.workspace = true
