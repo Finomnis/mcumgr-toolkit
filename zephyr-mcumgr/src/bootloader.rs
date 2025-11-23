@@ -1,7 +1,4 @@
-use serde::Serialize;
-
 /// Information about the bootloader
-#[derive(Serialize)]
 pub enum BootloaderInfo {
     /// MCUboot bootloader
     MCUboot {
@@ -17,6 +14,33 @@ pub enum BootloaderInfo {
         /// Name of the bootloader
         name: String,
     },
+}
+
+impl serde::Serialize for BootloaderInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+
+        let struct_name = "BootloaderInfo";
+
+        match self {
+            BootloaderInfo::MCUboot { mode, no_downgrade } => {
+                let mut s = serializer.serialize_struct(struct_name, 3)?;
+                s.serialize_field("name", "MCUboot")?;
+                s.serialize_field("mode", mode)?;
+                s.serialize_field("no_downgrade", no_downgrade)?;
+                s.end()
+            }
+
+            BootloaderInfo::Other { name } => {
+                let mut s = serializer.serialize_struct(struct_name, 1)?;
+                s.serialize_field("name", name)?;
+                s.end()
+            }
+        }
+    }
 }
 
 /// MCUboot modes
