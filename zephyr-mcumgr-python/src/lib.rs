@@ -443,10 +443,7 @@ impl MCUmgrClient {
         _exc_value: Py<PyAny>,
         _traceback: Py<PyAny>,
     ) -> PyResult<bool> {
-        self.client
-            .lock()
-            .map_err(|e| PyRuntimeError::new_err(format!("{e}")))?
-            .take();
+        self.lock()?.client.take();
         Ok(false)
     }
 }
