@@ -110,7 +110,7 @@ pub struct ApplicationInfoFlags {
     hardware_platform: bool,
     /// Operating system
     #[arg(short = 'o', long)]
-    operating: bool,
+    operating_system: bool,
     /// All fields (shorthand for all above options)
     #[arg(short = 'a', long)]
     all: bool,
@@ -144,7 +144,7 @@ impl ApplicationInfoFlags {
         if self.hardware_platform {
             flags.insert('i');
         }
-        if self.operating {
+        if self.operating_system {
             flags.insert('o');
         }
         if self.all {
