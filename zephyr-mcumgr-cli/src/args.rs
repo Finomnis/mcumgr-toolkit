@@ -77,7 +77,7 @@ pub enum OsCommand {
     /// Run this without flags to get a structured overview
     /// of all available information.
     ///
-    /// Specify one ore more flags to get the raw output
+    /// Specify one or more flags to get the raw output
     /// without any post-processing.
     ApplicationInfo(#[command(flatten)] ApplicationInfoFlags),
 }

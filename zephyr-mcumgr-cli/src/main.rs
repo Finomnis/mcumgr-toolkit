@@ -62,9 +62,9 @@ pub enum CliError {
     #[error("Failed to parse datetime string")]
     #[diagnostic(code(zephyr_mcumgr::cli::chrono_parse))]
     ChronoParseFailed(#[from] chrono::ParseError),
-    #[error("App info output contained an unexpected number of fields")]
+    #[error("App info output contained an unexpected number of fields: {0}")]
     #[diagnostic(code(zephyr_mcumgr::cli::appinfo_fieldcount))]
-    AppInfoUnexpectedFieldCount,
+    AppInfoUnexpectedFieldCount(usize),
 }
 
 fn cli_main() -> Result<(), CliError> {
@@ -203,7 +203,7 @@ fn cli_main() -> Result<(), CliError> {
                     let contains_build_time = match output.len() {
                         8 => false,
                         9 => true,
-                        _ => return Err(CliError::AppInfoUnexpectedFieldCount),
+                        n => return Err(CliError::AppInfoUnexpectedFieldCount(n)),
                     };
 
                     let mut iter = output.into_iter();
