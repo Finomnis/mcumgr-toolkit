@@ -204,7 +204,10 @@ fn cli_main() -> Result<(), CliError> {
                     let kernel_version = client.os_application_info(Some("v"))?;
                     let build_time = match client.os_application_info(Some("b")) {
                         Ok(val) => Some(val),
-                        Err(ExecuteError::ErrorResponse(_)) => None,
+                        Err(ExecuteError::ErrorResponse(e)) => {
+                            log::debug!("Failed to fetch build time: {:?}", e);
+                            None
+                        }
                         Err(e) => Err(e)?,
                     };
                     let machine = client.os_application_info(Some("m"))?;
