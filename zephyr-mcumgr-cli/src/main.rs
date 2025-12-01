@@ -268,10 +268,20 @@ fn cli_main() -> Result<(), CliError> {
                 with_progress_bar(!args.quiet, Some(&remote), |progress| {
                     client.fs_file_download(remote.as_str(), &mut data, progress)
                 })?;
-                write_output_file(&local, &data)?;
+
+                let filename = remote.rsplit_terminator('/').next();
+
+                write_output_file(&local, filename, &data)?;
             }
-            args::FsCommand::Upload { local, remote } => {
-                let data = read_input_file(&local)?;
+            args::FsCommand::Upload { local, mut remote } => {
+                let (data, filename) = read_input_file(&local)?;
+
+                if remote.ends_with("/") {
+                    if let Some(filename) = filename {
+                        remote.push_str(&filename);
+                    }
+                }
+
                 with_progress_bar(!args.quiet, Some(&remote), |progress| {
                     client.fs_file_upload(remote.as_str(), &*data, data.len() as u64, progress)
                 })?;
