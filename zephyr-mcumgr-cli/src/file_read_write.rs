@@ -6,13 +6,12 @@ use std::{
 
 use crate::CliError;
 
-/**
- * Reads the input file, or stdin if '-'.
- *
- * # Return
- *
- * A tuple of (file_content, file_basename).
- */
+/// Reads the input file, or stdin if '-'.
+///
+/// # Return
+///
+/// A tuple of (file_content, file_basename).
+///
 pub fn read_input_file(filename: &str) -> Result<(Box<[u8]>, Option<String>), CliError> {
     if filename == "-" {
         let mut data = Vec::new();
