@@ -46,24 +46,23 @@ pub fn read_input_file(filename: &str) -> Result<(Box<[u8]>, Option<String>), Cl
 
 pub fn write_output_file(
     output_path: &str,
-    filename: Option<&str>,
+    source_filename: Option<&str>,
     data: &[u8],
 ) -> Result<(), CliError> {
     if output_path == "-" {
-        std::io::stdout()
+        return std::io::stdout()
             .lock()
             .write_all(data)
-            .map_err(CliError::OutputWriteFailed)
-    } else {
-        let mut output_path = PathBuf::from(output_path);
-        if output_path.is_dir() {
-            if let Some(filename) = filename {
-                output_path.push(filename);
-            }
-        }
-        File::create(output_path)
-            .map_err(CliError::OutputWriteFailed)?
-            .write_all(data)
-            .map_err(CliError::OutputWriteFailed)
+            .map_err(CliError::OutputWriteFailed);
     }
+
+    let mut output_path = PathBuf::from(output_path);
+    if output_path.is_dir() {
+        let filename = source_filename.ok_or_else(|| CliError::DestinationFilenameUnknown)?;
+        output_path.push(filename);
+    }
+    File::create(output_path)
+        .map_err(CliError::OutputWriteFailed)?
+        .write_all(data)
+        .map_err(CliError::OutputWriteFailed)
 }
