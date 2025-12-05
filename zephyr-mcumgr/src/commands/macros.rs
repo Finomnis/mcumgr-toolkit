@@ -125,11 +125,19 @@ macro_rules! impl_deserialize_from_empty_map_and_into_unit {
                     where
                         M: ::serde::de::MapAccess<'de>,
                     {
-                        // Do not explicitly check for empty maps; we also accept non-empty maps for future compatibility.
+                        let mut had_entries = false;
+
                         while map
                             .next_entry::<serde::de::IgnoredAny, serde::de::IgnoredAny>()?
                             .is_some()
-                        {}
+                        {
+                            had_entries = true;
+                        }
+
+                        // Do not error when there is an entry; we also accept non-empty maps for future compatibility.
+                        if had_entries {
+                            log::debug!("Ignoring unexpected entries in unit-type deserialization");
+                        }
 
                         Ok(<$type>::default())
                     }
