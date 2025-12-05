@@ -134,7 +134,7 @@ macro_rules! impl_deserialize_from_empty_map_and_into_unit {
                             had_entries = true;
                         }
 
-                        // Do not error when there is an entry; we also accept non-empty maps for future compatibility.
+                        // Do not error when there are entries; we also accept non-empty maps for future compatibility.
                         if had_entries {
                             ::log::debug!(
                                 "Ignoring unexpected entries in unit-type deserialization"
