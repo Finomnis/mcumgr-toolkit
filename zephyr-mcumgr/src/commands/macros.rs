@@ -52,8 +52,8 @@ macro_rules! command_encode_decode_test {
             ::ciborium::into_writer(&$encoded_req.unwrap(), &mut expected_encoded_request).unwrap();
 
             assert_eq!(
-                encoded_request.iter().map(|x|format!("{:02x}", x)).collect::<String>(),
-                expected_encoded_request.iter().map(|x|format!("{:02x}", x)).collect::<String>(),
+                hex::encode(encoded_request),
+                hex::encode(expected_encoded_request),
                 "encoding mismatch"
             );
 

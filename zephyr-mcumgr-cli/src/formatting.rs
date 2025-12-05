@@ -20,6 +20,15 @@ impl StructuredPrint {
         self.entries
             .push((key.to_string(), Entry::Value(value.into())))
     }
+    pub fn key_value_maybe<T: Into<serde_json::Value>>(
+        &mut self,
+        key: impl ToString,
+        value: Option<T>,
+    ) {
+        if let Some(value) = value {
+            self.key_value(key, value);
+        }
+    }
     pub fn print(self, depth: usize) {
         let indent = std::iter::repeat_n("    ", depth).collect::<String>();
         let longest_key = self

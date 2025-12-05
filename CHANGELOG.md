@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make all functions in `MCUmgrClient` `&self` instead of `&mut self` (#62)
 - Fix: Python status callbacks deadlock when they call `MCUmgrClient` functions (#62)
 - Fix: Infinite loop if serial port returns EOF (#62)
+- Add Python/Rust library commands:
+  - `image_get_state`
+- Add CLI commands:
+  - `image`
+    - `get_state`
 
 ## [0.4.1] - 2025-12-02
 

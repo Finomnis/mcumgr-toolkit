@@ -45,3 +45,4 @@ ciborium.workspace = true
 zephyr-mcumgr.workspace = true
 serialport.workspace = true
 miette = { workspace = true, features = ["fancy"] }
+hex.workspace = true

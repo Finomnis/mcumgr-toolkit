@@ -197,7 +197,7 @@ impl FileChecksumData {
     /// Convert to hex string
     pub fn hex(&self) -> String {
         match self {
-            FileChecksumData::Hash(data) => data.iter().map(|val| format!("{val:02x}")).collect(),
+            FileChecksumData::Hash(data) => hex::encode(data),
             FileChecksumData::Checksum(value) => format!("{value:08x}"),
         }
     }

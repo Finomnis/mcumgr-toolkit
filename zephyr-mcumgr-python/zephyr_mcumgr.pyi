@@ -61,6 +61,61 @@ class FileStatus:
         """
 
 @typing.final
+class ImageState:
+    r"""
+    The state of an image slot
+    """
+    @property
+    def image(self) -> builtins.int:
+        r"""
+        image number
+        """
+    @property
+    def slot(self) -> builtins.int:
+        r"""
+        slot number within “image”
+        """
+    @property
+    def version(self) -> builtins.str:
+        r"""
+        string representing image version, as set with `imgtool`
+        """
+    @property
+    def hash(self) -> typing.Optional[bytes]:
+        r"""
+        SHA256 hash of the image header and body
+        
+        Note that this will not be the same as the SHA256 of the whole file, it is the field in the
+        MCUboot TLV section that contains a hash of the data which is used for signature
+        verification purposes.
+        """
+    @property
+    def bootable(self) -> builtins.bool:
+        r"""
+        true if image has bootable flag set
+        """
+    @property
+    def pending(self) -> builtins.bool:
+        r"""
+        true if image is set for next swap
+        """
+    @property
+    def confirmed(self) -> builtins.bool:
+        r"""
+        true if image has been confirmed
+        """
+    @property
+    def active(self) -> builtins.bool:
+        r"""
+        true if image is currently active application
+        """
+    @property
+    def permanent(self) -> builtins.bool:
+        r"""
+        true if image is to stay in primary slot after the next boot
+        """
+
+@typing.final
 class MCUmgrClient:
     r"""
     A high level client for Zephyr's MCUmgr SMP functionality
@@ -162,6 +217,10 @@ class MCUmgrClient:
     def os_bootloader_info(self) -> typing.Any:
         r"""
         Fetch information on the device's bootloader
+        """
+    def image_get_state(self) -> 'builtins.list[ImageState]':
+        r"""
+        Obtain a list of images with their current state.
         """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""

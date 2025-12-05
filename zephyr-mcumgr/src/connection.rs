@@ -84,10 +84,7 @@ impl Connection {
         let data_size = cursor.position() as usize;
         let data = &locked_self.transport_buffer[..data_size];
 
-        log::debug!(
-            "TX data: {}",
-            data.iter().map(|e| format!("{e:02x}")).collect::<String>()
-        );
+        log::debug!("TX data: {}", hex::encode(data));
 
         let sequence_num = locked_self.next_seqnum;
         locked_self.next_seqnum = locked_self.next_seqnum.wrapping_add(1);
@@ -112,13 +109,7 @@ impl Connection {
             command_id,
         )?;
 
-        log::debug!(
-            "RX data: {}",
-            response
-                .iter()
-                .map(|e| format!("{e:02x}"))
-                .collect::<String>()
-        );
+        log::debug!("RX data: {}", hex::encode(response));
 
         let err: ErrResponse = ciborium::from_reader(Cursor::new(response))
             .into_diagnostic()

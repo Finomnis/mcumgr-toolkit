@@ -26,6 +26,7 @@ ciborium.workspace = true
 log.workspace = true
 strum = { workspace = true, features = ["derive"] }
 chrono = { workspace = true, features = ["serde"] }
+hex = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 proptest = "1.9.0"

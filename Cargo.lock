@@ -498,6 +498,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "iana-time-zone"
 version = "0.1.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2075,6 +2084,7 @@ dependencies = [
  "chrono",
  "ciborium",
  "crc",
+ "hex",
  "log",
  "miette",
  "proptest",
@@ -2096,6 +2106,7 @@ dependencies = [
  "ciborium",
  "clap",
  "env_logger",
+ "hex",
  "indicatif",
  "log",
  "miette",
@@ -2110,6 +2121,7 @@ name = "zephyr-mcumgr-python"
 version = "0.4.1"
 dependencies = [
  "ciborium",
+ "hex",
  "miette",
  "pyo3",
  "pyo3-log",

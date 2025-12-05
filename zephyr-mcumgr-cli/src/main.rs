@@ -3,6 +3,8 @@
 mod args;
 use args::Group;
 
+mod groups;
+
 mod progress;
 use progress::with_progress_bar;
 
@@ -95,7 +97,10 @@ fn cli_main() -> Result<(), CliError> {
         log::warn!("Hint: Make sure that `CONFIG_MCUMGR_GRP_OS_MCUMGR_PARAMS` is enabled.");
     }
 
-    match args.group {
+    let group = args.group;
+    let args = args.common;
+
+    match group {
         Group::Os { command } => match command {
             args::OsCommand::Echo { msg } => println!("{}", client.os_echo(msg)?),
             args::OsCommand::TaskStatistics => {
@@ -265,6 +270,7 @@ fn cli_main() -> Result<(), CliError> {
                 })?;
             }
         },
+        Group::Image { command } => groups::image::run(&client, args, command)?,
         Group::Fs { command } => match command {
             args::FsCommand::Download { remote, local } => {
                 let mut data = vec![];

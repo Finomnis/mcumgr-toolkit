@@ -1,5 +1,7 @@
 /// [File management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html) group commands
 pub mod fs;
+/// [Application/software image management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html) group commands
+pub mod image;
 /// [Default/OS management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html) group commands
 pub mod os;
 /// [Shell management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_9.html) group commands
@@ -60,6 +62,8 @@ impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 6): os::MCUmgrParameters => os::M
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 7): os::ApplicationInfo<'_> => os::ApplicationInfoResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 8): os::BootloaderInfo => os::BootloaderInfoResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 8): os::BootloaderInfoMcubootMode => os::BootloaderInfoMcubootModeResponse);
+
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_IMAGE, 0): image::GetImageState => image::GetImageStateResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 0): fs::FileUpload<'_, '_> => fs::FileUploadResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 0): fs::FileDownload<'_> => fs::FileDownloadResponse);

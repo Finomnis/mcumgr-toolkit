@@ -39,6 +39,7 @@ pyo3 = "0.27.2"
 pyo3-stub-gen = "0.18.0"
 pyo3-log = "0.13.2"
 serde-pyobject = "0.8.0"
+hex = "0.4.3"
 
 [patch.crates-io]
 pyo3-stub-gen = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', rev = '1999efc189fe29e35d099acd5e5ec4a5d78190db' }

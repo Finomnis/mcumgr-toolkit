@@ -168,3 +168,59 @@ impl From<commands::os::TaskStatisticsEntry> for TaskStatistics {
         }
     }
 }
+
+/// The state of an image slot
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Serialize)]
+pub struct ImageState {
+    /// image number
+    #[pyo3(get)]
+    pub image: u64,
+    /// slot number within “image”
+    #[pyo3(get)]
+    pub slot: u64,
+    /// string representing image version, as set with `imgtool`
+    #[pyo3(get)]
+    pub version: String,
+    /// SHA256 hash of the image header and body
+    ///
+    /// Note that this will not be the same as the SHA256 of the whole file, it is the field in the
+    /// MCUboot TLV section that contains a hash of the data which is used for signature
+    /// verification purposes.
+    #[pyo3(get)]
+    #[serde(serialize_with = "crate::repr_macro::serialize_option_pybytes_as_hex")]
+    pub hash: Option<Py<PyBytes>>,
+    /// true if image has bootable flag set
+    #[pyo3(get)]
+    pub bootable: bool,
+    /// true if image is set for next swap
+    #[pyo3(get)]
+    pub pending: bool,
+    /// true if image has been confirmed
+    #[pyo3(get)]
+    pub confirmed: bool,
+    /// true if image is currently active application
+    #[pyo3(get)]
+    pub active: bool,
+    /// true if image is to stay in primary slot after the next boot
+    #[pyo3(get)]
+    pub permanent: bool,
+}
+generate_repr_from_serialize!(ImageState);
+
+impl ImageState {
+    pub(crate) fn from_response<'py>(py: Python<'py>, value: commands::image::ImageState) -> Self {
+        Self {
+            image: value.image,
+            slot: value.slot,
+            version: value.version,
+            hash: value.hash.map(|val| PyBytes::new(py, &val).unbind()),
+            bootable: value.bootable,
+            pending: value.pending,
+            confirmed: value.confirmed,
+            active: value.active,
+            permanent: value.permanent,
+        }
+    }
+}

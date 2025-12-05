@@ -202,6 +202,16 @@ impl MCUmgrClient {
             .map_err(Into::into)
     }
 
+    /// Obtain a list of images with their current state.
+    pub fn image_get_state<'py>(&self, py: Python<'py>) -> PyResult<Vec<ImageState>> {
+        let images = self.get_client()?.image_get_state().map_err(err_to_pyerr)?;
+
+        Ok(images
+            .into_iter()
+            .map(|val| ImageState::from_response(py, val))
+            .collect())
+    }
+
     /// Load a file from the device.
     ///
     /// ### Arguments
@@ -470,6 +480,8 @@ mod zephyr_mcumgr {
     use super::return_types::FileChecksumProperties;
     #[pymodule_export]
     use super::return_types::FileStatus;
+    #[pymodule_export]
+    use super::return_types::ImageState;
     #[pymodule_export]
     use super::return_types::MCUmgrParametersResponse;
     #[pymodule_export]

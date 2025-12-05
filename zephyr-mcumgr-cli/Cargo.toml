@@ -29,3 +29,4 @@ serde_json.workspace = true
 indicatif.workspace = true
 ciborium.workspace = true
 chrono.workspace = true
+hex.workspace = true
