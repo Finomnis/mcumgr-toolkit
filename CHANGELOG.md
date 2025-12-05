@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- Make all functions in `MCUmgrClient` `&self` instead of `&mut self`
-- Fix: Python status callbacks deadlock when they call `MCUmgrClient` functions
-- Fix: Infinite loop if serial port returns EOF
+- Make all functions in `MCUmgrClient` `&self` instead of `&mut self` (#62)
+- Fix: Python status callbacks deadlock when they call `MCUmgrClient` functions (#62)
+- Fix: Infinite loop if serial port returns EOF (#62)
 
 ## [0.4.1] - 2025-12-02
 
