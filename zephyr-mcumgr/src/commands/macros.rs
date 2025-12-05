@@ -121,11 +121,16 @@ macro_rules! impl_deserialize_from_empty_map_and_into_unit {
                         write!(f, "an empty map/object (`{{}}`)")
                     }
 
-                    fn visit_map<M>(self, mut _map: M) -> Result<$type, M::Error>
+                    fn visit_map<M>(self, mut map: M) -> Result<$type, M::Error>
                     where
                         M: ::serde::de::MapAccess<'de>,
                     {
                         // Do not explicitly check for empty maps; we also accept non-empty maps for future compatibility.
+                        while map
+                            .next_entry::<serde::de::IgnoredAny, serde::de::IgnoredAny>()?
+                            .is_some()
+                        {}
+
                         Ok(<$type>::default())
                     }
                 }
