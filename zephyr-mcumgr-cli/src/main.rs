@@ -76,7 +76,7 @@ fn cli_main() -> Result<(), CliError> {
 
     let args = args::App::parse();
 
-    let mut client = if let Some(serial_name) = args.serial {
+    let client = if let Some(serial_name) = args.serial {
         let serial = serialport::new(serial_name, args.baud)
             .open()
             .map_err(CliError::OpenSerialFailed)?;

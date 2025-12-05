@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     io::{self, Read, Write},
+    sync::atomic::AtomicUsize,
     time::Duration,
 };
 
@@ -24,7 +25,7 @@ const ZEPHYR_DEFAULT_SMP_FRAME_SIZE: usize = 384;
 /// This struct is the central entry point of this crate.
 pub struct MCUmgrClient {
     connection: Connection,
-    smp_frame_size: usize,
+    smp_frame_size: AtomicUsize,
 }
 
 /// Possible error values of [`MCUmgrClient::fs_file_download`].
@@ -96,7 +97,7 @@ impl MCUmgrClient {
     ) -> Self {
         Self {
             connection: Connection::new(SerialTransport::new(serial)),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE,
+            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
         }
     }
 
@@ -104,21 +105,25 @@ impl MCUmgrClient {
     ///
     /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
     /// otherwise we might crash the device.
-    pub fn set_frame_size(&mut self, smp_frame_size: usize) {
-        self.smp_frame_size = smp_frame_size;
+    pub fn set_frame_size(&self, smp_frame_size: usize) {
+        self.smp_frame_size
+            .store(smp_frame_size, std::sync::atomic::Ordering::SeqCst);
     }
 
     /// Configures the maximum SMP frame size that we can send to the device automatically
     /// by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// from the device.
-    pub fn use_auto_frame_size(&mut self) -> Result<(), ExecuteError> {
+    pub fn use_auto_frame_size(&self) -> Result<(), ExecuteError> {
         let mcumgr_params = self
             .connection
             .execute_command(&commands::os::MCUmgrParameters)?;
 
-        self.smp_frame_size = mcumgr_params.buf_size as usize;
+        log::debug!("Using frame size {}.", mcumgr_params.buf_size);
 
-        log::debug!("Using frame size {}.", self.smp_frame_size);
+        self.smp_frame_size.store(
+            mcumgr_params.buf_size as usize,
+            std::sync::atomic::Ordering::SeqCst,
+        );
 
         Ok(())
     }
@@ -127,14 +132,14 @@ impl MCUmgrClient {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    pub fn set_timeout(&mut self, timeout: Duration) -> Result<(), miette::Report> {
+    pub fn set_timeout(&self, timeout: Duration) -> Result<(), miette::Report> {
         self.connection.set_timeout(timeout)
     }
 
     /// Sends a message to the device and expects the same message back as response.
     ///
     /// This can be used as a sanity check for whether the device is connected and responsive.
-    pub fn os_echo(&mut self, msg: impl AsRef<str>) -> Result<String, ExecuteError> {
+    pub fn os_echo(&self, msg: impl AsRef<str>) -> Result<String, ExecuteError> {
         self.connection
             .execute_command(&commands::os::Echo { d: msg.as_ref() })
             .map(|resp| resp.r)
@@ -151,7 +156,7 @@ impl MCUmgrClient {
     ///
     /// A map of task names with their respective statistics
     pub fn os_task_statistics(
-        &mut self,
+        &self,
     ) -> Result<HashMap<String, commands::os::TaskStatisticsEntry>, ExecuteError> {
         self.connection
             .execute_command(&commands::os::TaskStatistics)
@@ -166,14 +171,14 @@ impl MCUmgrClient {
     }
 
     /// Sets the RTC of the device to the given datetime.
-    pub fn os_set_datetime(&mut self, datetime: chrono::NaiveDateTime) -> Result<(), ExecuteError> {
+    pub fn os_set_datetime(&self, datetime: chrono::NaiveDateTime) -> Result<(), ExecuteError> {
         self.connection
             .execute_command(&commands::os::DateTimeSet { datetime })
             .map(Into::into)
     }
 
     /// Retrieves the device RTC's datetime.
-    pub fn os_get_datetime(&mut self) -> Result<chrono::NaiveDateTime, ExecuteError> {
+    pub fn os_get_datetime(&self) -> Result<chrono::NaiveDateTime, ExecuteError> {
         self.connection
             .execute_command(&commands::os::DateTimeGet)
             .map(|val| val.datetime)
@@ -192,11 +197,7 @@ impl MCUmgrClient {
     ///
     /// Note that `boot_mode` only works if [`MCUMGR_GRP_OS_RESET_BOOT_MODE`](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_MCUMGR_GRP_OS_RESET_BOOT_MODE) is enabled.
     ///
-    pub fn os_system_reset(
-        &mut self,
-        force: bool,
-        boot_mode: Option<u8>,
-    ) -> Result<(), ExecuteError> {
+    pub fn os_system_reset(&self, force: bool, boot_mode: Option<u8>) -> Result<(), ExecuteError> {
         self.connection
             .execute_command(&commands::os::SystemReset { force, boot_mode })
             .map(Into::into)
@@ -204,7 +205,7 @@ impl MCUmgrClient {
 
     /// Fetch parameters from the MCUmgr library
     pub fn os_mcumgr_parameters(
-        &mut self,
+        &self,
     ) -> Result<commands::os::MCUmgrParametersResponse, ExecuteError> {
         self.connection
             .execute_command(&commands::os::MCUmgrParameters)
@@ -221,14 +222,14 @@ impl MCUmgrClient {
     /// For more information about the format specifier fields, see
     /// the [SMP documentation](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info-request).
     ///
-    pub fn os_application_info(&mut self, format: Option<&str>) -> Result<String, ExecuteError> {
+    pub fn os_application_info(&self, format: Option<&str>) -> Result<String, ExecuteError> {
         self.connection
             .execute_command(&commands::os::ApplicationInfo { format })
             .map(|resp| resp.output)
     }
 
     /// Fetch information on the device's bootloader
-    pub fn os_bootloader_info(&mut self) -> Result<BootloaderInfo, ExecuteError> {
+    pub fn os_bootloader_info(&self) -> Result<BootloaderInfo, ExecuteError> {
         Ok(
             match self
                 .connection
@@ -266,7 +267,7 @@ impl MCUmgrClient {
     /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// to maybe `4096` or larger.
     pub fn fs_file_download<T: Write>(
-        &mut self,
+        &self,
         name: impl AsRef<str>,
         mut writer: T,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
@@ -340,7 +341,7 @@ impl MCUmgrClient {
     /// to maybe `4096` and then enable larger chunking through either [`MCUmgrClient::set_frame_size`]
     /// or [`MCUmgrClient::use_auto_frame_size`].
     pub fn fs_file_upload<T: Read>(
-        &mut self,
+        &self,
         name: impl AsRef<str>,
         mut reader: T,
         size: u64,
@@ -348,8 +349,12 @@ impl MCUmgrClient {
     ) -> Result<(), FileUploadError> {
         let name = name.as_ref();
 
-        let chunk_size_max = file_upload_max_data_chunk_size(self.smp_frame_size, name)
-            .map_err(FileUploadError::FrameSizeTooSmall)?;
+        let chunk_size_max = file_upload_max_data_chunk_size(
+            self.smp_frame_size
+                .load(std::sync::atomic::Ordering::SeqCst),
+            name,
+        )
+        .map_err(FileUploadError::FrameSizeTooSmall)?;
         let mut data_buffer = vec![0u8; chunk_size_max].into_boxed_slice();
 
         let mut offset = 0;
@@ -381,7 +386,7 @@ impl MCUmgrClient {
 
     /// Queries the file status
     pub fn fs_file_status(
-        &mut self,
+        &self,
         name: impl AsRef<str>,
     ) -> Result<commands::fs::FileStatusResponse, ExecuteError> {
         self.connection.execute_command(&commands::fs::FileStatus {
@@ -401,7 +406,7 @@ impl MCUmgrClient {
     /// * `length` - How many bytes to read after `offset`. None for the entire file.
     ///
     pub fn fs_file_checksum(
-        &mut self,
+        &self,
         name: impl AsRef<str>,
         algorithm: Option<impl AsRef<str>>,
         offset: u64,
@@ -418,7 +423,7 @@ impl MCUmgrClient {
 
     /// Queries which hash/checksum algorithms are available on the target
     pub fn fs_supported_checksum_types(
-        &mut self,
+        &self,
     ) -> Result<HashMap<String, commands::fs::FileChecksumProperties>, ExecuteError> {
         self.connection
             .execute_command(&commands::fs::SupportedFileChecksumTypes)
@@ -426,7 +431,7 @@ impl MCUmgrClient {
     }
 
     /// Close all device files MCUmgr has currently open
-    pub fn fs_file_close(&mut self) -> Result<(), ExecuteError> {
+    pub fn fs_file_close(&self) -> Result<(), ExecuteError> {
         self.connection
             .execute_command(&commands::fs::FileClose)
             .map(Into::into)
@@ -441,14 +446,14 @@ impl MCUmgrClient {
     /// # Return
     ///
     /// A tuple of (returncode, stdout) produced by the command execution.
-    pub fn shell_execute(&mut self, argv: &[String]) -> Result<(i32, String), ExecuteError> {
+    pub fn shell_execute(&self, argv: &[String]) -> Result<(i32, String), ExecuteError> {
         self.connection
             .execute_command(&commands::shell::ShellCommandLineExecute { argv })
             .map(|ret| (ret.ret, ret.o))
     }
 
     /// Erase the `storage_partition` flash partition.
-    pub fn zephyr_erase_storage(&mut self) -> Result<(), ExecuteError> {
+    pub fn zephyr_erase_storage(&self) -> Result<(), ExecuteError> {
         self.connection
             .execute_command(&commands::zephyr::EraseStorage)
             .map(Into::into)
@@ -460,7 +465,7 @@ impl MCUmgrClient {
     /// user does not need to check for an `rc` or `err`
     /// field in the response.
     pub fn raw_command<T: commands::McuMgrCommand>(
-        &mut self,
+        &self,
         command: &T,
     ) -> Result<T::Response, ExecuteError> {
         self.connection.execute_command(command)

@@ -1,4 +1,4 @@
-use std::{io::Cursor, time::Duration};
+use std::{io::Cursor, sync::Mutex, time::Duration};
 
 use crate::{
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
@@ -9,14 +9,18 @@ use crate::{
 use miette::{Diagnostic, IntoDiagnostic};
 use thiserror::Error;
 
+struct Inner {
+    transport: Box<dyn Transport + Send>,
+    next_seqnum: u8,
+    transport_buffer: Box<[u8; u16::MAX as usize]>,
+}
+
 /// An SMP protocol layer connection to a device.
 ///
 /// In most cases this struct will not be used directly by the user,
 /// but instead it is used indirectly through [`MCUmgrClient`](crate::MCUmgrClient).
 pub struct Connection {
-    transport: Box<dyn Transport + Send>,
-    next_seqnum: u8,
-    transport_buffer: [u8; u16::MAX as usize],
+    inner: Mutex<Inner>,
 }
 
 /// Errors that can happen on SMP protocol level
@@ -48,9 +52,11 @@ impl Connection {
     /// Creates a new SMP
     pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {
         Self {
-            transport: Box::new(transport),
-            next_seqnum: rand::random(),
-            transport_buffer: [0; u16::MAX as usize],
+            inner: Mutex::new(Inner {
+                transport: Box::new(transport),
+                next_seqnum: rand::random(),
+                transport_buffer: Box::new([0; u16::MAX as usize]),
+            }),
         }
     }
 
@@ -58,40 +64,48 @@ impl Connection {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    pub fn set_timeout(&mut self, timeout: Duration) -> Result<(), miette::Report> {
-        self.transport.set_timeout(timeout)
+    pub fn set_timeout(&self, timeout: Duration) -> Result<(), miette::Report> {
+        self.inner.lock().unwrap().transport.set_timeout(timeout)
     }
 
     /// Executes a given CBOR based SMP command.
     pub fn execute_command<R: McuMgrCommand>(
-        &mut self,
+        &self,
         request: &R,
     ) -> Result<R::Response, ExecuteError> {
-        let mut cursor = Cursor::new(self.transport_buffer.as_mut_slice());
+        let mut lock_guard = self.inner.lock().unwrap();
+        let locked_self: &mut Inner = &mut lock_guard;
+
+        let mut cursor = Cursor::new(locked_self.transport_buffer.as_mut_slice());
         ciborium::into_writer(request.data(), &mut cursor)
             .into_diagnostic()
             .map_err(Into::into)
             .map_err(ExecuteError::EncodeFailed)?;
         let data_size = cursor.position() as usize;
-        let data = &self.transport_buffer[..data_size];
+        let data = &locked_self.transport_buffer[..data_size];
 
         log::debug!(
             "TX data: {}",
             data.iter().map(|e| format!("{e:02x}")).collect::<String>()
         );
 
-        let sequence_num = self.next_seqnum;
-        self.next_seqnum = self.next_seqnum.wrapping_add(1);
+        let sequence_num = locked_self.next_seqnum;
+        locked_self.next_seqnum = locked_self.next_seqnum.wrapping_add(1);
 
         let write_operation = request.is_write_operation();
         let group_id = request.group_id();
         let command_id = request.command_id();
 
-        self.transport
-            .send_frame(write_operation, sequence_num, group_id, command_id, data)?;
+        locked_self.transport.send_frame(
+            write_operation,
+            sequence_num,
+            group_id,
+            command_id,
+            data,
+        )?;
 
-        let response = self.transport.receive_frame(
-            &mut self.transport_buffer,
+        let response = locked_self.transport.receive_frame(
+            &mut locked_self.transport_buffer,
             write_operation,
             sequence_num,
             group_id,
@@ -137,26 +151,36 @@ impl Connection {
     /// Read Zephyr's [SMP Protocol Specification](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html)
     /// for more information.
     pub fn execute_raw_command(
-        &mut self,
+        &self,
         write_operation: bool,
         group_id: u16,
         command_id: u8,
         data: &[u8],
-    ) -> Result<&[u8], ExecuteError> {
-        let sequence_num = self.next_seqnum;
-        self.next_seqnum = self.next_seqnum.wrapping_add(1);
+    ) -> Result<Box<[u8]>, ExecuteError> {
+        let mut lock_guard = self.inner.lock().unwrap();
+        let locked_self: &mut Inner = &mut lock_guard;
 
-        self.transport
-            .send_frame(write_operation, sequence_num, group_id, command_id, data)?;
+        let sequence_num = locked_self.next_seqnum;
+        locked_self.next_seqnum = locked_self.next_seqnum.wrapping_add(1);
 
-        self.transport
+        locked_self.transport.send_frame(
+            write_operation,
+            sequence_num,
+            group_id,
+            command_id,
+            data,
+        )?;
+
+        locked_self
+            .transport
             .receive_frame(
-                &mut self.transport_buffer,
+                &mut locked_self.transport_buffer,
                 write_operation,
                 sequence_num,
                 group_id,
                 command_id,
             )
             .map_err(Into::into)
+            .map(|val| val.into())
     }
 }
