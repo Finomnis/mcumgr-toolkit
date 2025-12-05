@@ -56,6 +56,8 @@ impl_serialize_as_empty_map!(GetImageState);
 pub struct GetImageStateResponse {
     /// List of all images and their state
     pub images: Vec<ImageState>,
+    // splitStatus field is missing
+    // because it is unused by Zephyr
 }
 
 #[cfg(test)]
