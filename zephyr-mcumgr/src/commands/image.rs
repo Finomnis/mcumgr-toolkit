@@ -54,7 +54,7 @@ impl_serialize_as_empty_map!(GetImageState);
 /// Response for [`GetImageState`] command
 #[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct GetImageStateResponse {
-    /// chunk of data read from file
+    /// List of all images and their state
     pub images: Vec<ImageState>,
 }
 
