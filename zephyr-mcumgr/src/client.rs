@@ -6,6 +6,7 @@ use std::{
 };
 
 use miette::Diagnostic;
+use rand::distr::SampleString;
 use thiserror::Error;
 
 use crate::{
@@ -293,6 +294,25 @@ impl MCUmgrClient {
     /// duration, an error will be raised.
     pub fn set_timeout(&self, timeout: Duration) -> Result<(), miette::Report> {
         self.connection.set_timeout(timeout)
+    }
+
+    /// Checks if the device is alive and responding.
+    ///
+    /// Runs a simple echo with random data and checks if the response matches.
+    ///
+    /// # Return
+    ///
+    /// An error if the device is not alive and responding.
+    pub fn check_connection(&self) -> Result<(), ExecuteError> {
+        let random_message = rand::distr::Alphanumeric.sample_string(&mut rand::rng(), 16);
+        let response = self.os_echo(&random_message)?;
+        if random_message == response {
+            Ok(())
+        } else {
+            Err(ExecuteError::ReceiveFailed(
+                crate::transport::ReceiveError::UnexpectedResponse,
+            ))
+        }
     }
 
     /// Sends a message to the device and expects the same message back as response.

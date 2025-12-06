@@ -74,12 +74,13 @@ impl MCUmgrClient {
     /// Useful for programming many devices in rapid succession, as Windows usually
     /// gives each one a different COMxx identifier.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `identifier` - A regex that identifies the device.
     /// * `baud_rate` - The baud rate the port should operate at.
+    /// * `timeout_ms` - The communication timeout, in ms.
     ///
-    /// # Identifier examples
+    /// ### Identifier examples
     ///
     /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
     /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
@@ -124,6 +125,17 @@ impl MCUmgrClient {
         self.get_client()?
             .set_timeout(Duration::from_millis(timeout_ms))
             .map_err(err_to_pyerr)
+    }
+
+    /// Checks if the device is alive and responding.
+    ///
+    /// Runs a simple echo with random data and checks if the response matches.
+    ///
+    /// ### Return
+    ///
+    /// An error if the device is not alive and responding.
+    pub fn check_connection(&self) -> PyResult<()> {
+        self.get_client()?.check_connection().map_err(err_to_pyerr)
     }
 
     /// Sends a message to the device and expects the same message back as response.

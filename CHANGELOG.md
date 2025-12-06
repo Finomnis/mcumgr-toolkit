@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Python: `MCUmgr::usb_serial`
     - CLI: add `-u`/`--usb-serial` flag
         - When no argument specified, list all available ports
+- Add `MCUmgr::check_connection` that checks if the device is connected and responding
 
 ## [0.4.2] - 2025-12-06
 

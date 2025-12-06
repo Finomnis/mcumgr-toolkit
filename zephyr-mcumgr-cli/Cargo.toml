@@ -30,4 +30,3 @@ indicatif.workspace = true
 ciborium.workspace = true
 chrono.workspace = true
 hex.workspace = true
-rand.workspace = true

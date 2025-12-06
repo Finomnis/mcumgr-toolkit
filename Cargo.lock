@@ -2111,7 +2111,6 @@ dependencies = [
  "indicatif",
  "log",
  "miette",
- "rand 0.9.2",
  "serde_json",
  "serialport",
  "thiserror",

@@ -97,6 +97,13 @@ Available USB serial ports:
  - 2fe3:0004:0 (/dev/ttyACM0) - Zephyr Project CDC ACM serial backend
 ```
 
+You can even use a Regex if you want:
+
+```none
+$ zephyr-mcumgr --usb-serial "2fe3:.*"
+Device alive and responsive.
+```
+
 > [!TIP]
 > `2fe3:0004` is the default VID/PID of Zephyr samples.
 

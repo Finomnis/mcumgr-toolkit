@@ -31,4 +31,3 @@ regex.workspace = true
 
 [dev-dependencies]
 proptest = "1.9.0"
-rand.workspace = true
