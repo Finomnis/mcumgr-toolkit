@@ -121,7 +121,10 @@ impl Connection {
         }
 
         if let Some(rc) = err.rc {
-            return Err(ExecuteError::ErrorResponse(DeviceError::V1 { rc }));
+            return Err(ExecuteError::ErrorResponse(DeviceError::V1 {
+                rc,
+                rsn: err.rsn,
+            }));
         }
 
         let decoded_response: R::Response = ciborium::from_reader(Cursor::new(response))

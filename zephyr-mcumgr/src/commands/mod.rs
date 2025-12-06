@@ -28,6 +28,8 @@ pub struct ErrResponseV2 {
 pub struct ErrResponse {
     /// SMP version 1 error code
     pub rc: Option<i32>,
+    /// SMP version 1 error string
+    pub rsn: Option<String>,
     /// SMP version 2 error message
     pub err: Option<ErrResponseV2>,
 }
@@ -97,7 +99,8 @@ mod tests {
             err,
             ErrResponse {
                 rc: None,
-                err: None
+                rsn: None,
+                err: None,
             }
         );
     }
@@ -118,7 +121,31 @@ mod tests {
             err,
             ErrResponse {
                 rc: Some(10),
-                err: None
+                rsn: None,
+                err: None,
+            }
+        );
+    }
+
+    #[test]
+    fn decode_error_v1_with_msg() {
+        let mut cbor_data = vec![];
+        ciborium::into_writer(
+            &cbor!({
+                "rc" => 1,
+                "rsn" => "Test Reason!",
+            })
+            .unwrap(),
+            &mut cbor_data,
+        )
+        .unwrap();
+        let err: ErrResponse = ciborium::from_reader(cbor_data.as_slice()).unwrap();
+        assert_eq!(
+            err,
+            ErrResponse {
+                rc: Some(10),
+                rsn: Some("Test Reason!".to_string()),
+                err: None,
             }
         );
     }
@@ -142,6 +169,7 @@ mod tests {
             err,
             ErrResponse {
                 rc: None,
+                rsn: None,
                 err: Some(ErrResponseV2 { group: 4, rc: 20 })
             }
         );
