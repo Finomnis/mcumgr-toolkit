@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - xxxx-xx-xx
+## [0.5.1] - 2025-12-07
+
+### Changes
+
+- Add `MCUmgrClient::new_from_usb_serial` that connects to a USB VID:PID serial port
+  - Python: `MCUmgrClient::usb_serial`
+  - CLI: add `-u`/`--usb-serial` flag
+    - When no argument specified, list all available ports
+- Add `MCUmgrClient::check_connection` that checks if the device is connected and responding
+  - CLI: run connection test if no group specified
+
+## [0.5.0] - 2025-12-06
 
 ### Breaking Changes
 
@@ -15,12 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Add support for SMP v1 error's `rsn` field
-- Add `MCUmgrClient::new_from_usb_serial` that connects to a USB VID:PID serial port
-    - Python: `MCUmgrClient::usb_serial`
-    - CLI: add `-u`/`--usb-serial` flag
-        - When no argument specified, list all available ports
-- Add `MCUmgrClient::check_connection` that checks if the device is connected and responding
-    - CLI: run connection test if no group specified
 
 ## [0.4.2] - 2025-12-06
 
@@ -172,6 +177,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.5.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.2...0.5.0
 [0.4.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.0...0.4.1
