@@ -69,6 +69,35 @@ impl MCUmgrClient {
         })
     }
 
+    /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
+    ///
+    /// Useful for programming many devices in rapid succession, as Windows usually
+    /// gives each one a different COMxx identifier.
+    ///
+    /// # Arguments
+    ///
+    /// * `identifier` - A regex that identifies the device.
+    /// * `baud_rate` - The baud rate the port should operate at.
+    ///
+    /// # Identifier examples
+    ///
+    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=500))]
+    fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
+        let client = ::zephyr_mcumgr::MCUmgrClient::new_from_usb_serial(identifier, baud_rate)
+            .map_err(err_to_pyerr)?;
+        client
+            .set_timeout(Duration::from_millis(timeout_ms))
+            .map_err(err_to_pyerr)?;
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
     /// Configures the maximum SMP frame size that we can send to the device.
     ///
     /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),

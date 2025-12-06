@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Add support for SMP v1 error's `rsn` field
+- CLI: if no group specified, run connection test
+- Add `MCUmgr::new_from_usb_serial` that connects to a USB VID:PID serial port
+    - Python: `MCUmgr::usb_serial`
+    - CLI: add `-u`/`--usb-serial` flag
+        - When no argument specified, list all available ports
 
 ## [0.4.2] - 2025-12-06
 

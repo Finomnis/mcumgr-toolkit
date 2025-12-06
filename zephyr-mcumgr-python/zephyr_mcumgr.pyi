@@ -131,6 +131,25 @@ class MCUmgrClient:
         * `baud_rate` - The baud rate of the serial port.
         * `timeout_ms` - The communication timeout, in ms.
         """
+    @staticmethod
+    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> 'MCUmgrClient':
+        r"""
+        Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
+        
+        Useful for programming many devices in rapid succession, as Windows usually
+        gives each one a different COMxx identifier.
+        
+        # Arguments
+        
+        * `identifier` - A regex that identifies the device.
+        * `baud_rate` - The baud rate the port should operate at.
+        
+        # Identifier examples
+        
+        - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+        - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+        - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+        """
     def set_frame_size(self, smp_frame_size: builtins.int) -> None:
         r"""
         Configures the maximum SMP frame size that we can send to the device.
