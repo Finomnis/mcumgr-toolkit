@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::CliError;
+use crate::errors::CliError;
 
 /// Reads the input file, or stdin if '-'.
 ///

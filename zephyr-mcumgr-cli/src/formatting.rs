@@ -1,4 +1,4 @@
-use crate::CliError;
+use crate::errors::CliError;
 
 enum Entry {
     Value(serde_json::Value),

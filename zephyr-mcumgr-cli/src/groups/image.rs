@@ -1,6 +1,6 @@
 use zephyr_mcumgr::MCUmgrClient;
 
-use crate::{CliError, args::CommonArgs, formatting::structured_print};
+use crate::{args::CommonArgs, errors::CliError, formatting::structured_print};
 
 #[derive(Debug, clap::Subcommand)]
 pub enum ImageCommand {
