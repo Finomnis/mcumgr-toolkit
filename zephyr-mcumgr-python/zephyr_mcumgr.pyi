@@ -197,7 +197,7 @@ class MCUmgrClient:
         
         Note that `boot_mode` only works if [`MCUMGR_GRP_OS_RESET_BOOT_MODE`](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_MCUMGR_GRP_OS_RESET_BOOT_MODE) is enabled.
         """
-    def os_mcumgr_parameters(self) -> 'MCUmgrParametersResponse':
+    def os_mcumgr_parameters(self) -> 'MCUmgrParameters':
         r"""
         Fetch parameters from the MCUmgr library
         """
@@ -333,7 +333,7 @@ class MCUmgrClient:
         """
 
 @typing.final
-class MCUmgrParametersResponse:
+class MCUmgrParameters:
     r"""
     Return value of `MCUmgrClient.os_mcumgr_parameters`.
     """

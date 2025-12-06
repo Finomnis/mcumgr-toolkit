@@ -26,7 +26,7 @@ impl From<commands::fs::FileStatusResponse> for FileStatus {
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Serialize)]
-pub struct MCUmgrParametersResponse {
+pub struct MCUmgrParameters {
     /// Single SMP buffer size, this includes SMP header and CBOR payload
     #[pyo3(get)]
     pub buf_size: u32,
@@ -34,8 +34,8 @@ pub struct MCUmgrParametersResponse {
     #[pyo3(get)]
     pub buf_count: u32,
 }
-generate_repr_from_serialize!(MCUmgrParametersResponse);
-impl From<commands::os::MCUmgrParametersResponse> for MCUmgrParametersResponse {
+generate_repr_from_serialize!(MCUmgrParameters);
+impl From<commands::os::MCUmgrParametersResponse> for MCUmgrParameters {
     fn from(value: commands::os::MCUmgrParametersResponse) -> Self {
         Self {
             buf_size: value.buf_size,
