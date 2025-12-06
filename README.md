@@ -81,12 +81,14 @@ Device alive and responsive.
 ```
 
 Connect to a USB serial port using USB VID/PID:
+
 ```none
 $ zephyr-mcumgr --usb-serial 2fe3:0004
 Device alive and responsive.
 ```
 
 Or without an identifier to list all available ports:
+
 ```none
 $ zephyr-mcumgr --usb-serial
 

@@ -124,7 +124,7 @@ pub enum UsbSerialError {
     },
     /// More than one port matched the given identifier
     #[error("Multiple serial ports matched the identifier '{identifier}'\n{ports}")]
-    #[diagnostic(code(zephyr_mcumgr::usb_serial::no_matches))]
+    #[diagnostic(code(zephyr_mcumgr::usb_serial::multiple_matches))]
     MultipleMatchingPorts {
         /// The original identifier provided by the user
         identifier: String,
