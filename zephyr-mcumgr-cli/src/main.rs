@@ -25,6 +25,8 @@ fn cli_main() -> Result<(), CliError> {
             .open()
             .map_err(CliError::OpenSerialFailed)?;
         MCUmgrClient::new_from_serial(serial)
+    } else if let Some(identifier) = args.usb_serial {
+        MCUmgrClient::new_from_usb_serial(identifier)?
     } else {
         return Err(CliError::NoBackendSelected);
     };
