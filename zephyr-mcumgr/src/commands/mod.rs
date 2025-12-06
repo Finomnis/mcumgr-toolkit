@@ -143,7 +143,7 @@ mod tests {
         assert_eq!(
             err,
             ErrResponse {
-                rc: Some(10),
+                rc: Some(1),
                 rsn: Some("Test Reason!".to_string()),
                 err: None,
             }
