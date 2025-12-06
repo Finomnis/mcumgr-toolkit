@@ -5,12 +5,14 @@ use crate::MCUmgrGroup;
 /// Errors the device can respond with when trying to execute an SMP command.
 ///
 /// More information can be found [here](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html#minimal-response-smp-data).
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum DeviceError {
     /// MCUmgr SMP v1 error codes
     V1 {
         /// Error code
         rc: i32,
+        /// Optional string that clarifies reason for an error
+        rsn: Option<String>,
     },
     /// MCUmgr SMP v2 error codes
     V2 {
@@ -42,8 +44,12 @@ fn v2_err_to_string(group: u16, rc: i32) -> Option<String> {
 impl std::fmt::Display for DeviceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DeviceError::V1 { rc } => {
-                write!(f, "{}", MCUmgrErr::err_to_string(*rc))
+            DeviceError::V1 { rc, rsn } => {
+                if let Some(rsn) = rsn {
+                    write!(f, "{}: {}", MCUmgrErr::err_to_string(*rc), rsn)
+                } else {
+                    write!(f, "{}", MCUmgrErr::err_to_string(*rc))
+                }
             }
             DeviceError::V2 { group, rc } => match v2_err_to_string(*group, *rc) {
                 Some(msg) => f.write_str(&msg),

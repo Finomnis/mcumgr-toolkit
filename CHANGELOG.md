@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Python: Rename `MCUmgrParametersResponse` to `MCUmgrParameters`
+- `smp_errors::DeviceError` is no longer `Copy`
+
+### Changes
+
+- Add support for SMP v1 error's `rsn` field
 
 ## [0.4.2] - 2025-12-06
 
