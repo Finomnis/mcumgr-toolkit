@@ -24,11 +24,27 @@ Its primary design goals are:
 
 ## Usage Example
 
+Connect to a serial port:
+
 ```python no_run
 from zephyr_mcumgr import MCUmgrClient
 
 with MCUmgrClient.serial("/dev/ttyACM0") as client:
-    client.set_timeout_ms(500)
+    client.use_auto_frame_size()
+
+    print(client.os_echo("Hello world!"))
+```
+
+```none
+Hello world!
+```
+
+Or a USB based serial port:
+
+```python no_run
+from zephyr_mcumgr import MCUmgrClient
+
+with MCUmgrClient.usb_serial("2fe3:0004") as client:
     client.use_auto_frame_size()
 
     print(client.os_echo("Hello world!"))
