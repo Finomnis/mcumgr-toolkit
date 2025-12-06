@@ -168,7 +168,7 @@ impl MCUmgrClient {
     }
 
     /// Fetch parameters from the MCUmgr library
-    pub fn os_mcumgr_parameters(&self) -> PyResult<MCUmgrParametersResponse> {
+    pub fn os_mcumgr_parameters(&self) -> PyResult<MCUmgrParameters> {
         self.get_client()?
             .os_mcumgr_parameters()
             .map(Into::into)
@@ -483,7 +483,7 @@ mod zephyr_mcumgr {
     #[pymodule_export]
     use super::return_types::ImageState;
     #[pymodule_export]
-    use super::return_types::MCUmgrParametersResponse;
+    use super::return_types::MCUmgrParameters;
     #[pymodule_export]
     use super::return_types::TaskStatistics;
 
