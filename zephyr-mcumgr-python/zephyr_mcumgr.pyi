@@ -139,12 +139,13 @@ class MCUmgrClient:
         Useful for programming many devices in rapid succession, as Windows usually
         gives each one a different COMxx identifier.
         
-        # Arguments
+        ### Arguments
         
         * `identifier` - A regex that identifies the device.
         * `baud_rate` - The baud rate the port should operate at.
+        * `timeout_ms` - The communication timeout, in ms.
         
-        # Identifier examples
+        ### Identifier examples
         
         - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
         - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
@@ -169,6 +170,16 @@ class MCUmgrClient:
         
         When the device does not respond to packets within the set
         duration, an error will be raised.
+        """
+    def check_connection(self) -> None:
+        r"""
+        Checks if the device is alive and responding.
+        
+        Runs a simple echo with random data and checks if the response matches.
+        
+        ### Return
+        
+        An error if the device is not alive and responding.
         """
     def os_echo(self, msg: builtins.str) -> builtins.str:
         r"""
