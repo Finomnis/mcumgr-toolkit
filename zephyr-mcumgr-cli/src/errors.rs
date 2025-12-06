@@ -46,7 +46,7 @@ pub enum CliError {
     #[error("Failed to parse datetime string")]
     #[diagnostic(code(zephyr_mcumgr::cli::chrono_parse))]
     ChronoParseFailed(#[from] chrono::ParseError),
-    #[error("Failed to open usb serial port")]
+    #[error("Failed to open USB serial port")]
     #[diagnostic(code(zephyr_mcumgr::cli::usb_serial))]
     UsbSerialOpenFailed(#[from] UsbSerialError),
 }

@@ -81,11 +81,21 @@ pub enum FileUploadError {
 /// A list of available serial ports, in the form of (identifier, port).
 ///
 /// Used for pretty error messages.
-pub struct UsbSerialPorts(Vec<(String, String)>);
+pub struct UsbSerialPorts(pub Vec<(String, String, serialport::UsbPortInfo)>);
 impl std::fmt::Display for UsbSerialPorts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (identifier, port) in &self.0 {
-            writeln!(f, " - {identifier} ({port})")?;
+        for (identifier, port, port_info) in &self.0 {
+            writeln!(f)?;
+            write!(f, " - {identifier} ({port})")?;
+            if port_info.manufacturer.is_some() || port_info.product.is_some() {
+                write!(f, " -")?;
+                if let Some(manufacturer) = &port_info.manufacturer {
+                    write!(f, " {manufacturer}")?;
+                }
+                if let Some(product) = &port_info.product {
+                    write!(f, " {product}")?;
+                }
+            }
         }
         Ok(())
     }
@@ -119,6 +129,14 @@ pub enum UsbSerialError {
         /// The original identifier provided by the user
         identifier: String,
         /// The matching ports
+        ports: UsbSerialPorts,
+    },
+    /// Returned when the identifier was empty;
+    /// can be used to query all available ports
+    #[error("An empty identifier was provided")]
+    #[diagnostic(code(zephyr_mcumgr::usb_serial::empty_identifier))]
+    IdentifierEmpty {
+        /// A list of available ports
         ports: UsbSerialPorts,
     },
 }
@@ -162,6 +180,8 @@ impl MCUmgrClient {
     /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
     ///
     pub fn new_from_usb_serial(identifier: impl AsRef<str>) -> Result<Self, UsbSerialError> {
+        let identifier = identifier.as_ref();
+
         let ports = serialport::available_ports()?
             .into_iter()
             .filter_map(|port| {
@@ -170,11 +190,13 @@ impl MCUmgrClient {
                         Some((
                             format!("{:04X}:{:04X}:{}", port_info.vid, port_info.pid, interface),
                             port.port_name,
+                            port_info,
                         ))
                     } else {
                         Some((
                             format!("{:04X}:{:04X}", port_info.vid, port_info.pid),
                             port.port_name,
+                            port_info,
                         ))
                     }
                 } else {
@@ -183,8 +205,14 @@ impl MCUmgrClient {
             })
             .collect::<Vec<_>>();
 
+        if identifier.is_empty() {
+            return Err(UsbSerialError::IdentifierEmpty {
+                ports: UsbSerialPorts(ports),
+            });
+        }
+
         Err(UsbSerialError::NoMatchingPort {
-            identifier: identifier.as_ref().to_string(),
+            identifier: identifier.to_string(),
             available: UsbSerialPorts(ports),
         })
     }

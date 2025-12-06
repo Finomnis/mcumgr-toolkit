@@ -11,7 +11,7 @@ mod formatting;
 use std::time::Duration;
 
 use clap::Parser;
-use zephyr_mcumgr::MCUmgrClient;
+use zephyr_mcumgr::{MCUmgrClient, client::UsbSerialError};
 
 use crate::errors::CliError;
 
@@ -26,7 +26,21 @@ fn cli_main() -> Result<(), CliError> {
             .map_err(CliError::OpenSerialFailed)?;
         MCUmgrClient::new_from_serial(serial)
     } else if let Some(identifier) = args.usb_serial {
-        MCUmgrClient::new_from_usb_serial(identifier)?
+        let result = MCUmgrClient::new_from_usb_serial(identifier);
+
+        if let Err(UsbSerialError::IdentifierEmpty { ports }) = &result {
+            println!();
+            if ports.0.is_empty() {
+                println!("No USB serial ports available.");
+            } else {
+                println!("Available USB serial ports:");
+                println!("{}", ports);
+            }
+            println!();
+            std::process::exit(1);
+        }
+
+        result?
     } else {
         return Err(CliError::NoBackendSelected);
     };
