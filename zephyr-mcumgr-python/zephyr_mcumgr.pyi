@@ -390,6 +390,10 @@ class McubootImageInfo:
     def hash(self) -> bytes:
         r"""
         The identifying hash for the firmware
+        
+        Note that this will not be the same as the SHA256 of the whole file, it is the field in the
+        MCUboot TLV section that contains a hash of the data which is used for signature
+        verification purposes.
         """
 
 @typing.final
