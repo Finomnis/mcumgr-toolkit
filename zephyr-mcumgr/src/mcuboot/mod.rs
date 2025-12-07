@@ -1,2 +1,4 @@
 /// MCUboot image parser
-pub mod image;
+mod image;
+
+pub use image::{ImageInfo, ImageParseError, ImageVersion, get_image_info};

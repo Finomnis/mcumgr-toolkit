@@ -8,7 +8,7 @@ use crate::repr_macro::generate_repr_from_serialize;
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Serialize, Debug)]
-pub struct ImageInfo {
+pub struct McubootImageInfo {
     /// Firmware version
     #[pyo3(get)]
     pub version: String,
@@ -17,20 +17,20 @@ pub struct ImageInfo {
     #[pyo3(get)]
     pub hash: Py<PyBytes>,
 }
-generate_repr_from_serialize!(ImageInfo);
+generate_repr_from_serialize!(McubootImageInfo);
 
-/// Parse an MCUboot firmware image
+/// Extract information from an MCUboot image file
 #[pyfunction]
 #[gen_stub_pyfunction]
-pub fn mcuboot_parse_image<'py>(
+pub fn mcuboot_get_image_info<'py>(
     py: Python<'py>,
     image_data: Bound<'py, PyBytes>,
-) -> PyResult<ImageInfo> {
+) -> PyResult<McubootImageInfo> {
     let data = image_data.as_bytes();
-    let image_info = zephyr_mcumgr::mcuboot::image::parse(std::io::Cursor::new(data))
+    let image_info = zephyr_mcumgr::mcuboot::get_image_info(std::io::Cursor::new(data))
         .map_err(super::err_to_pyerr)?;
 
-    Ok(ImageInfo {
+    Ok(McubootImageInfo {
         version: image_info.version.to_string(),
         hash: PyBytes::new(py, &image_info.hash).unbind(),
     })

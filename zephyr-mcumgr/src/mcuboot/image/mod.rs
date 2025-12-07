@@ -71,14 +71,15 @@ fn read_u8(data: &mut dyn std::io::Read) -> Result<u8, std::io::Error> {
 }
 
 /// The identifying header of an MCUboot image
-pub const IMAGE_MAGIC: u32 = 0x96f3b83d;
-
+const IMAGE_MAGIC: u32 = 0x96f3b83d;
 const IMAGE_TLV_INFO_MAGIC: u16 = 0x6907;
 const IMAGE_TLV_SHA256: u8 = 0x10;
 const SHA256_LEN: usize = 32;
 
-/// Parses an MCUboot image
-pub fn parse(mut image_data: impl io::Read + io::Seek) -> Result<ImageInfo, ImageParseError> {
+/// Extract information from an MCUboot image file
+pub fn get_image_info(
+    mut image_data: impl io::Read + io::Seek,
+) -> Result<ImageInfo, ImageParseError> {
     let image_data = &mut image_data;
 
     let ih_magic = read_u32(image_data)?;

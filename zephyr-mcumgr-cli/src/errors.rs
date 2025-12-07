@@ -5,7 +5,7 @@ use zephyr_mcumgr::{
     Errno,
     client::{FileDownloadError, FileUploadError, UsbSerialError},
     connection::ExecuteError,
-    mcuboot::image::ImageParseError,
+    mcuboot::ImageParseError,
 };
 
 /// Possible CLI errors.

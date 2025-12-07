@@ -529,9 +529,9 @@ mod zephyr_mcumgr {
     use super::return_types::TaskStatistics;
 
     #[pymodule_export]
-    use super::mcuboot::ImageInfo;
+    use super::mcuboot::McubootImageInfo;
     #[pymodule_export]
-    use super::mcuboot::mcuboot_parse_image;
+    use super::mcuboot::mcuboot_get_image_info;
 
     #[pymodule_init]
     fn init(_m: &Bound<'_, PyModule>) -> PyResult<()> {

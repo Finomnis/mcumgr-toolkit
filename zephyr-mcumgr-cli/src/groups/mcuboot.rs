@@ -17,7 +17,7 @@ pub fn run(_client: &Client, args: CommonArgs, command: MCUbootCommand) -> Resul
         MCUbootCommand::GetImageInfo { file } => {
             let (image_data, _source_filename) = read_input_file(&file)?;
             let image_info =
-                zephyr_mcumgr::mcuboot::image::parse(std::io::Cursor::new(image_data.as_ref()))?;
+                zephyr_mcumgr::mcuboot::get_image_info(std::io::Cursor::new(image_data.as_ref()))?;
 
             structured_print(Some(file), args.json, |s| {
                 s.key_value("version", image_info.version.to_string());
