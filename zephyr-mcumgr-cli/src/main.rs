@@ -1,12 +1,14 @@
 #![forbid(unsafe_code)]
 
 mod args;
+mod client;
 mod errors;
 mod file_read_write;
+mod formatting;
 mod groups;
 mod progress;
 
-mod formatting;
+use client::Client;
 
 use std::time::Duration;
 
@@ -25,7 +27,7 @@ fn cli_main() -> Result<(), CliError> {
             .timeout(Duration::from_millis(args.timeout))
             .open()
             .map_err(CliError::OpenSerialFailed)?;
-        MCUmgrClient::new_from_serial(serial)
+        Client::new(MCUmgrClient::new_from_serial(serial))
     } else if let Some(identifier) = args.usb_serial {
         let result = MCUmgrClient::new_from_usb_serial(
             identifier,
@@ -45,21 +47,23 @@ fn cli_main() -> Result<(), CliError> {
             std::process::exit(1);
         }
 
-        result?
+        Client::new(result?)
     } else {
-        return Err(CliError::NoBackendSelected);
+        Client::default()
     };
 
-    if let Err(e) = client.use_auto_frame_size() {
-        log::warn!("Failed to read SMP frame size from device, using slow default");
-        log::warn!("Reason: {e}");
-        log::warn!("Hint: Make sure that `CONFIG_MCUMGR_GRP_OS_MCUMGR_PARAMS` is enabled.");
+    if let Ok(client) = client.get() {
+        if let Err(e) = client.use_auto_frame_size() {
+            log::warn!("Failed to read SMP frame size from device, using slow default");
+            log::warn!("Reason: {e}");
+            log::warn!("Hint: Make sure that `CONFIG_MCUMGR_GRP_OS_MCUMGR_PARAMS` is enabled.");
+        }
     }
 
     if let Some(group) = args.group {
         groups::run(&client, args.common, group)?;
     } else {
-        client.check_connection()?;
+        client.get()?.check_connection()?;
         println!("Device alive and responsive.");
     }
 

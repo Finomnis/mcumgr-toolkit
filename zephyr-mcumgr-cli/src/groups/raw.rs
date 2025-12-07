@@ -1,6 +1,4 @@
-use zephyr_mcumgr::MCUmgrClient;
-
-use crate::{args::CommonArgs, errors::CliError};
+use crate::{args::CommonArgs, client::Client, errors::CliError};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
 pub enum RawCommandOp {
@@ -52,7 +50,8 @@ impl zephyr_mcumgr::commands::McuMgrCommand for RawCommand {
     }
 }
 
-pub fn run(client: &MCUmgrClient, _args: CommonArgs, command: RawCommand) -> Result<(), CliError> {
+pub fn run(client: &Client, _args: CommonArgs, command: RawCommand) -> Result<(), CliError> {
+    let client = client.get()?;
     let response = client.raw_command(&command)?;
 
     let json_response =

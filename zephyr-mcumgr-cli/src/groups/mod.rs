@@ -1,9 +1,8 @@
-use zephyr_mcumgr::MCUmgrClient;
-
-use crate::{args::CommonArgs, errors::CliError};
+use crate::{args::CommonArgs, client::Client, errors::CliError};
 
 mod fs;
 mod image;
+mod mcuboot;
 mod os;
 mod raw;
 mod shell;
@@ -20,6 +19,11 @@ pub enum Group {
     Image {
         #[command(subcommand)]
         command: image::ImageCommand,
+    },
+    /// MCUboot specific tools
+    Mcuboot {
+        #[command(subcommand)]
+        command: mcuboot::MCUbootCommand,
     },
     /// File Management
     Fs {
@@ -41,10 +45,11 @@ pub enum Group {
     Raw(#[command(flatten)] raw::RawCommand),
 }
 
-pub fn run(client: &MCUmgrClient, args: CommonArgs, group: Group) -> Result<(), CliError> {
+pub fn run(client: &Client, args: CommonArgs, group: Group) -> Result<(), CliError> {
     match group {
         Group::Os { command } => os::run(client, args, command),
         Group::Image { command } => image::run(client, args, command),
+        Group::Mcuboot { command } => mcuboot::run(client, args, command),
         Group::Fs { command } => fs::run(client, args, command),
         Group::Shell { argv } => shell::run(client, args, argv),
         Group::Zephyr { command } => zephyr::run(client, args, command),

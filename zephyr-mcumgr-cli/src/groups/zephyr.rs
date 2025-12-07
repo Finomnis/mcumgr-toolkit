@@ -1,6 +1,4 @@
-use zephyr_mcumgr::MCUmgrClient;
-
-use crate::{args::CommonArgs, errors::CliError};
+use crate::{args::CommonArgs, client::Client, errors::CliError};
 
 #[derive(Debug, clap::Subcommand)]
 pub enum ZephyrCommand {
@@ -8,11 +6,9 @@ pub enum ZephyrCommand {
     EraseStorage,
 }
 
-pub fn run(
-    client: &MCUmgrClient,
-    _args: CommonArgs,
-    command: ZephyrCommand,
-) -> Result<(), CliError> {
+pub fn run(client: &Client, _args: CommonArgs, command: ZephyrCommand) -> Result<(), CliError> {
+    let client = client.get()?;
+
     match command {
         ZephyrCommand::EraseStorage => client.zephyr_erase_storage()?,
     }

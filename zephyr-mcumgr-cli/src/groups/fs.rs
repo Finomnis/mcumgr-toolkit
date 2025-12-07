@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
 
-use zephyr_mcumgr::MCUmgrClient;
-
 use crate::{
     args::CommonArgs,
+    client::Client,
     errors::CliError,
     file_read_write::{read_input_file, write_output_file},
     formatting::structured_print,
@@ -52,7 +51,8 @@ pub enum FsCommand {
     Close,
 }
 
-pub fn run(client: &MCUmgrClient, args: CommonArgs, command: FsCommand) -> Result<(), CliError> {
+pub fn run(client: &Client, args: CommonArgs, command: FsCommand) -> Result<(), CliError> {
+    let client = client.get()?;
     match command {
         FsCommand::Download { remote, local } => {
             let mut data = vec![];

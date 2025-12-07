@@ -1,6 +1,4 @@
-use zephyr_mcumgr::MCUmgrClient;
-
-use crate::{args::CommonArgs, errors::CliError, formatting::structured_print};
+use crate::{args::CommonArgs, client::Client, errors::CliError, formatting::structured_print};
 
 #[derive(Debug, clap::Subcommand)]
 pub enum ImageCommand {
@@ -8,7 +6,8 @@ pub enum ImageCommand {
     GetState,
 }
 
-pub fn run(client: &MCUmgrClient, args: CommonArgs, command: ImageCommand) -> Result<(), CliError> {
+pub fn run(client: &Client, args: CommonArgs, command: ImageCommand) -> Result<(), CliError> {
+    let client = client.get()?;
     match command {
         ImageCommand::GetState => {
             let images = client.image_get_state()?;

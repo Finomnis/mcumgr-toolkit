@@ -1,8 +1,7 @@
-use zephyr_mcumgr::MCUmgrClient;
+use crate::{args::CommonArgs, client::Client, errors::CliError};
 
-use crate::{args::CommonArgs, errors::CliError};
-
-pub fn run(client: &MCUmgrClient, _args: CommonArgs, argv: Vec<String>) -> Result<(), CliError> {
+pub fn run(client: &Client, _args: CommonArgs, argv: Vec<String>) -> Result<(), CliError> {
+    let client = client.get()?;
     let (returncode, output) = client.shell_execute(&argv)?;
     println!("{output}");
     if returncode < 0 {

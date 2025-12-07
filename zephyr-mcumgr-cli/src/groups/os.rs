@@ -1,13 +1,12 @@
 use std::collections::HashSet;
 
 use zephyr_mcumgr::{
-    MCUmgrClient,
     bootloader::{BootloaderInfo, MCUbootMode},
     commands::os::ThreadStateFlags,
     connection::ExecuteError,
 };
 
-use crate::{args::CommonArgs, errors::CliError, formatting::structured_print};
+use crate::{args::CommonArgs, client::Client, errors::CliError, formatting::structured_print};
 
 #[derive(Debug, clap::Subcommand)]
 pub enum OsCommand {
@@ -130,7 +129,8 @@ impl ApplicationInfoFlags {
     }
 }
 
-pub fn run(client: &MCUmgrClient, args: CommonArgs, command: OsCommand) -> Result<(), CliError> {
+pub fn run(client: &Client, args: CommonArgs, command: OsCommand) -> Result<(), CliError> {
+    let client = client.get()?;
     match command {
         OsCommand::Echo { msg } => println!("{}", client.os_echo(msg)?),
         OsCommand::TaskStatistics => {
