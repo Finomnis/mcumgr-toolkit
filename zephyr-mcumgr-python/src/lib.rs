@@ -18,6 +18,7 @@ use crate::raw_py_any_command::RawPyAnyCommand;
 mod return_types;
 pub use return_types::*;
 
+mod mcuboot;
 mod raw_py_any_command;
 mod repr_macro;
 
@@ -526,6 +527,11 @@ mod zephyr_mcumgr {
     use super::return_types::MCUmgrParameters;
     #[pymodule_export]
     use super::return_types::TaskStatistics;
+
+    #[pymodule_export]
+    use super::mcuboot::ImageInfo;
+    #[pymodule_export]
+    use super::mcuboot::mcuboot_parse_image;
 
     #[pymodule_init]
     fn init(_m: &Bound<'_, PyModule>) -> PyResult<()> {

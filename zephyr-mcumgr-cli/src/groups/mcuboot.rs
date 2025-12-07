@@ -21,7 +21,7 @@ pub fn run(_client: &Client, args: CommonArgs, command: MCUbootCommand) -> Resul
 
             structured_print(Some(file), args.json, |s| {
                 s.key_value("version", image_info.version.to_string());
-                s.key_value("hash", hex::encode(image_info.id_hash));
+                s.key_value("hash", hex::encode(image_info.hash));
             })?;
         }
     }

@@ -28,7 +28,7 @@ pub struct ImageInfo {
     /// Firmware version
     pub version: ImageVersion,
     /// The identifying hash for the firmware
-    pub id_hash: [u8; SHA256_LEN],
+    pub hash: [u8; SHA256_LEN],
 }
 
 /// Possible error values of [`image::parse`](parse).
@@ -147,7 +147,7 @@ pub fn parse(mut image_data: impl io::Read + io::Seek) -> Result<ImageInfo, Imag
     if let Some(id_hash) = id_hash {
         Ok(ImageInfo {
             version: ih_ver,
-            id_hash,
+            hash: id_hash,
         })
     } else {
         Err(ImageParseError::IdHashMissing)

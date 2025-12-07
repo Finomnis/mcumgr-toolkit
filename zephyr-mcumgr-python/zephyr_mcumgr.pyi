@@ -61,6 +61,22 @@ class FileStatus:
         """
 
 @typing.final
+class ImageInfo:
+    r"""
+    Information about an MCUboot firmware image
+    """
+    @property
+    def version(self) -> builtins.str:
+        r"""
+        Firmware version
+        """
+    @property
+    def hash(self) -> bytes:
+        r"""
+        The identifying hash for the firmware
+        """
+
+@typing.final
 class ImageState:
     r"""
     The state of an image slot
@@ -429,5 +445,10 @@ class FileChecksumDataFormat(enum.Enum):
     ByteArray = ...
     r"""
     Data is a bytes array
+    """
+
+def mcuboot_parse_image(image_data: bytes) -> 'ImageInfo':
+    r"""
+    Parse an MCUboot firmware image
     """
 
