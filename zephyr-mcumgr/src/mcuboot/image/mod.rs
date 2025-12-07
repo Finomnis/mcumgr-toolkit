@@ -31,11 +31,11 @@ pub struct ImageInfo {
     pub hash: [u8; SHA256_LEN],
 }
 
-/// Possible error values of [`image::parse`](parse).
+/// Possible error values of [`get_image_info`].
 #[derive(thiserror::Error, Debug, miette::Diagnostic)]
 pub enum ImageParseError {
-    /// The given image file does is not an MCUboot image.
-    #[error("Image is not an an MCUboot image")]
+    /// The given image file is not an MCUboot image.
+    #[error("Image is not an MCUboot image")]
     #[diagnostic(code(zephyr_mcumgr::mcuboot::image::unknown_type))]
     UnknownImageType,
     /// The given image file does not contain TLV entries.
