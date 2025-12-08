@@ -190,8 +190,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
-[0.6.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.2...0.6.0
-[0.5.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.1...0.5.2
+[0.6.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.2...0.5.0
 [0.4.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.1...0.4.2
