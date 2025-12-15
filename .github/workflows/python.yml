@@ -44,7 +44,7 @@ jobs:
           pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
           python -c "import zephyr_mcumgr"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-macos
           path: dist
@@ -71,7 +71,7 @@ jobs:
           pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
           python -c "import zephyr_mcumgr"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-windows-${{ matrix.target }}
           path: dist
@@ -99,7 +99,7 @@ jobs:
           pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
           python -c "import zephyr_mcumgr"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
@@ -136,7 +136,7 @@ jobs:
             pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall
             python3 -c "import zephyr_mcumgr"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-linux-cross-${{ matrix.target }}
           path: dist
@@ -172,7 +172,7 @@ jobs:
             pip3 install zephyr_mcumgr --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
             python3 -c "import zephyr_mcumgr"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-musllinux-${{ matrix.target }}
           path: dist
@@ -210,7 +210,7 @@ jobs:
             pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall --break-system-packages
             python3 -c "import zephyr_mcumgr"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-musllinux-cross-${{ matrix.platform.arch }}
           path: dist
