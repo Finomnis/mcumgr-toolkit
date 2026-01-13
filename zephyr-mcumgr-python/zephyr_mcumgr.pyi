@@ -403,7 +403,7 @@ class McubootImageInfo:
 @typing.final
 class SlotInfoImage:
     r"""
-    Information about a firmware image type returned by [`SlotInfo`]
+    Information about a firmware image type returned by `MCUmgrClient.image_slot_info`
     """
     @property
     def image(self) -> builtins.int:
