@@ -1,8 +1,8 @@
-use pyo3::{prelude::*, types::PyBytes};
+use pyo3::{PyClass, prelude::*, types::PyBytes};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum};
 
 use ::zephyr_mcumgr::commands;
-use serde::Serialize;
+use serde::{Serialize, ser::SerializeSeq};
 
 use crate::repr_macro::generate_repr_from_serialize;
 
@@ -222,5 +222,81 @@ impl ImageState {
             active: value.active,
             permanent: value.permanent,
         }
+    }
+}
+
+fn serialize_pyvec<S, T>(slots: &[Py<T>], serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+    T: PyClass + serde::Serialize,
+{
+    Python::attach(|py| {
+        let mut seq = serializer.serialize_seq(Some(slots.len()))?;
+        for obj in slots {
+            let cell = obj.borrow(py);
+            seq.serialize_element(&*cell)?;
+        }
+        seq.end()
+    })
+}
+
+/// Information about a firmware image type returned by [`SlotInfo`]
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Serialize)]
+pub struct SlotInfoImage {
+    /// number of the image
+    #[pyo3(get)]
+    pub image: u32,
+    /// slots available for the image
+    #[pyo3(get)]
+    #[serde(serialize_with = "serialize_pyvec")]
+    pub slots: Vec<Py<SlotInfoImageSlot>>,
+    /// maximum size of an application that can be uploaded to that image number
+    #[pyo3(get)]
+    pub max_image_size: Option<u64>,
+}
+generate_repr_from_serialize!(SlotInfoImage);
+
+/// Information about a slot that can hold a firmware image
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Serialize)]
+pub struct SlotInfoImageSlot {
+    /// slot inside the image being enumerated
+    #[pyo3(get)]
+    pub slot: u32,
+    /// size of the slot
+    #[pyo3(get)]
+    pub size: u64,
+    /// specifies the image ID that can be used by external tools to upload an image to that slot
+    #[pyo3(get)]
+    pub upload_image_id: Option<u32>,
+}
+generate_repr_from_serialize!(SlotInfoImageSlot);
+
+impl SlotInfoImage {
+    pub(crate) fn from_response<'py>(
+        py: Python<'py>,
+        value: commands::image::SlotInfoImage,
+    ) -> PyResult<Self> {
+        Ok(Self {
+            image: value.image,
+            slots: value
+                .slots
+                .into_iter()
+                .map(|slot| {
+                    Py::new(
+                        py,
+                        SlotInfoImageSlot {
+                            slot: slot.slot,
+                            size: slot.size,
+                            upload_image_id: slot.upload_image_id,
+                        },
+                    )
+                })
+                .collect::<PyResult<_>>()?,
+            max_image_size: value.max_image_size,
+        })
     }
 }

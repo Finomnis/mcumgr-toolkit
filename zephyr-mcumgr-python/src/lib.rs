@@ -253,6 +253,16 @@ impl MCUmgrClient {
             .collect())
     }
 
+    /// Obtain a list of available image slots.
+    pub fn image_slot_info<'py>(&self, py: Python<'py>) -> PyResult<Vec<SlotInfoImage>> {
+        let images = self.get_client()?.image_slot_info().map_err(err_to_pyerr)?;
+
+        images
+            .into_iter()
+            .map(|val| SlotInfoImage::from_response(py, val))
+            .collect::<PyResult<_>>()
+    }
+
     /// Load a file from the device.
     ///
     /// ### Arguments
@@ -525,6 +535,10 @@ mod zephyr_mcumgr {
     use super::return_types::ImageState;
     #[pymodule_export]
     use super::return_types::MCUmgrParameters;
+    #[pymodule_export]
+    use super::return_types::SlotInfoImage;
+    #[pymodule_export]
+    use super::return_types::SlotInfoImageSlot;
     #[pymodule_export]
     use super::return_types::TaskStatistics;
 
