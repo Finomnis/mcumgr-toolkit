@@ -32,7 +32,19 @@ impl StructuredPrint {
             self.key_value(key, value);
         }
     }
+
     pub fn print(self, depth: usize) {
+        self.print_impl(
+            depth,
+            &mut StandardStream::stdout(if std::io::stdout().is_terminal() {
+                ColorChoice::Auto
+            } else {
+                ColorChoice::Never
+            }),
+        );
+    }
+
+    fn print_impl(self, depth: usize, stdout: &mut StandardStream) {
         let indent = std::iter::repeat_n("    ", depth).collect::<String>();
         let longest_key = self
             .entries
@@ -40,12 +52,6 @@ impl StructuredPrint {
             .map(|(key, _)| key.len())
             .max()
             .unwrap_or(0);
-
-        let mut stdout = StandardStream::stdout(if std::io::stdout().is_terminal() {
-            ColorChoice::Auto
-        } else {
-            ColorChoice::Never
-        });
 
         for (key, value) in self.entries {
             if depth == 0 {
@@ -76,7 +82,7 @@ impl StructuredPrint {
                 }
                 Entry::Sublist(sublist) => {
                     writeln!(stdout, "{}{}:", indent, key).ok();
-                    sublist.print(depth + 1);
+                    sublist.print_impl(depth + 1, stdout);
                 }
             }
         }

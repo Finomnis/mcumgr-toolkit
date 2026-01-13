@@ -233,7 +233,6 @@ where
     Python::attach(|py| {
         let mut seq = serializer.serialize_seq(Some(slots.len()))?;
         for obj in slots {
-            // Borrow the Rust value behind the Python object (no clone/copy of T)
             let cell = obj.borrow(py);
             seq.serialize_element(&*cell)?;
         }
