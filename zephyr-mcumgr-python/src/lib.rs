@@ -257,10 +257,10 @@ impl MCUmgrClient {
     pub fn image_slot_info<'py>(&self, py: Python<'py>) -> PyResult<Vec<SlotInfoImage>> {
         let images = self.get_client()?.image_slot_info().map_err(err_to_pyerr)?;
 
-        Ok(images
+        images
             .into_iter()
             .map(|val| SlotInfoImage::from_response(py, val))
-            .collect::<PyResult<_>>()?)
+            .collect::<PyResult<_>>()
     }
 
     /// Load a file from the device.
