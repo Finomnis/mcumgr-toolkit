@@ -76,10 +76,10 @@ impl StructuredPrint {
                     write!(stdout, "{}{}:{}", indent, key, padding).ok();
                     if let Some(color) = color {
                         stdout.set_color(ColorSpec::new().set_fg(Some(color))).ok();
-                    }
-                    writeln!(stdout, "{}", value).ok();
-                    if color.is_some() {
+                        writeln!(stdout, "{}", value).ok();
                         stdout.reset().ok();
+                    } else {
+                        writeln!(stdout, "{}", value).ok();
                     }
                 }
                 Entry::Sublist(sublist) => {
