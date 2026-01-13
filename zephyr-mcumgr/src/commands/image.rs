@@ -73,6 +73,7 @@ pub struct SlotInfoImage {
     /// Slots available for the image
     pub slots: Vec<SlotInfoImageSlot>,
     /// Maximum size of an application that can be uploaded to that image number
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_image_size: Option<u64>,
 }
 
@@ -84,6 +85,7 @@ pub struct SlotInfoImageSlot {
     /// The size of the slot
     pub size: u64,
     /// Specifies the image ID that can be used by external tools to upload an image to that slot
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub upload_image_id: Option<u32>,
 }
 

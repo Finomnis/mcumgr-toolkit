@@ -1,3 +1,6 @@
+use std::io::{IsTerminal, Write};
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+
 use crate::errors::CliError;
 
 enum Entry {
@@ -46,15 +49,29 @@ impl StructuredPrint {
                 std::iter::repeat_n(' ', (longest_key + 1) - key.len()).collect::<String>();
             match value {
                 Entry::Value(value) => {
-                    let value = match value {
-                        serde_json::Value::Null => "---".to_string(),
-                        serde_json::Value::Bool(val) => val.to_string(),
-                        serde_json::Value::Number(number) => number.to_string(),
-                        serde_json::Value::String(s) => s,
-                        serde_json::Value::Array(_) => "...".to_string(),
-                        serde_json::Value::Object(_) => "...".to_string(),
+                    let (value, color) = match value {
+                        serde_json::Value::Null => ("---".to_string(), None),
+                        serde_json::Value::Bool(val) => (
+                            val.to_string(),
+                            Some(if val { Color::Green } else { Color::Red }),
+                        ),
+                        serde_json::Value::Number(number) => (number.to_string(), None),
+                        serde_json::Value::String(s) => (s, None),
+                        serde_json::Value::Array(_) => ("...".to_string(), None),
+                        serde_json::Value::Object(_) => ("...".to_string(), None),
                     };
-                    println!("{}{}:{}{}", indent, key, padding, value)
+
+                    let mut stdout = StandardStream::stdout(ColorChoice::Auto);
+                    write!(stdout, "{}{}:{}", indent, key, padding).ok();
+                    if let Some(color) = color {
+                        if std::io::stdout().is_terminal() {
+                            stdout.set_color(ColorSpec::new().set_fg(Some(color))).ok();
+                        }
+                    }
+                    writeln!(stdout, "{}", value).ok();
+                    if color.is_some() && std::io::stdout().is_terminal() {
+                        stdout.reset().ok();
+                    }
                 }
                 Entry::Sublist(sublist) => {
                     println!("{}{}:", indent, key);

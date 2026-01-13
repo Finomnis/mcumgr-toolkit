@@ -486,6 +486,13 @@ impl MCUmgrClient {
             .map(|val| val.images)
     }
 
+    /// Obtain a list of available image slots.
+    pub fn image_slot_info(&self) -> Result<Vec<commands::image::SlotInfoImage>, ExecuteError> {
+        self.connection
+            .execute_command(&commands::image::SlotInfo)
+            .map(|val| val.images)
+    }
+
     /// Load a file from the device.
     ///
     /// # Arguments
