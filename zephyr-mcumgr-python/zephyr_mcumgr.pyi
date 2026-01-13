@@ -250,6 +250,10 @@ class MCUmgrClient:
         r"""
         Obtain a list of images with their current state.
         """
+    def image_slot_info(self) -> 'builtins.list[SlotInfoImage]':
+        r"""
+        Obtain a list of available image slots.
+        """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""
         Load a file from the device.
@@ -394,6 +398,48 @@ class McubootImageInfo:
         Note that this will not be the same as the SHA256 of the whole file, it is the field in the
         MCUboot TLV section that contains a hash of the data which is used for signature
         verification purposes.
+        """
+
+@typing.final
+class SlotInfoImage:
+    r"""
+    Information about a firmware image type returned by [`SlotInfo`]
+    """
+    @property
+    def image(self) -> builtins.int:
+        r"""
+        number of the image
+        """
+    @property
+    def slots(self) -> 'builtins.list[SlotInfoImageSlot]':
+        r"""
+        slots available for the image
+        """
+    @property
+    def max_image_size(self) -> typing.Optional[builtins.int]:
+        r"""
+        maximum size of an application that can be uploaded to that image number
+        """
+
+@typing.final
+class SlotInfoImageSlot:
+    r"""
+    Information about a slot that can hold a firmware image
+    """
+    @property
+    def slot(self) -> builtins.int:
+        r"""
+        slot inside the image being enumerated
+        """
+    @property
+    def size(self) -> builtins.int:
+        r"""
+        size of the slot
+        """
+    @property
+    def upload_image_id(self) -> typing.Optional[builtins.int]:
+        r"""
+        specifies the image ID that can be used by external tools to upload an image to that slot
         """
 
 @typing.final
