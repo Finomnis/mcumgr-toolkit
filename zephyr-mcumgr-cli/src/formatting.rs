@@ -41,11 +41,15 @@ impl StructuredPrint {
             .max()
             .unwrap_or(0);
 
-        let is_terminal = std::io::stdout().is_terminal();
+        let mut stdout = StandardStream::stdout(if std::io::stdout().is_terminal() {
+            ColorChoice::Auto
+        } else {
+            ColorChoice::Never
+        });
 
         for (key, value) in self.entries {
             if depth == 0 {
-                println!();
+                writeln!(stdout).ok();
             }
             let padding =
                 std::iter::repeat_n(' ', (longest_key + 1) - key.len()).collect::<String>();
@@ -63,26 +67,21 @@ impl StructuredPrint {
                         serde_json::Value::Object(_) => ("...".to_string(), None),
                     };
 
-                    let mut stdout = StandardStream::stdout(ColorChoice::Auto);
                     write!(stdout, "{}{}:{}", indent, key, padding).ok();
                     if let Some(color) = color {
-                        if is_terminal {
-                            stdout.set_color(ColorSpec::new().set_fg(Some(color))).ok();
-                        }
+                        stdout.set_color(ColorSpec::new().set_fg(Some(color))).ok();
                     }
                     writeln!(stdout, "{}", value).ok();
-                    if color.is_some() && is_terminal {
-                        stdout.reset().ok();
-                    }
+                    stdout.reset().ok();
                 }
                 Entry::Sublist(sublist) => {
-                    println!("{}{}:", indent, key);
+                    writeln!(stdout, "{}{}:", indent, key).ok();
                     sublist.print(depth + 1);
                 }
             }
         }
         if depth == 0 {
-            println!();
+            writeln!(stdout).ok();
         }
     }
 

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.1] - xxxx-xx-xx
 
 ### Changes
+
 - Add Python/Rust library commands:
   - `image_slot_info`
 - Add CLI commands:
