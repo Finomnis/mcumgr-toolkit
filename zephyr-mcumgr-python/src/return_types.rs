@@ -240,7 +240,7 @@ where
     })
 }
 
-/// Information about a firmware image type returned by [`SlotInfo`]
+/// Information about a firmware image type returned by `MCUmgrClient.image_slot_info`
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Serialize)]
