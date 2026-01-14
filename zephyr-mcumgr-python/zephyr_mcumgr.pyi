@@ -250,6 +250,26 @@ class MCUmgrClient:
         r"""
         Obtain a list of images with their current state.
         """
+    def image_upload(self, data: bytes, image: typing.Optional[builtins.int] = None, checksum: typing.Optional[builtins.str] = None, upgrade_only: builtins.bool = False, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> None:
+        r"""
+        Upload a firmware image to an image slot.
+        
+        ### Arguments
+        
+        * `data` - The firmware image data
+        * `image` - Selects target image on the device. Defaults to `0`.
+        * `checksum` - The SHA256 checksum of the image. If missing, will be computed from the image data.
+        * `upgrade_only` - If true, allow firmware upgrades only and reject downgrades.
+        * `progress` - A callable object that takes (transmitted, total) values as parameters.
+                       Any return value is ignored. Raising an exception aborts the operation.
+        
+        ### Performance
+        
+        Uploading files with Zephyr's default parameters is slow.
+        You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
+        to maybe `4096` and then enable larger chunking through either `set_frame_size`
+        or `use_auto_frame_size`.
+        """
     def image_erase(self, slot: typing.Optional[builtins.int] = None) -> None:
         r"""
         Erase image slot on target device.

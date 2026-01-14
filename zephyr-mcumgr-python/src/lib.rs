@@ -35,6 +35,14 @@ fn err_to_pyerr<E: Into<miette::Report>>(err: E) -> PyErr {
     PyRuntimeError::new_err(format!("{e:?}"))
 }
 
+fn parse_sha256(s: &str) -> PyResult<[u8; 32]> {
+    hex::decode(s)
+        .into_diagnostic()
+        .map_err(err_to_pyerr)?
+        .try_into()
+        .map_err(|_| PyRuntimeError::new_err("Incorrect length for SHA-256"))
+}
+
 impl MCUmgrClient {
     fn get_client(&self) -> PyResult<Arc<::zephyr_mcumgr::MCUmgrClient>> {
         let locked_client = self.client.lock().unwrap();
@@ -251,6 +259,62 @@ impl MCUmgrClient {
             .into_iter()
             .map(|val| ImageState::from_response(py, val))
             .collect())
+    }
+
+    /// Upload a firmware image to an image slot.
+    ///
+    /// ### Arguments
+    ///
+    /// * `data` - The firmware image data
+    /// * `image` - Selects target image on the device. Defaults to `0`.
+    /// * `checksum` - The SHA256 checksum of the image. If missing, will be computed from the image data.
+    /// * `upgrade_only` - If true, allow firmware upgrades only and reject downgrades.
+    /// * `progress` - A callable object that takes (transmitted, total) values as parameters.
+    ///                Any return value is ignored. Raising an exception aborts the operation.
+    ///
+    /// ### Performance
+    ///
+    /// Uploading files with Zephyr's default parameters is slow.
+    /// You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
+    /// to maybe `4096` and then enable larger chunking through either `set_frame_size`
+    /// or `use_auto_frame_size`.
+    ///
+    #[pyo3(signature = (data, image=None, checksum=None, upgrade_only=false, progress=None))]
+    pub fn image_upload<'py>(
+        &self,
+        data: &Bound<'py, PyBytes>,
+        image: Option<u32>,
+        checksum: Option<&str>,
+        upgrade_only: bool,
+        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]]", imports=("builtins", "collections.abc", "typing")))]
+        progress: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<()> {
+        let bytes: &[u8] = data.extract()?;
+
+        let mut cb_error = None;
+
+        let checksum = checksum.map(parse_sha256).transpose()?;
+
+        let res = if let Some(progress) = progress {
+            let mut cb = |current, total| match progress.call((current, total), None) {
+                Ok(_) => true,
+                Err(e) => {
+                    cb_error = Some(e);
+                    false
+                }
+            };
+            self.get_client()?
+                .image_upload(bytes, image, checksum, upgrade_only, Some(&mut cb))
+        } else {
+            self.get_client()?
+                .image_upload(bytes, image, checksum, upgrade_only, None)
+        };
+
+        if let Some(cb_error) = cb_error {
+            return Err(cb_error);
+        }
+
+        res.map_err(err_to_pyerr)
     }
 
     /// Erase image slot on target device.

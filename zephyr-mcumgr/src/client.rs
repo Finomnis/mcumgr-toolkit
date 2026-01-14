@@ -519,17 +519,17 @@ impl MCUmgrClient {
     /// # Arguments
     ///
     /// * `data` - The firmware image data
-    /// * `image` - The image ID to upload. Defaults to `0`.
-    /// * `sha` - The SHA256 checksum of the image. If missing, will be computed from the image data.
-    /// * `upgrade` - If true, allow firmware upgrades only and reject downgrades.
+    /// * `image` - Selects target image on the device. Defaults to `0`.
+    /// * `checksum` - The SHA256 checksum of the image. If missing, will be computed from the image data.
+    /// * `upgrade_only` - If true, allow firmware upgrades only and reject downgrades.
     /// * `progress` - A callback that receives a pair of (transferred, total) bytes and returns false on error.
     ///
     pub fn image_upload(
         &self,
         data: impl AsRef<[u8]>,
         image: Option<u32>,
-        sha: Option<[u8; 32]>,
-        upgrade: bool,
+        checksum: Option<[u8; 32]>,
+        upgrade_only: bool,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), ImageUploadError> {
         let chunk_size_max = image_upload_max_data_chunk_size(
@@ -539,7 +539,8 @@ impl MCUmgrClient {
         .map_err(ImageUploadError::FrameSizeTooSmall)?;
 
         let data = data.as_ref();
-        let sha = sha.unwrap_or_else(|| Sha256::digest(data).into());
+        // TODO perform checksum test on input data
+        let sha = checksum.unwrap_or_else(|| Sha256::digest(data).into());
 
         let mut offset = 0;
         let size = data.len();
@@ -558,7 +559,7 @@ impl MCUmgrClient {
                         off: offset as u64,
                         sha: Some(&sha),
                         data: chunk_data,
-                        upgrade: Some(upgrade),
+                        upgrade: Some(upgrade_only),
                     })?
             } else {
                 self.connection
