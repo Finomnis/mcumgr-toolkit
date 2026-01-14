@@ -91,7 +91,7 @@ pub struct ImageUpload<'a, 'b> {
     #[serde(with = "serde_bytes")]
     pub data: &'b [u8],
     /// optional flag that states that only upgrade should be allowed, so if the version of uploaded software
-    /// is not higher then already on a device, the image upload will be rejected.
+    /// is not higher than already on a device, the image upload will be rejected.
     ///
     /// Should only be present when “off” is 0.
     #[serde(skip_serializing_if = "Option::is_none")]
