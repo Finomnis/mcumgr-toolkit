@@ -84,6 +84,7 @@ pub fn run(client: &Client, args: CommonArgs, command: ImageCommand) -> Result<(
                         s.sublist(format!("Image {}", image.image), |s| {
                             for slot in image.slots {
                                 s.sublist(format!("Slot {}", slot.slot), |s| {
+                                    s.unaligned();
                                     s.key_value("size", slot.size);
                                     s.key_value_maybe("upload_image_id", slot.upload_image_id);
                                 });

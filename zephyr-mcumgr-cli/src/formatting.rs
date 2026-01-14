@@ -11,6 +11,7 @@ enum Entry {
 #[derive(Default)]
 pub struct StructuredPrint {
     entries: Vec<(String, Entry)>,
+    no_align: bool,
 }
 
 impl StructuredPrint {
@@ -31,6 +32,10 @@ impl StructuredPrint {
         if let Some(value) = value {
             self.key_value(key, value);
         }
+    }
+
+    pub fn unaligned(&mut self) {
+        self.no_align = true;
     }
 
     pub fn print(self, depth: usize) {
@@ -57,8 +62,15 @@ impl StructuredPrint {
             if depth == 0 {
                 writeln!(stdout).ok();
             }
-            let padding =
-                std::iter::repeat_n(' ', (longest_key + 1) - key.len()).collect::<String>();
+            let padding = std::iter::repeat_n(
+                ' ',
+                if self.no_align {
+                    1
+                } else {
+                    (longest_key + 1) - key.len()
+                },
+            )
+            .collect::<String>();
             match value {
                 Entry::Value(value) => {
                     let (value, color) = match value {
