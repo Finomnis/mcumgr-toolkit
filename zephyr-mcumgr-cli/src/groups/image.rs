@@ -7,7 +7,7 @@ use crate::{
 pub enum ImageCommand {
     /// Obtain a list of images with their current state
     GetState,
-    /// Upload a firmware image to the FPGA
+    /// Upload a firmware image to the device
     Upload {
         /// The file to copy. '-' for stdin.
         image_file: String,
@@ -21,7 +21,7 @@ pub enum ImageCommand {
         #[arg(long, value_parser=parse_sha256)]
         checksum: Option<[u8; 32]>,
     },
-    /// Erase image slot on target device.
+    /// Erase image slot on target device
     Erase {
         /// The slot ID of the image to erase. Default: 1
         slot: Option<u32>,
