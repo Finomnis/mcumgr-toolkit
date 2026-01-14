@@ -104,6 +104,10 @@ pub enum ImageUploadError {
     UnexpectedOffset,
     /// The device reported a checksum mismatch
     #[error("Device reported checksum mismatch")]
+    #[diagnostic(code(zephyr_mcumgr::client::image_upload::checksum_mismatch_on_device))]
+    ChecksumMismatchOnDevice,
+    /// The firmware image does not match the given checksum
+    #[error("Firmware image does not match given checksum")]
     #[diagnostic(code(zephyr_mcumgr::client::image_upload::checksum_mismatch))]
     ChecksumMismatch,
 }
@@ -540,7 +544,13 @@ impl MCUmgrClient {
 
         let data = data.as_ref();
         // TODO perform checksum test on input data
-        let sha = checksum.unwrap_or_else(|| Sha256::digest(data).into());
+
+        let actual_checksum: [u8; 32] = Sha256::digest(data).into();
+        if let Some(checksum) = checksum {
+            if actual_checksum != checksum {
+                return Err(ImageUploadError::ChecksumMismatch);
+            }
+        }
 
         let mut offset = 0;
         let size = data.len();
@@ -557,7 +567,7 @@ impl MCUmgrClient {
                         image,
                         len: Some(size as u64),
                         off: offset as u64,
-                        sha: Some(&sha),
+                        sha: Some(&actual_checksum),
                         data: chunk_data,
                         upgrade: Some(upgrade_only),
                     })?
@@ -595,7 +605,7 @@ impl MCUmgrClient {
 
         if let Some(checksum_matched) = checksum_matched {
             if !checksum_matched {
-                return Err(ImageUploadError::ChecksumMismatch);
+                return Err(ImageUploadError::ChecksumMismatchOnDevice);
             }
         } else {
             log::warn!("Device did not perform image checksum verification");
