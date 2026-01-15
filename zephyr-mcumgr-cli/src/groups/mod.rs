@@ -1,5 +1,3 @@
-use miette::IntoDiagnostic;
-
 use crate::{args::CommonArgs, client::Client, errors::CliError};
 
 mod fs;
