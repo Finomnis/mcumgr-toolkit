@@ -18,7 +18,7 @@ exclude = ["/.gitignore", "/.github/"]
 [workspace.dependencies]
 zephyr-mcumgr = { version = "0.6.2", path = "./zephyr-mcumgr" }
 serialport = { version = "4.7.3", default-features = false }
-thiserror = "2.0.17"
+thiserror = "2.0.18"
 miette = "7.6.0"
 rand = "0.9.2"
 base64 = "0.22.1"
