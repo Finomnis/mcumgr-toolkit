@@ -1,4 +1,5 @@
 use indicatif::MultiProgress;
+use zephyr_mcumgr::commands::image::ImageState;
 
 use crate::{
     args::CommonArgs, client::Client, errors::CliError, file_read_write::read_input_file,
@@ -9,6 +10,17 @@ use crate::{
 pub enum ImageCommand {
     /// Obtain a list of images with their current state
     GetState,
+    /// Changes the image state
+    SetState {
+        /// Boot to the image with the given hash ID
+        #[arg(long, value_parser=parse_sha256, required_unless_present = "confirm")]
+        hash: Option<[u8; 32]>,
+        /// Mark the given image as confirmed
+        ///
+        /// If no hash is specified, confirm the currently running image
+        #[arg(long)]
+        confirm: bool,
+    },
     /// Upload a firmware image to the device
     Upload {
         /// The file to copy. '-' for stdin.
@@ -32,6 +44,29 @@ pub enum ImageCommand {
     SlotInfo,
 }
 
+fn print_current_image_state(images: &[ImageState], args: CommonArgs) -> Result<(), CliError> {
+    if args.json {
+        let json_str = serde_json::to_string_pretty(images).map_err(CliError::JsonEncodeError)?;
+        println!("{json_str}");
+    } else {
+        structured_print(None, args.json, |s| {
+            for image in images {
+                s.sublist(format!("Image {}, Slot {}", image.image, image.slot), |s| {
+                    s.key_value("version", image.version.as_str());
+                    s.key_value_maybe("hash", image.hash.map(hex::encode));
+                    s.key_value("bootable", image.bootable);
+                    s.key_value("pending", image.pending);
+                    s.key_value("confirmed", image.confirmed);
+                    s.key_value("active", image.active);
+                    s.key_value("permanent", image.permanent);
+                });
+            }
+        })?;
+    }
+
+    Ok(())
+}
+
 pub fn run(
     client: &Client,
     multiprogress: &MultiProgress,
@@ -42,26 +77,17 @@ pub fn run(
     match command {
         ImageCommand::GetState => {
             let images = client.image_get_state()?;
+            print_current_image_state(&images, args)?;
+        }
+        ImageCommand::SetState { hash, confirm } => {
+            let images = client.image_set_state(hash, confirm)?;
 
-            if args.json {
-                let json_str =
-                    serde_json::to_string_pretty(&images).map_err(CliError::JsonEncodeError)?;
-                println!("{json_str}");
-            } else {
-                structured_print(None, args.json, |s| {
-                    for image in images {
-                        s.sublist(format!("Image {}, Slot {}", image.image, image.slot), |s| {
-                            s.key_value("version", image.version);
-                            s.key_value_maybe("hash", image.hash.map(hex::encode));
-                            s.key_value("bootable", image.bootable);
-                            s.key_value("pending", image.pending);
-                            s.key_value("confirmed", image.confirmed);
-                            s.key_value("active", image.active);
-                            s.key_value("permanent", image.permanent);
-                        });
-                    }
-                })?;
+            if !(args.quiet || args.json) {
+                println!();
+                println!("Success. New state:");
             }
+
+            print_current_image_state(&images, args)?;
         }
         ImageCommand::Upload {
             image_file,

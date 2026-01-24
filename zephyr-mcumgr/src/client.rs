@@ -518,6 +518,34 @@ impl MCUmgrClient {
             .map(|val| val.images)
     }
 
+    /// Modify the current image state
+    ///
+    /// # Arguments
+    ///
+    /// * `hash` - the SHA256 id of the image.
+    /// * `confirm` - mark the given image as 'confirmed'
+    ///
+    /// If `confirm` is `false`, perform a test boot with the given image and revert upon hard reset.
+    ///
+    /// If `confirm` is `true`, boot to the given image and mark it as `confirmed`. If `hash` is omitted,
+    /// confirm the currently running image.
+    ///
+    /// Note that `hash` will not be the same as the SHA256 of the whole firmware image,
+    /// it is the field in the MCUboot TLV section that contains a hash of the data
+    /// which is used for signature verification purposes.
+    pub fn image_set_state(
+        &self,
+        hash: Option<[u8; 32]>,
+        confirm: bool,
+    ) -> Result<Vec<commands::image::ImageState>, ExecuteError> {
+        self.connection
+            .execute_command(&commands::image::SetImageState {
+                hash: hash.as_ref(),
+                confirm,
+            })
+            .map(|val| val.images)
+    }
+
     /// Upload a firmware image to an image slot.
     ///
     /// # Arguments
