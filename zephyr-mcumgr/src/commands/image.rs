@@ -76,7 +76,7 @@ pub struct SetImageState<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "serde_bytes")]
     pub hash: Option<&'a [u8; 32]>,
-    /// If true, set the given image to 'confirmed'.
+    /// If true, mark the given image as 'confirmed'.
     ///
     /// If false, perform a test boot with the given image
     /// and revert upon hard reset.
