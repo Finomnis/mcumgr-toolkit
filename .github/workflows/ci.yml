@@ -11,18 +11,26 @@ name: CI
 jobs:
   test:
     name: Build and Test
-    runs-on: ubuntu-latest
-    needs: [lints, docs]
     env:
       RUSTFLAGS: "-D warnings"
     strategy:
+      fail-fast: false
       matrix:
         target:
           - x86_64-pc-windows-gnu
           - x86_64-unknown-linux-gnu
+          - aarch64-apple-darwin
         rust:
           - stable
           - nightly
+        include:
+          - target: x86_64-pc-windows-gnu
+            image: ubuntu-latest
+          - target: x86_64-unknown-linux-gnu
+            image: ubuntu-latest
+          - target: aarch64-apple-darwin
+            image: macos-latest
+    runs-on: ${{ matrix.image }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -36,10 +44,10 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --workspace --exclude zephyr-mcumgr-python
+        run: cargo build --release --target ${{ matrix.target }} --workspace --exclude zephyr-mcumgr-python
 
       - name: Test
-        run: cargo test --release --workspace --exclude zephyr-mcumgr-python --verbose $DOCTEST_XCOMPILE -- --test-threads 1
+        run: cargo test --release --target ${{ matrix.target }} --workspace --exclude zephyr-mcumgr-python --verbose $DOCTEST_XCOMPILE -- --test-threads 1
 
   build-examples:
     name: Build Examples
