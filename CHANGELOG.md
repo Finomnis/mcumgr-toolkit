@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
-- Increase default timeout to `5000 ms`.
+- Increase default timeout to `10000 ms`.
 
 ## Fixes
 
