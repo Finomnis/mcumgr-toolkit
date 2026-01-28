@@ -19,21 +19,7 @@ use zephyr_mcumgr::{MCUmgrClient, client::UsbSerialError};
 
 use crate::errors::CliError;
 
-fn cli_main() -> Result<(), CliError> {
-    let multiprogress = {
-        let logger =
-            env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-                .build();
-        let level = logger.filter();
-        let multiprogress = MultiProgress::new();
-        LogWrapper::new(multiprogress.clone(), logger)
-            .try_init()
-            .unwrap();
-        log::set_max_level(level);
-
-        multiprogress
-    };
-
+fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     let args = args::App::parse();
 
     let client = if let Some(serial_name) = args.serial {
@@ -82,7 +68,7 @@ fn cli_main() -> Result<(), CliError> {
     }
 
     if let Some(group) = args.group {
-        groups::run(&client, &multiprogress, args.common, group)?;
+        groups::run(&client, multiprogress, args.common, group)?;
     } else {
         client.get()?.check_connection()?;
         println!("Device alive and responsive.");
@@ -92,5 +78,23 @@ fn cli_main() -> Result<(), CliError> {
 }
 
 fn main() -> miette::Result<()> {
-    cli_main().map_err(Into::into)
+    let multiprogress = {
+        let logger =
+            env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+                .build();
+        let level = logger.filter();
+        let multiprogress = MultiProgress::new();
+        LogWrapper::new(multiprogress.clone(), logger)
+            .try_init()
+            .unwrap();
+        log::set_max_level(level);
+
+        multiprogress
+    };
+
+    let result = cli_main(&multiprogress).map_err(Into::into);
+
+    multiprogress.clear().ok();
+
+    result
 }

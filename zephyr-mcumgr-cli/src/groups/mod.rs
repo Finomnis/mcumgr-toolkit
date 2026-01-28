@@ -2,9 +2,9 @@ use indicatif::MultiProgress;
 
 use crate::{args::CommonArgs, client::Client, errors::CliError};
 
+mod firmware;
 mod fs;
 mod image;
-mod mcuboot;
 mod os;
 mod raw;
 mod shell;
@@ -22,10 +22,10 @@ pub enum Group {
         #[command(subcommand)]
         command: image::ImageCommand,
     },
-    /// MCUboot specific tools
-    Mcuboot {
+    /// High level firmware update utilities
+    Firmware {
         #[command(subcommand)]
-        command: mcuboot::MCUbootCommand,
+        command: firmware::FirmwareCommand,
     },
     /// File Management
     Fs {
@@ -56,7 +56,7 @@ pub fn run(
     match group {
         Group::Os { command } => os::run(client, multiprogress, args, command),
         Group::Image { command } => image::run(client, multiprogress, args, command),
-        Group::Mcuboot { command } => mcuboot::run(client, multiprogress, args, command),
+        Group::Firmware { command } => firmware::run(client, multiprogress, args, command),
         Group::Fs { command } => fs::run(client, multiprogress, args, command),
         Group::Shell { argv } => shell::run(client, multiprogress, args, argv),
         Group::Zephyr { command } => zephyr::run(client, multiprogress, args, command),

@@ -44,6 +44,13 @@ impl serde::Serialize for BootloaderInfo {
     }
 }
 
+/// Supported bootloader/image types
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum BootloaderType {
+    /// McuBoot Bootloader
+    McuBoot,
+}
+
 /// MCUboot modes
 ///
 /// See [`enum mcuboot_mode`](https://github.com/mcu-tools/mcuboot/blob/main/boot/bootutil/include/bootutil/boot_status.h).

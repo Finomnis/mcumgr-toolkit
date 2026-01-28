@@ -1,4 +1,4 @@
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 
 pub fn with_progress_bar<T>(
     multiprogress: &MultiProgress,
@@ -11,7 +11,7 @@ pub fn with_progress_bar<T>(
 
         let mut callback = |current, total| {
             let progress = progress.get_or_insert_with(|| {
-                let progress = multiprogress.add(ProgressBar::new(total));
+                let progress = multiprogress.add(ProgressBar::new(total)).with_finish(ProgressFinish::AndClear);
 
                 if let Some(message) = &message {
                     progress.set_message(message.to_string());
@@ -34,7 +34,7 @@ pub fn with_progress_bar<T>(
         let result = action(Some(&mut callback));
 
         if let Some(progress) = progress {
-            progress.finish();
+            progress.finish_and_clear();
             multiprogress.remove(&progress);
         }
 
