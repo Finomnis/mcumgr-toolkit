@@ -2,9 +2,6 @@ use clap::ValueEnum;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 use zephyr_mcumgr::firmware_update::{FirmwareUpdateParams, firmware_update};
 
-// TODO: Rename the `mcuboot` point to `firmware`
-// add `firmware update` and `firmware get-image-info`
-
 use crate::{
     args::CommonArgs, client::Client, errors::CliError, file_read_write::read_input_file,
     formatting::structured_print, groups::parse_sha256,
@@ -163,9 +160,13 @@ pub fn run(
                 )
             }?;
 
-            multiprogress
-                .println("Success. Device should reboot with new firmware.")
-                .ok();
+            multiprogress.println("Success.").ok();
+
+            if !skip_reboot {
+                multiprogress
+                    .println("Device should reboot with new firmware.")
+                    .ok();
+            }
         }
     }
 

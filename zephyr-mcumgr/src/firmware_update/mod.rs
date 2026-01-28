@@ -24,7 +24,7 @@ pub enum FirmwareUpdateError {
     #[diagnostic(code(zephyr_mcumgr::firmware_update::unknown_bootloader))]
     BootloaderNotSupported(String),
     /// Failed to parse the firmware image as MCUboot firmware.
-    #[error("Firmare is not a valid MCUboot image")]
+    #[error("Firmware is not a valid MCUboot image")]
     #[diagnostic(code(zephyr_mcumgr::firmware_update::mcuboot_image))]
     InvalidMcuBootFirmwareImage(#[from] mcuboot::ImageParseError),
     /// Fetching the image state returned an error.
@@ -163,8 +163,7 @@ pub fn firmware_update(
     progress(
         format!("Update: {} -> {}", active_image_string, new_image_string).into(),
         None,
-    )
-    .ok();
+    )?;
 
     if active_image.and_then(|img| img.hash) == Some(image_id_hash) {
         return Err(FirmwareUpdateError::AlreadyInstalled);
@@ -173,12 +172,7 @@ pub fn firmware_update(
     progress("Uploading new firmware ...".into(), None)?;
     let upload_progress_cb: Option<&mut dyn FnMut(u64, u64) -> bool> = if has_progress {
         Some(&mut |current, total| {
-            if let Err(e) = progress("Uploading new firmware ...".into(), Some((current, total))) {
-                log::error!("{e:?}");
-                false
-            } else {
-                true
-            }
+            progress("Uploading new firmware ...".into(), Some((current, total))).is_ok()
         })
     } else {
         None
@@ -219,10 +213,12 @@ pub fn firmware_update(
         }
     }
 
-    progress("Triggering device reboot ...".into(), None)?;
-    client
-        .os_system_reset(false, None)
-        .map_err(FirmwareUpdateError::RebootFailed)?;
+    if !params.skip_reboot {
+        progress("Triggering device reboot ...".into(), None)?;
+        client
+            .os_system_reset(false, None)
+            .map_err(FirmwareUpdateError::RebootFailed)?;
+    }
 
     Ok(())
 }
