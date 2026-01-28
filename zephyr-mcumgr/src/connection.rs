@@ -48,6 +48,19 @@ pub enum ExecuteError {
     ErrorResponse(DeviceError),
 }
 
+impl ExecuteError {
+    /// Checks if the device reported the command as unsupported
+    pub fn command_not_supported(&self) -> bool {
+        if let Self::ErrorResponse(DeviceError::V1 { rc, .. }) = self
+            && *rc == MCUmgrErr::MGMT_ERR_ENOTSUP as i32
+        {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 impl Connection {
     /// Creates a new SMP
     pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {

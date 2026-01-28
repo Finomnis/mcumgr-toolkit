@@ -35,6 +35,18 @@ pub enum FirmwareUpdateError {
     #[error("Failed to upload firmware image to device")]
     #[diagnostic(code(zephyr_mcumgr::firmware_update::image_upload))]
     ImageUploadFailed(#[from] ImageUploadError),
+    /// Writing the new image state to the device failed
+    #[error("Failed to activate new firmware image")]
+    #[diagnostic(code(zephyr_mcumgr::firmware_update::set_image_state))]
+    SetStateFailed(#[source] ExecuteError),
+    /// Performing device reset failed
+    #[error("Failed to trigger device reboot")]
+    #[diagnostic(code(zephyr_mcumgr::firmware_update::reboot))]
+    RebootFailed(#[source] ExecuteError),
+    /// The given firmware is already installed on the device
+    #[error("The device is already running the given firmware")]
+    #[diagnostic(code(zephyr_mcumgr::firmware_update::already_installed))]
+    AlreadyInstalled,
 }
 
 /// Configurable parameters for [`firmware_update`].
@@ -96,7 +108,7 @@ pub fn firmware_update(
     let bootloader_type = if let Some(bootloader_type) = params.bootloader_type {
         bootloader_type
     } else {
-        progress("Detecting bootloader ...".into(), None)?;
+        progress("Detect bootloader ...".into(), None)?;
 
         let bootloader_type = client
             .os_bootloader_info()
@@ -109,7 +121,7 @@ pub fn firmware_update(
         bootloader_type
     };
 
-    progress("Parsing firmware image ...".into(), None)?;
+    progress("Parse firmware image ...".into(), None)?;
     let image_id_hash = match bootloader_type {
         BootloaderType::McuBoot => {
             let info = mcuboot::get_image_info(std::io::Cursor::new(firmware))?;
@@ -118,11 +130,22 @@ pub fn firmware_update(
         }
     };
 
-    progress("Uploading new firmware ...".into(), None)?;
+    progress("Query device state ...".into(), None)?;
+    let image_state = client
+        .image_get_state()
+        .map_err(FirmwareUpdateError::GetStateFailed)?;
+    // Check if the firmware we want to install is already active on the device
+    if image_state
+        .iter()
+        .any(|img| img.hash == Some(image_id_hash) && img.active)
+    {
+        return Err(FirmwareUpdateError::AlreadyInstalled);
+    }
 
+    progress("Upload new firmware ...".into(), None)?;
     let upload_progress_cb: Option<&mut dyn FnMut(u64, u64) -> bool> = if has_progress {
         Some(&mut |current, total| {
-            if let Err(e) = progress("Uploading new firmware ...".into(), Some((current, total))) {
+            if let Err(e) = progress("Upload new firmware ...".into(), Some((current, total))) {
                 log::error!("{e:?}");
                 false
             } else {
@@ -140,10 +163,38 @@ pub fn firmware_update(
         upload_progress_cb,
     )?;
 
-    progress("Query device state ...".into(), None)?;
-    let image_state = client
-        .image_get_state()
-        .map_err(FirmwareUpdateError::GetStateFailed)?;
+    progress("Activate new firmware ...".into(), None)?;
+    let set_state_result = client.image_set_state(Some(image_id_hash), params.force_confirm);
+    if let Err(set_state_error) = set_state_result {
+        let mut image_already_active = false;
+
+        // Special case: if the command isn't supported, we are most likely in
+        // the MCUmgr recovery shell, which writes directly to the active slot
+        // and does not support swapping.
+        // Sanity check that the image is on the first position already to avoid false
+        // positives of this exception.
+        if bootloader_type == BootloaderType::McuBoot && set_state_error.command_not_supported() {
+            progress("Query device state ...".into(), None)?;
+            let image_state = client
+                .image_get_state()
+                .map_err(FirmwareUpdateError::GetStateFailed)?;
+            if image_state
+                .iter()
+                .any(|img| img.image == 0 && img.slot == 0 && img.hash == Some(image_id_hash))
+            {
+                image_already_active = true;
+            }
+        }
+
+        if !image_already_active {
+            return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
+        }
+    }
+
+    progress("Trigger device reboot ...".into(), None)?;
+    client
+        .os_system_reset(false, None)
+        .map_err(FirmwareUpdateError::RebootFailed)?;
 
     Ok(())
 }
