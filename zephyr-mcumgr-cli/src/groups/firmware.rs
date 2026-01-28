@@ -35,6 +35,8 @@ pub enum FirmwareCommand {
     },
     /// Perform a device firmware update
     Update {
+        /// The firmware image file to update to. '-' for stdin.
+        firmware_file: String,
         /// Specify the bootloader type
         ///
         /// Auto-detect if not specified
@@ -124,10 +126,13 @@ pub fn run(
             }
         }
         FirmwareCommand::Update {
+            firmware_file,
             bootloader,
             skip_reboot,
             force_confirm,
         } => {
+            let (firmware, _source_filename) = read_input_file(&firmware_file)?;
+
             let client = client.get()?;
 
             let params = FirmwareUpdateParams {
@@ -137,11 +142,12 @@ pub fn run(
             };
 
             if args.quiet {
-                firmware_update(client, params, None)
+                firmware_update(client, firmware, params, None)
             } else {
                 let mut progress_handler = FirmwareUpgradeProgressHandler::new(multiprogress);
                 firmware_update(
                     client,
+                    firmware,
                     params,
                     Some(&mut move |msg, progress| progress_handler.update(msg, progress)),
                 )

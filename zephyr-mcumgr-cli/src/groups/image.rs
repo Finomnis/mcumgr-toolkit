@@ -23,7 +23,7 @@ pub enum ImageCommand {
     },
     /// Upload a firmware image to the device
     Upload {
-        /// The file to copy. '-' for stdin.
+        /// The firmware image file to upload. '-' for stdin.
         image_file: String,
         /// Selects target image on the device. Default: 0
         #[arg(long)]

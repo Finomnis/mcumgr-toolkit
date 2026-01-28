@@ -2,7 +2,7 @@ use std::{io::Cursor, sync::Mutex, time::Duration};
 
 use crate::{
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
-    smp_errors::DeviceError,
+    smp_errors::{DeviceError, MCUmgrErr},
     transport::{ReceiveError, SendError, Transport},
 };
 
@@ -121,10 +121,12 @@ impl Connection {
         }
 
         if let Some(rc) = err.rc {
-            return Err(ExecuteError::ErrorResponse(DeviceError::V1 {
-                rc,
-                rsn: err.rsn,
-            }));
+            if rc != MCUmgrErr::MGMT_ERR_EOK as i32 {
+                return Err(ExecuteError::ErrorResponse(DeviceError::V1 {
+                    rc,
+                    rsn: err.rsn,
+                }));
+            }
         }
 
         let decoded_response: R::Response = ciborium::from_reader(Cursor::new(response))
