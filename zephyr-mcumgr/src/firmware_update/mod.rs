@@ -174,13 +174,22 @@ pub fn firmware_update(
         progress("Uploading new firmware ...".into(), Some((current, total))).is_ok()
     };
 
-    client.image_upload(
-        firmware,
-        None,
-        params.checksum,
-        params.upgrade_only,
-        has_progress.then_some(&mut upload_progress_cb),
-    )?;
+    client
+        .image_upload(
+            firmware,
+            None,
+            params.checksum,
+            params.upgrade_only,
+            has_progress.then_some(&mut upload_progress_cb),
+        )
+        .map_err(|err| {
+            if let ImageUploadError::ProgressCallbackError = err {
+                // Users expect this error when the progress callback errors
+                FirmwareUpdateError::ProgressCallbackError
+            } else {
+                FirmwareUpdateError::ImageUploadFailed(err)
+            }
+        })?;
 
     progress("Activating new firmware ...".into(), None)?;
     let set_state_result = client.image_set_state(Some(image_id_hash), params.force_confirm);
