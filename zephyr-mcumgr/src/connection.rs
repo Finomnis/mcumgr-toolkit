@@ -51,10 +51,8 @@ pub enum ExecuteError {
 impl ExecuteError {
     /// Checks if the device reported the command as unsupported
     pub fn command_not_supported(&self) -> bool {
-        if let Self::ErrorResponse(DeviceError::V1 { rc, .. }) = self
-            && *rc == MCUmgrErr::MGMT_ERR_ENOTSUP as i32
-        {
-            true
+        if let Self::ErrorResponse(DeviceError::V1 { rc, .. }) = self {
+            *rc == MCUmgrErr::MGMT_ERR_ENOTSUP as i32
         } else {
             false
         }

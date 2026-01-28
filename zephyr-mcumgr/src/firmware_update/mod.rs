@@ -170,19 +170,16 @@ pub fn firmware_update(
     }
 
     progress("Uploading new firmware ...".into(), None)?;
-    let upload_progress_cb: Option<&mut dyn FnMut(u64, u64) -> bool> = if has_progress {
-        Some(&mut |current, total| {
-            progress("Uploading new firmware ...".into(), Some((current, total))).is_ok()
-        })
-    } else {
-        None
+    let mut upload_progress_cb = |current, total| {
+        progress("Uploading new firmware ...".into(), Some((current, total))).is_ok()
     };
+
     client.image_upload(
         firmware,
         None,
         params.checksum,
         params.upgrade_only,
-        upload_progress_cb,
+        has_progress.then_some(&mut upload_progress_cb),
     )?;
 
     progress("Activating new firmware ...".into(), None)?;
