@@ -28,7 +28,7 @@ mod raw_py_any_command;
 mod repr_macro;
 mod sha256_type;
 
-/// A high level client for Zephyr's MCUmgr SMP functionality
+/// A high-level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 struct MCUmgrClient {
@@ -144,7 +144,7 @@ impl MCUmgrClient {
         self.get_client()?.check_connection().map_err(err_to_pyerr)
     }
 
-    /// High level firmware update routine.
+    /// High-level firmware update routine.
     ///
     /// ### Arguments
     ///

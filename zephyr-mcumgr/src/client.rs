@@ -1,4 +1,4 @@
-/// High level firmware update routine
+/// High-level firmware update routine
 mod firmware_update;
 
 pub use firmware_update::{
@@ -32,7 +32,7 @@ use crate::{
 /// Matches Zephyr default value of [MCUMGR_TRANSPORT_NETBUF_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
 const ZEPHYR_DEFAULT_SMP_FRAME_SIZE: usize = 384;
 
-/// A high level client for Zephyr's MCUmgr SMP protocol.
+/// A high-level client for Zephyr's MCUmgr SMP protocol.
 ///
 /// This struct is the central entry point of this crate.
 pub struct MCUmgrClient {
@@ -407,7 +407,7 @@ impl MCUmgrClient {
         }
     }
 
-    /// High level firmware update routine.
+    /// High-level firmware update routine.
     ///
     /// # Arguments
     ///

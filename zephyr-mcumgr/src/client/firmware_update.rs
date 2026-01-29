@@ -86,7 +86,7 @@ pub type FirmwareUpdateProgressCallback<'a> = dyn FnMut(&str, Option<(u64, u64)>
 
 const SHOWN_HASH_DIGITS: usize = 4;
 
-/// High level firmware update routine
+/// High-level firmware update routine
 ///
 /// # Arguments
 ///

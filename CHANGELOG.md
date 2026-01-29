@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- Implement high level firmware update command
+- Implement high-level firmware update routine
 - Add Python/Rust library commands:
   - `firmware_update`
 - Add CLI commands:

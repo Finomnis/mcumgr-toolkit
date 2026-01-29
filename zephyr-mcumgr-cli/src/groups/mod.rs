@@ -22,7 +22,7 @@ pub enum Group {
         #[command(subcommand)]
         command: image::ImageCommand,
     },
-    /// High level firmware update utilities
+    /// High-level firmware update utilities
     Firmware {
         #[command(subcommand)]
         command: firmware::FirmwareCommand,
