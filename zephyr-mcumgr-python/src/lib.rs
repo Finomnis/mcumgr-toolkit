@@ -166,7 +166,7 @@ impl MCUmgrClient {
         skip_reboot: bool,
         force_confirm: bool,
         upgrade_only: bool,
-        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.str, builtins.tuple[builtins.int, builtins.int]], None]]", imports=("builtins", "collections.abc", "typing")))]
+        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.str, typing.Optional[builtins.tuple[builtins.int, builtins.int]]], None]]", imports=("builtins", "collections.abc", "typing")))]
         progress: Option<Bound<'py, PyAny>>,
     ) -> PyResult<()> {
         let firmware_bytes: &[u8] = firmware.extract()?;

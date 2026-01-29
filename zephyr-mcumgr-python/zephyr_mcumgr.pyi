@@ -179,7 +179,7 @@ class MCUmgrClient:
         
         Raises an error if the device is not alive and responding.
         """
-    def firmware_update(self, firmware: bytes, checksum: typing.Optional[builtins.str | builtins.bytes] = None, bootloader_type: typing.Optional[typing.Literal['MCUboot']] = None, skip_reboot: builtins.bool = False, force_confirm: builtins.bool = False, upgrade_only: builtins.bool = False, progress: typing.Optional[collections.abc.Callable[[builtins.str, builtins.tuple[builtins.int, builtins.int]], None]] = None) -> None:
+    def firmware_update(self, firmware: bytes, checksum: typing.Optional[builtins.str | builtins.bytes] = None, bootloader_type: typing.Optional[typing.Literal['MCUboot']] = None, skip_reboot: builtins.bool = False, force_confirm: builtins.bool = False, upgrade_only: builtins.bool = False, progress: typing.Optional[collections.abc.Callable[[builtins.str, typing.Optional[builtins.tuple[builtins.int, builtins.int]]], None]] = None) -> None:
         r"""
         High level firmware update routine.
         
