@@ -2212,6 +2212,8 @@ dependencies = [
  "serde",
  "serde-pyobject",
  "serialport",
+ "strum",
+ "thiserror",
  "zephyr-mcumgr",
 ]
 

@@ -15,12 +15,14 @@ use std::time::Duration;
 use ::zephyr_mcumgr::bootloader::BootloaderType;
 use ::zephyr_mcumgr::client::FirmwareUpdateParams;
 
+use crate::errors::McubootPythonError;
 use crate::raw_py_any_command::RawPyAnyCommand;
 use crate::sha256_type::Sha256;
 
 mod return_types;
 pub use return_types::*;
 
+mod errors;
 mod mcuboot;
 mod raw_py_any_command;
 mod repr_macro;
@@ -173,7 +175,7 @@ impl MCUmgrClient {
         let bootloader_type = match bootloader_type {
             Some(bootloader_type) => Some(
                 BootloaderType::from_str(&bootloader_type)
-                    .into_diagnostic()
+                    .map_err(|e| McubootPythonError::InvalidBootloaderString(e, bootloader_type))
                     .map_err(err_to_pyerr)?,
             ),
             None => None,
