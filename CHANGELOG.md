@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Rename CLI subcommand `mcuboot` to `firmware`
-    - Add parameter to `firmware get-image-info` that specifies the
-      bootloader type
+  - Add parameter to `firmware get-image-info` that specifies the
+    bootloader type
 
 ### Changes
 
