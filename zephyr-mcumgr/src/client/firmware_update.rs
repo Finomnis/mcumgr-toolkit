@@ -138,7 +138,7 @@ pub(crate) fn firmware_update(
 
     progress("Parsing firmware image ...".into(), None)?;
     let (image_version, image_id_hash) = match bootloader_type {
-        BootloaderType::McuBoot => {
+        BootloaderType::MCUboot => {
             let info = mcuboot::get_image_info(std::io::Cursor::new(firmware))?;
             (info.version, info.hash)
         }
@@ -209,7 +209,7 @@ pub(crate) fn firmware_update(
         // and does not support swapping.
         // Sanity check that the image is on the first position already to avoid false
         // positives of this exception.
-        if bootloader_type == BootloaderType::McuBoot && set_state_error.command_not_supported() {
+        if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported() {
             progress("Querying device state ...".into(), None)?;
             let image_state = client
                 .image_get_state()

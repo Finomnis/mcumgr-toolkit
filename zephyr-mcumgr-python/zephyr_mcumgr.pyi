@@ -84,7 +84,7 @@ class ImageState:
     def hash(self) -> typing.Optional[bytes]:
         r"""
         SHA256 hash of the image header and body
-
+        
         Note that this will not be the same as the SHA256 of the whole file, it is the field in the
         MCUboot TLV section that contains a hash of the data which is used for signature
         verification purposes.
@@ -124,9 +124,9 @@ class MCUmgrClient:
     def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 10000) -> 'MCUmgrClient':
         r"""
         Creates a new serial port based Zephyr MCUmgr SMP client.
-
+        
         ### Arguments
-
+        
         * `serial` - The identifier of the serial device. (Windows: `COMxx`, Linux: `/dev/ttyXX`)
         * `baud_rate` - The baud rate of the serial port.
         * `timeout_ms` - The communication timeout, in ms.
@@ -135,18 +135,18 @@ class MCUmgrClient:
     def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 10000) -> 'MCUmgrClient':
         r"""
         Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
-
+        
         Useful for programming many devices in rapid succession, as Windows usually
         gives each one a different COMxx identifier.
-
+        
         ### Arguments
-
+        
         * `identifier` - A regex that identifies the device.
         * `baud_rate` - The baud rate the port should operate at.
         * `timeout_ms` - The communication timeout, in ms.
-
+        
         ### Identifier examples
-
+        
         - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
         - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
         - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
@@ -154,7 +154,7 @@ class MCUmgrClient:
     def set_frame_size(self, smp_frame_size: builtins.int) -> None:
         r"""
         Configures the maximum SMP frame size that we can send to the device.
-
+        
         Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
         otherwise we might crash the device.
         """
@@ -167,62 +167,76 @@ class MCUmgrClient:
     def set_timeout_ms(self, timeout_ms: builtins.int) -> None:
         r"""
         Changes the communication timeout.
-
+        
         When the device does not respond to packets within the set
         duration, an error will be raised.
         """
     def check_connection(self) -> None:
         r"""
         Checks if the device is alive and responding.
-
+        
         Runs a simple echo with random data and checks if the response matches.
-
+        
         Raises an error if the device is not alive and responding.
+        """
+    def firmware_update(self, firmware: bytes, checksum: typing.Optional[builtins.str | builtins.bytes] = None, bootloader_type: typing.Optional[typing.Literal['MCUboot']] = None, skip_reboot: builtins.bool = False, force_confirm: builtins.bool = False, upgrade_only: builtins.bool = False, progress: typing.Optional[collections.abc.Callable[[builtins.str, builtins.tuple[builtins.int, builtins.int]], None]] = None) -> None:
+        r"""
+        High level firmware update routine.
+        
+        ### Arguments
+        
+        * `firmware` - The firmware image data.
+        * `checksum` - SHA256 of the firmware image. Optional.
+        * `bootloader_type` - The type of bootloader. Auto-detect bootloader if missing.
+        * `skip_reboot` - Do not reboot device after the update.
+        * `force_confirm` - Skip test boot and confirm directly.
+        * `upgrade_only` - Prevent firmware downgrades.
+        * `progress` - A callback that receives progress updates.
         """
     def os_echo(self, msg: builtins.str) -> builtins.str:
         r"""
         Sends a message to the device and expects the same message back as response.
-
+        
         This can be used as a sanity check for whether the device is connected and responsive.
         """
     def os_task_statistics(self) -> 'builtins.dict[builtins.str, TaskStatistics]':
         r"""
         Queries live task statistics
-
+        
         ### Note
-
+        
         Converts `stkuse` and `stksiz` to bytes.
         Zephyr originally reports them as number of 4 byte words.
-
+        
         ### Return
-
+        
         A map of task names with their respective statistics
         """
     def os_set_datetime(self, datetime: datetime.datetime) -> None:
         r"""
         Sets the RTC of the device to the given datetime.
-
+        
         Uses the contained local time and discards timezone information.
         """
     def os_get_datetime(self) -> datetime.datetime:
         r"""
         Retrieves the device RTC's datetime.
-
+        
         Will not contain timezone information.
         """
     def os_system_reset(self, force: builtins.bool = False, boot_mode: typing.Optional[builtins.int] = None) -> None:
         r"""
         Issues a system reset.
-
+        
         ### Arguments
-
+        
         * `force` - Issues a force reset.
         * `boot_mode` - Overwrites the default boot mode.
-
+        
         Known `boot_mode` values:
         * `0` - Normal system boot
         * `1` - Bootloader recovery mode
-
+        
         Note that `boot_mode` only works if [`MCUMGR_GRP_OS_RESET_BOOT_MODE`](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_MCUMGR_GRP_OS_RESET_BOOT_MODE) is enabled.
         """
     def os_mcumgr_parameters(self) -> 'MCUmgrParameters':
@@ -232,13 +246,13 @@ class MCUmgrClient:
     def os_application_info(self, format: typing.Optional[builtins.str] = None) -> builtins.str:
         r"""
         Fetch information on the running image
-
+        
         Similar to Linux's `uname` command.
-
+        
         ### Arguments
-
+        
         * `format` - Format specifier for the returned response
-
+        
         For more information about the format specifier fields, see
         the [SMP documentation](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info-request).
         """
@@ -253,17 +267,17 @@ class MCUmgrClient:
     def image_set_state(self, hash: typing.Optional[builtins.str | builtins.bytes] = None, confirm: builtins.bool = False) -> 'builtins.list[ImageState]':
         r"""
         Modify the current image state and return the new state
-
+        
         ### Arguments
-
+        
         * `hash` - the SHA256 id of the image.
         * `confirm` - mark the given image as 'confirmed'
-
+        
         If `confirm` is `false`, perform a test boot with the given image and revert upon hard reset.
-
+        
         If `confirm` is `true`, boot to the given image and mark it as `confirmed`. If `hash` is omitted,
         confirm the currently running image.
-
+        
         Note that `hash` will not be the same as the SHA256 of the whole firmware image,
         it is the field in the MCUboot TLV section that contains a hash of the data
         which is used for signature verification purposes.
@@ -271,18 +285,18 @@ class MCUmgrClient:
     def image_upload(self, data: bytes, image: typing.Optional[builtins.int] = None, checksum: typing.Optional[builtins.str | builtins.bytes] = None, upgrade_only: builtins.bool = False, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> None:
         r"""
         Upload a firmware image to an image slot.
-
+        
         ### Arguments
-
+        
         * `data` - The firmware image data
         * `image` - Selects target image on the device. Defaults to `0`.
         * `checksum` - The SHA256 checksum of the image. If missing, will be computed from the image data.
         * `upgrade_only` - If true, allow firmware upgrades only and reject downgrades.
         * `progress` - A callable object that takes (transmitted, total) values as parameters.
                        Any return value is ignored. Raising an exception aborts the operation.
-
+        
         ### Performance
-
+        
         Uploading files with Zephyr's default parameters is slow.
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` and then enable larger chunking through either `set_frame_size`
@@ -291,9 +305,9 @@ class MCUmgrClient:
     def image_erase(self, slot: typing.Optional[builtins.int] = None) -> None:
         r"""
         Erase image slot on target device.
-
+        
         ### Arguments
-
+        
         * `slot` - The slot ID of the image to erase. Slot `1` if omitted.
         """
     def image_slot_info(self) -> 'builtins.list[SlotInfoImage]':
@@ -303,19 +317,19 @@ class MCUmgrClient:
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""
         Load a file from the device.
-
+        
         ### Arguments
-
+        
         * `name` - The full path of the file on the device.
         * `progress` - A callable object that takes (transmitted, total) values as parameters.
                        Any return value is ignored. Raising an exception aborts the operation.
-
+        
         ### Return
-
+        
         The file content
-
+        
         ### Performance
-
+        
         Downloading files with Zephyr's default parameters is slow.
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` or larger.
@@ -323,16 +337,16 @@ class MCUmgrClient:
     def fs_file_upload(self, name: builtins.str, data: bytes, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> None:
         r"""
         Write a file to the device.
-
+        
         ### Arguments
-
+        
         * `name` - The full path of the file on the device.
         * `data` - The file content.
         * `progress` - A callable object that takes (transmitted, total) values as parameters.
                        Any return value is ignored. Raising an exception aborts the operation.
-
+        
         ### Performance
-
+        
         Uploading files with Zephyr's default parameters is slow.
         You want to increase [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
         to maybe `4096` and then enable larger chunking through either `set_frame_size`
@@ -345,11 +359,11 @@ class MCUmgrClient:
     def fs_file_checksum(self, name: builtins.str, algorithm: typing.Optional[builtins.str] = None, offset: builtins.int = 0, length: typing.Optional[builtins.int] = None) -> 'FileChecksum':
         r"""
         Computes the hash/checksum of a file
-
+        
         For available algorithms, see `fs_supported_checksum_types`.
-
+        
         ### Arguments
-
+        
         * `name` - The absolute path of the file on the device
         * `algorithm` - The hash/checksum algorithm to use, or default if None
         * `offset` - How many bytes of the file to skip
@@ -366,13 +380,13 @@ class MCUmgrClient:
     def shell_execute(self, argv: typing.Sequence[builtins.str]) -> builtins.str:
         r"""
         Run a shell command.
-
+        
         ### Arguments
-
+        
         * `argv` - The shell command to be executed.
-
+        
         ### Return
-
+        
         The command output
         """
     def zephyr_erase_storage(self) -> None:
@@ -382,23 +396,23 @@ class MCUmgrClient:
     def raw_command(self, write_operation: builtins.bool, group_id: builtins.int, command_id: builtins.int, data: typing.Any) -> typing.Any:
         r"""
         Execute a raw MCUmgrCommand.
-
+        
         Only returns if no error happened, so the
         user does not need to check for an `rc` or `err`
         field in the response.
-
+        
         Read Zephyr's [SMP Protocol Specification](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html)
         for more information.
-
+        
         ### Arguments
-
+        
         * `write_operation` - Whether the command is a read or write operation.
         * `group_id` - The group ID of the command
         * `command_id` - The command ID
         * `data` - Anything that can be serialized as a proper packet payload.
-
+        
         ### Example
-
+        
         ```python
         client.raw_command(True, 0, 0, {"d": "Hello!"})
         # Returns: {'r': 'Hello!'}
@@ -440,7 +454,7 @@ class McubootImageInfo:
     def hash(self) -> bytes:
         r"""
         The identifying hash for the firmware
-
+        
         Note that this will not be the same as the SHA256 of the whole file, it is the field in the
         MCUboot TLV section that contains a hash of the data which is used for signature
         verification purposes.
@@ -547,3 +561,4 @@ def mcuboot_get_image_info(image_data: bytes) -> 'McubootImageInfo':
     r"""
     Extract information from an MCUboot image file
     """
+

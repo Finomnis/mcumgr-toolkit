@@ -15,7 +15,7 @@ pub enum BootloaderType {
 impl From<BootloaderType> for zephyr_mcumgr::bootloader::BootloaderType {
     fn from(value: BootloaderType) -> Self {
         match value {
-            BootloaderType::Mcuboot => Self::McuBoot,
+            BootloaderType::Mcuboot => Self::MCUboot,
         }
     }
 }

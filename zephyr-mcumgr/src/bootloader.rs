@@ -29,7 +29,7 @@ impl serde::Serialize for BootloaderInfo {
         match self {
             BootloaderInfo::MCUboot { mode, no_downgrade } => {
                 let mut s = serializer.serialize_struct(struct_name, 3)?;
-                s.serialize_field("name", "MCUboot")?;
+                s.serialize_field("name", &BootloaderType::MCUboot.to_string())?;
                 s.serialize_field("mode", mode)?;
                 s.serialize_field("no_downgrade", no_downgrade)?;
                 s.end()
@@ -45,20 +45,12 @@ impl serde::Serialize for BootloaderInfo {
 }
 
 /// Supported bootloader/image types
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, strum::Display, strum::EnumString,
+)]
 pub enum BootloaderType {
-    /// McuBoot Bootloader
-    McuBoot,
-}
-
-impl std::fmt::Display for BootloaderType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = match self {
-            BootloaderType::McuBoot => "MCUboot",
-        };
-
-        write!(f, "{name}",)
-    }
+    /// MCUboot Bootloader
+    MCUboot,
 }
 
 impl BootloaderInfo {
@@ -67,7 +59,7 @@ impl BootloaderInfo {
     /// If the type is unknown, returns the name of the bootloader `Err` value.
     pub fn get_bootloader_type(&self) -> Result<BootloaderType, String> {
         match self {
-            BootloaderInfo::MCUboot { .. } => Ok(BootloaderType::McuBoot),
+            BootloaderInfo::MCUboot { .. } => Ok(BootloaderType::MCUboot),
             BootloaderInfo::Unknown { name } => Err(name.clone()),
         }
     }
