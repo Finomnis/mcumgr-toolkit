@@ -17,7 +17,6 @@ fn parse_raw_command_data(s: &str) -> Result<ciborium::Value, serde_json::Error>
 #[derive(Debug, clap::Args)]
 pub struct RawCommand {
     /// Whether this is a read or write command
-    #[arg(value_enum)]
     pub op: RawCommandOp,
     /// The group ID of the command
     pub group_id: u16,

@@ -25,7 +25,6 @@ pub enum FirmwareCommand {
     /// Shows information about an MCUboot image file
     GetImageInfo {
         /// The image type
-        #[arg(value_enum)]
         r#type: BootloaderType,
         /// The image file to analyze. '-' for stdin.
         file: String,
