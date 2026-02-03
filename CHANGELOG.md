@@ -16,7 +16,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - Rust library crate: `zephyr-mcumgr` -> `mcumgr-toolkit`
 - Rust CLI crate: `zephyr-mcumgr-cli` -> `mcumgr-toolkit-cli`
    - CLI executable: `zephyr-mcumgr` -> `mcumgrctl`
-- Python package: `zepyr-mcumgr` -> `mcumgr-toolkit`
+- Python package: `zephyr-mcumgr` -> `mcumgr-toolkit`
 
 ### Breaking Changes
 
@@ -284,3 +284,4 @@ Primarily to test release workflow.
 [0.1.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.2...0.1.0
 [0.0.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.1...0.0.2
 [0.0.1]: https://github.com/Finomnis/mcumgr-toolkit/releases/tag/0.0.1
+
