@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- List available serial ports on `mcumgrctl --serial`
+- List available serial ports on `mcumgrctl --serial` without argument
 
 ## [0.8.0] - 2026-02-03
 
