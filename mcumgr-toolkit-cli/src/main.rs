@@ -47,7 +47,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
                 }
                 println!();
             }
-            std::process::exit(0);
+            return Ok(());
         }
 
         let serial = serialport::new(serial_name, args.baud)
@@ -78,7 +78,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
                 }
                 println!();
             }
-            std::process::exit(0);
+            return Ok(());
         }
 
         Client::new(result?)
