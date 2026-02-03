@@ -21,7 +21,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Generate python stubs
-        working-directory: zephyr-mcumgr-python
+        working-directory: mcumgr-toolkit-python
         run: cargo run --bin stub_gen --no-default-features --features pyo3-embed
 
       - run: git diff --exit-code
@@ -38,11 +38,11 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: universal2-apple-darwin
-          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel - universal2
         run: |
-          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
-          python -c "import zephyr_mcumgr"
+          pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
+          python -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -65,11 +65,11 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel
         run: |
-          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
-          python -c "import zephyr_mcumgr"
+          pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
+          python -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -92,12 +92,12 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: auto
-          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel
         if: matrix.target == 'x86_64'
         run: |
-          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
-          python -c "import zephyr_mcumgr"
+          pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
+          python -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -119,7 +119,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: auto
-          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - uses: uraimo/run-on-arch-action@v3.0.1
         if: matrix.target != 'ppc64'
         name: Install built wheel
@@ -133,8 +133,8 @@ jobs:
             pip3 install -U pip
           run: |
             ls -la dist/
-            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall
-            python3 -c "import zephyr_mcumgr"
+            pip3 install mcumgr_toolkit --no-index --find-links dist/ --force-reinstall
+            python3 -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -159,7 +159,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel
         if: matrix.target == 'x86_64-unknown-linux-musl'
         uses: addnab/docker-run-action@v3
@@ -169,8 +169,8 @@ jobs:
           run: |
             apk add py3-pip
             pip3 install -U pip --break-system-packages
-            pip3 install zephyr_mcumgr --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
-            python3 -c "import zephyr_mcumgr"
+            pip3 install mcumgr_toolkit --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
+            python3 -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -196,7 +196,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist -m zephyr-mcumgr-python/Cargo.toml
+          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - uses: uraimo/run-on-arch-action@v3.0.1
         name: Install built wheel
         with:
@@ -207,8 +207,8 @@ jobs:
             apk add py3-pip
             pip3 install -U pip --break-system-packages
           run: |
-            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall --break-system-packages
-            python3 -c "import zephyr_mcumgr"
+            pip3 install mcumgr_toolkit --no-index --find-links dist/ --force-reinstall --break-system-packages
+            python3 -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -250,7 +250,7 @@ jobs:
         run: test -n "${{ env.release_tag_version }}"
 
       - name: Check for correct version
-        run: find wheels -name "zephyr_mcumgr-${{ env.release_tag_version }}-*" | grep .
+        run: find wheels -name "mcumgr_toolkit-${{ env.release_tag_version }}-*" | grep .
 
       - name: Publish to PyPI
         env:

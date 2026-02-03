@@ -24,7 +24,7 @@ jobs:
       - name: Install llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Compute Coverage
-        run: cargo llvm-cov --package zephyr-mcumgr --codecov --output-path codecov.json -- --test-threads 1
+        run: cargo llvm-cov --package mcumgr-toolkit --codecov --output-path codecov.json -- --test-threads 1
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         env:

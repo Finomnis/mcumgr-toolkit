@@ -838,6 +838,68 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcumgr-toolkit"
+version = "0.8.0"
+dependencies = [
+ "base64",
+ "chrono",
+ "ciborium",
+ "crc",
+ "hex",
+ "log",
+ "miette",
+ "proptest",
+ "rand 0.9.2",
+ "regex",
+ "ringbuf",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "serialport",
+ "sha2",
+ "strum",
+ "thiserror",
+]
+
+[[package]]
+name = "mcumgr-toolkit-cli"
+version = "0.8.0"
+dependencies = [
+ "chrono",
+ "ciborium",
+ "clap",
+ "console",
+ "env_logger",
+ "hex",
+ "indicatif",
+ "indicatif-log-bridge",
+ "log",
+ "mcumgr-toolkit",
+ "miette",
+ "serde_json",
+ "serialport",
+ "thiserror",
+]
+
+[[package]]
+name = "mcumgr-toolkit-python"
+version = "0.8.0"
+dependencies = [
+ "ciborium",
+ "hex",
+ "mcumgr-toolkit",
+ "miette",
+ "pyo3",
+ "pyo3-log",
+ "pyo3-stub-gen",
+ "serde",
+ "serde-pyobject",
+ "serialport",
+ "strum",
+ "thiserror",
+]
+
+[[package]]
 name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2154,68 +2216,6 @@ name = "wit-bindgen"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
-
-[[package]]
-name = "zephyr-mcumgr"
-version = "0.8.0"
-dependencies = [
- "base64",
- "chrono",
- "ciborium",
- "crc",
- "hex",
- "log",
- "miette",
- "proptest",
- "rand 0.9.2",
- "regex",
- "ringbuf",
- "serde",
- "serde_bytes",
- "serde_repr",
- "serialport",
- "sha2",
- "strum",
- "thiserror",
-]
-
-[[package]]
-name = "zephyr-mcumgr-cli"
-version = "0.8.0"
-dependencies = [
- "chrono",
- "ciborium",
- "clap",
- "console",
- "env_logger",
- "hex",
- "indicatif",
- "indicatif-log-bridge",
- "log",
- "miette",
- "serde_json",
- "serialport",
- "thiserror",
- "zephyr-mcumgr",
-]
-
-[[package]]
-name = "zephyr-mcumgr-python"
-version = "0.8.0"
-dependencies = [
- "ciborium",
- "hex",
- "miette",
- "pyo3",
- "pyo3-log",
- "pyo3-stub-gen",
- "serde",
- "serde-pyobject",
- "serialport",
- "strum",
- "thiserror",
- "zephyr-mcumgr",
-]
 
 [[package]]
 name = "zerocopy"

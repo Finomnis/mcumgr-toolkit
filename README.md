@@ -1,12 +1,12 @@
-# Zephyr MCUmgr Client
+# MCUmgr Client for Zephyr
 
-[![Crates.io](https://img.shields.io/crates/v/zephyr-mcumgr)](https://crates.io/crates/zephyr-mcumgr)
-[![PyPI - Version](https://img.shields.io/pypi/v/zephyr_mcumgr)](https://pypi.org/project/zephyr-mcumgr/)
-[![Crates.io](https://img.shields.io/crates/d/zephyr-mcumgr)](https://crates.io/crates/zephyr-mcumgr)
-[![License](https://img.shields.io/crates/l/zephyr-mcumgr)](https://github.com/Finomnis/zephyr-mcumgr-client/blob/main/LICENSE-MIT)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Finomnis/zephyr-mcumgr-client/ci.yml?branch=main)](https://github.com/Finomnis/zephyr-mcumgr-client/actions/workflows/ci.yml?query=branch%3Amain)
-[![docs.rs](https://img.shields.io/docsrs/zephyr-mcumgr)](https://docs.rs/zephyr-mcumgr)
-[![Coverage Status](https://img.shields.io/codecov/c/github/Finomnis/zephyr-mcumgr-client)](https://app.codecov.io/github/Finomnis/zephyr-mcumgr-client)
+[![Crates.io](https://img.shields.io/crates/v/mcumgr-toolkit)](https://crates.io/crates/mcumgr-toolkit)
+[![PyPI - Version](https://img.shields.io/pypi/v/mcumgr-toolkit)](https://pypi.org/project/mcumgr-toolkit/)
+[![Crates.io](https://img.shields.io/crates/d/mcumgr-toolkit)](https://crates.io/crates/mcumgr-toolkit)
+[![License](https://img.shields.io/crates/l/mcumgr-toolkit)](https://github.com/Finomnis/mcumgr-toolkit/blob/main/LICENSE-MIT)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Finomnis/mcumgr-toolkit/ci.yml?branch=main)](https://github.com/Finomnis/mcumgr-toolkit/actions/workflows/ci.yml?query=branch%3Amain)
+[![docs.rs](https://img.shields.io/docsrs/mcumgr-toolkit)](https://docs.rs/mcumgr-toolkit)
+[![Coverage Status](https://img.shields.io/codecov/c/github/Finomnis/mcumgr-toolkit)](https://app.codecov.io/github/Finomnis/mcumgr-toolkit)
 
 This crate provides a full Rust-based software suite for Zephyr's [MCUmgr protocol](https://docs.zephyrproject.org/latest/services/device_mgmt/mcumgr.html).
 
@@ -14,14 +14,14 @@ It might be compatible with other MCUmgr/SMP-based systems, but it is developed 
 
 Specifically, it provides:
 
-- A [Rust library](https://crates.io/crates/zephyr-mcumgr) that supports all Zephyr MCUmgr commands
-- A [CLI tool](https://crates.io/crates/zephyr-mcumgr-cli) that allows most of the commands to be run via command line
-- A [Python interface](https://pypi.org/project/zephyr-mcumgr/) for the library
+- A [Rust library](https://crates.io/crates/mcumgr-toolkit) that supports all Zephyr MCUmgr commands
+- A [CLI tool](https://crates.io/crates/mcumgr-toolkit-cli) that allows most of the commands to be run via command line
+- A [Python interface](https://pypi.org/project/mcumgr-toolkit/) for the library
 
 Its primary design goals are:
 - Completeness
   - cover all use cases of Zephyr's MCUmgr
-  - for implementation progress, see this [tracking issue](https://github.com/Finomnis/zephyr-mcumgr-client/issues/32)
+  - for implementation progress, see this [tracking issue](https://github.com/Finomnis/mcumgr-toolkit/issues/32)
 - Performance
   - use static memory and large buffers to prioritize performance
     over memory footprint
@@ -32,7 +32,7 @@ Its primary design goals are:
 ## Usage Example
 
 ```rust no_run
-use zephyr_mcumgr::MCUmgrClient;
+use mcumgr_toolkit::MCUmgrClient;
 use std::time::Duration;
 
 fn main() {
@@ -54,13 +54,13 @@ fn main() {
 To use this library in your project, enter your project directory and run:
 
 ```none
-cargo add zephyr-mcumgr
+cargo add mcumgr-toolkit
 ```
 
 ## Installation as command line tool
 
 ```none
-cargo install zephyr-mcumgr-cli
+cargo install mcumgr-toolkit-cli
 ```
 
 ### Usage examples
@@ -68,28 +68,28 @@ cargo install zephyr-mcumgr-cli
 Send an echo over a serial connection:
 
 ```none
-$ zephyr-mcumgr --serial COM42 os echo "Hello world!"
+$ mcumgrctl --serial COM42 os echo "Hello world!"
 Hello world!
 ```
 
 Omit the command to run a simple connection test:
 
 ```none
-$ zephyr-mcumgr --serial COM42
+$ mcumgrctl --serial COM42
 Device alive and responsive.
 ```
 
 Connect to a USB serial port using USB VID/PID:
 
 ```none
-$ zephyr-mcumgr --usb-serial 2fe3:0004
+$ mcumgrctl --usb-serial 2fe3:0004
 Device alive and responsive.
 ```
 
 Or without an identifier to list all available ports:
 
 ```none
-$ zephyr-mcumgr --usb-serial
+$ mcumgrctl --usb-serial
 
 Available USB serial ports:
 
@@ -99,7 +99,7 @@ Available USB serial ports:
 You can even use a Regex if you want:
 
 ```none
-$ zephyr-mcumgr --usb-serial "2fe3:.*"
+$ mcumgrctl --usb-serial "2fe3:.*"
 Device alive and responsive.
 ```
 

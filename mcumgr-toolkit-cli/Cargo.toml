@@ -1,0 +1,34 @@
+[package]
+name = "mcumgr-toolkit-cli"
+description = "Command-line interface for Zephyr's MCUmgr protocol"
+categories = ["command-line-utilities"]
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+
+[[bin]]
+name = "mcumgrctl"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+mcumgr-toolkit.workspace = true
+serialport = { workspace = true, features = ["usbportinfo-interface"] }
+miette = { workspace = true, features = ["fancy"] }
+env_logger.workspace = true
+clap = { workspace = true, features = ["derive"] }
+log.workspace = true
+thiserror.workspace = true
+serde_json.workspace = true
+indicatif.workspace = true
+indicatif-log-bridge.workspace = true
+ciborium.workspace = true
+chrono.workspace = true
+hex.workspace = true
+console.workspace = true

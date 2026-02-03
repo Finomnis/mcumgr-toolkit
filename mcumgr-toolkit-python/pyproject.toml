@@ -1,0 +1,30 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "mcumgr-toolkit"
+requires-python = ">=3.10"
+dynamic = ["version", "description", "readme", "authors", "keywords"]
+license = { text = "MIT OR Apache-2.0" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Repository = "https://github.com/Finomnis/mcumgr-toolkit"
+Documentation = "https://finomnis.github.io/mcumgr-toolkit"
+Issues = "https://github.com/Finomnis/mcumgr-toolkit/issues"
+
+[tool.maturin]
+module-name = "mcumgr_toolkit"
