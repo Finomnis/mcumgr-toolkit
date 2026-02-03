@@ -104,7 +104,7 @@ pub(crate) fn firmware_update(
     mut progress: Option<&mut FirmwareUpdateProgressCallback>,
 ) -> Result<(), FirmwareUpdateError> {
     // Might become a params member in the future
-    let target_image = None;
+    let target_image: Option<u32> = Default::default();
     let actual_target_image = target_image.unwrap_or(0);
 
     let firmware = firmware.as_ref();
