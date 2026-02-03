@@ -72,6 +72,12 @@ $ mcumgrctl --serial COM42 os echo "Hello world!"
 Hello world!
 ```
 
+Perform a firmware update:
+
+```none
+$ mcumgrctl --serial COM42 firmware update zephyr.signed.encrypted.bin
+```
+
 Omit the command to run a simple connection test:
 
 ```none
