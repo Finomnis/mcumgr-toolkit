@@ -103,6 +103,10 @@ pub(crate) fn firmware_update(
     params: FirmwareUpdateParams,
     mut progress: Option<&mut FirmwareUpdateProgressCallback>,
 ) -> Result<(), FirmwareUpdateError> {
+    // Might become a params member in the future
+    let target_image = None;
+    let actual_target_image = target_image.unwrap_or(0).into();
+
     let firmware = firmware.as_ref();
 
     let has_progress = progress.is_some();
@@ -152,7 +156,12 @@ pub(crate) fn firmware_update(
 
     let active_image = image_state
         .iter()
-        .find(|img| img.image == 0 && img.slot == 0);
+        .find(|img| img.image == actual_target_image && img.active)
+        .or_else(|| {
+            image_state
+                .iter()
+                .find(|img| img.image == actual_target_image && img.slot == 0)
+        });
 
     let active_image_string = if let Some(active_image) = &active_image {
         if let Some(active_hash) = active_image.hash {
@@ -185,7 +194,7 @@ pub(crate) fn firmware_update(
     client
         .image_upload(
             firmware,
-            None,
+            target_image,
             checksum,
             params.upgrade_only,
             has_progress.then_some(&mut upload_progress_cb),
