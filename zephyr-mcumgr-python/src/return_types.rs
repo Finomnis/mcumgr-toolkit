@@ -176,10 +176,10 @@ impl From<commands::os::TaskStatisticsEntry> for TaskStatistics {
 pub struct ImageState {
     /// image number
     #[pyo3(get)]
-    pub image: u64,
+    pub image: u32,
     /// slot number within “image”
     #[pyo3(get)]
-    pub slot: u64,
+    pub slot: u32,
     /// string representing image version, as set with `imgtool`
     #[pyo3(get)]
     pub version: String,

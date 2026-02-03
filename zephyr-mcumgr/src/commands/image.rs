@@ -20,9 +20,9 @@ where
 pub struct ImageState {
     /// image number
     #[serde(default)]
-    pub image: u64,
+    pub image: u32,
     /// slot number within “image”
-    pub slot: u64,
+    pub slot: u32,
     /// string representing image version, as set with `imgtool`
     pub version: String,
     /// SHA256 hash of the image header and body

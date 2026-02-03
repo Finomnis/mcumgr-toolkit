@@ -105,7 +105,7 @@ pub(crate) fn firmware_update(
 ) -> Result<(), FirmwareUpdateError> {
     // Might become a params member in the future
     let target_image = None;
-    let actual_target_image = target_image.unwrap_or(0).into();
+    let actual_target_image = target_image.unwrap_or(0);
 
     let firmware = firmware.as_ref();
 
