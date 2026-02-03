@@ -23,6 +23,33 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     let args = args::App::parse();
 
     let client = if let Some(serial_name) = args.serial {
+        if serial_name.is_empty() {
+            let ports = serialport::available_ports()
+                .map_err(CliError::ListSerialPortsFailed)?
+                .into_iter()
+                .map(|port| port.port_name)
+                .collect::<Vec<_>>();
+            if args.common.json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&ports).map_err(CliError::JsonEncodeError)?
+                );
+            } else {
+                println!();
+                if ports.is_empty() {
+                    println!("No serial ports available.");
+                } else {
+                    println!("Available serial ports:");
+                    println!();
+                    for port in ports {
+                        println!(" - {port}");
+                    }
+                }
+                println!();
+            }
+            std::process::exit(0);
+        }
+
         let serial = serialport::new(serial_name, args.baud)
             .timeout(Duration::from_millis(args.timeout))
             .open()
