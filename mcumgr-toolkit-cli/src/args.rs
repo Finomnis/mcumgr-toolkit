@@ -23,7 +23,9 @@ pub struct CommonArgs {
 #[command(disable_help_subcommand = true)]
 pub struct App {
     /// Use the given serial port as backend
-    #[arg(short, long)]
+    ///
+    /// If no argument provided, list all available ports and exit.
+    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
     pub serial: Option<String>,
 
     /// Use the given usb serial port as backend

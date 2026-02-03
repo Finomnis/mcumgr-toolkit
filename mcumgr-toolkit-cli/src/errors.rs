@@ -13,6 +13,9 @@ use mcumgr_toolkit::{
 /// Possible CLI errors.
 #[derive(Error, Debug, Diagnostic)]
 pub enum CliError {
+    #[error("Failed to list serial ports")]
+    #[diagnostic(code(mcumgrctl::list_serial_ports_failed))]
+    ListSerialPortsFailed(#[source] serialport::Error),
     #[error("Failed to open serial port")]
     #[diagnostic(code(mcumgrctl::open_serial_failed))]
     OpenSerialFailed(#[source] serialport::Error),

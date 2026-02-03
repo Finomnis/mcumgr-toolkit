@@ -839,7 +839,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "base64",
  "chrono",
@@ -863,7 +863,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit-cli"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "chrono",
  "ciborium",
@@ -883,7 +883,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit-python"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "ciborium",
  "hex",
