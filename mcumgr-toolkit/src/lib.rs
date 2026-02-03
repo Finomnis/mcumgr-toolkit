@@ -2,7 +2,7 @@
 #![deny(unreachable_pub)]
 #![forbid(unsafe_code)]
 #![doc = include_str!("../README.md")]
-#![doc(issue_tracker_base_url = "https://github.com/Finomnis/zephyr-mcumgr-client/issues")]
+#![doc(issue_tracker_base_url = "https://github.com/Finomnis/mcumgr-toolkit-client/issues")]
 
 /// A high-level client for Zephyr's MCUmgr SMP functionality
 pub mod client;

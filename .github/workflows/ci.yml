@@ -44,10 +44,10 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }} --workspace --exclude zephyr-mcumgr-python
+        run: cargo build --release --target ${{ matrix.target }} --workspace --exclude mcumgr-toolkit-python
 
       - name: Test
-        run: cargo test --release --target ${{ matrix.target }} --workspace --exclude zephyr-mcumgr-python --verbose $DOCTEST_XCOMPILE -- --test-threads 1
+        run: cargo test --release --target ${{ matrix.target }} --workspace --exclude mcumgr-toolkit-python --verbose $DOCTEST_XCOMPILE -- --test-threads 1
 
   build-examples:
     name: Build Examples
@@ -81,11 +81,11 @@ jobs:
       - name: Install cargo-msrv
         run: cargo binstall --version 0.18.4 --no-confirm cargo-msrv
 
-      - name: Check MSRV of zephyr-mcumgr
-        run: cargo msrv verify --path zephyr-mcumgr --log-target=stdout --output-format=json
+      - name: Check MSRV of mcumgr-toolkit
+        run: cargo msrv verify --path mcumgr-toolkit --log-target=stdout --output-format=json
 
-      - name: Check MSRV of zephyr-mcumgr-cli
-        run: cargo msrv verify --path zephyr-mcumgr-cli --log-target=stdout --output-format=json
+      - name: Check MSRV of mcumgr-toolkit-cli
+        run: cargo msrv verify --path mcumgr-toolkit-cli --log-target=stdout --output-format=json
 
   semver:
     name: Semantic Versioning
@@ -98,7 +98,7 @@ jobs:
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
-          manifest-path: zephyr-mcumgr/Cargo.toml
+          manifest-path: mcumgr-toolkit/Cargo.toml
 
   # min-versions:
   #   name: Minimal Dependency Versions
@@ -142,7 +142,7 @@ jobs:
   #       uses: taiki-e/install-action@cargo-minimal-versions
 
   #     - name: Determine MSRV
-  #       run: echo "MSRV=$(cargo msrv --path zephyr-mcumgr show --output-format=minimal)" >> $GITHUB_ENV
+  #       run: echo "MSRV=$(cargo msrv --path mcumgr-toolkit show --output-format=minimal)" >> $GITHUB_ENV
 
   #     - name: Show MSRV
   #       run: echo "$MSRV"
@@ -204,12 +204,12 @@ jobs:
       - name: Build
         env:
           RUSTFLAGS: "-Z sanitizer=address"
-        run: cargo build --workspace --exclude zephyr-mcumgr-python --target x86_64-unknown-linux-gnu --tests
+        run: cargo build --workspace --exclude mcumgr-toolkit-python --target x86_64-unknown-linux-gnu --tests
 
       - name: Run tests with leak sanitizer
         env:
           RUSTFLAGS: "-Z sanitizer=address"
-        run: cargo test --workspace --exclude zephyr-mcumgr-python
+        run: cargo test --workspace --exclude mcumgr-toolkit-python
           --target x86_64-unknown-linux-gnu --tests
           -- --test-threads 1
 
@@ -264,4 +264,4 @@ jobs:
         run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
 
       - name: Cargo publish
-        run: cargo publish --workspace --exclude zephyr-mcumgr-python
+        run: cargo publish --workspace --exclude mcumgr-toolkit-python

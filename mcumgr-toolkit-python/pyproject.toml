@@ -3,7 +3,7 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "zephyr-mcumgr"
+name = "mcumgr-toolkit"
 requires-python = ">=3.10"
 dynamic = ["version", "description", "readme", "authors", "keywords"]
 license = { text = "MIT OR Apache-2.0" }
@@ -22,9 +22,9 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/Finomnis/zephyr-mcumgr-client"
-Documentation = "https://finomnis.github.io/zephyr-mcumgr-client"
-Issues = "https://github.com/Finomnis/zephyr-mcumgr-client/issues"
+Repository = "https://github.com/Finomnis/mcumgr-toolkit"
+Documentation = "https://finomnis.github.io/mcumgr-toolkit"
+Issues = "https://github.com/Finomnis/mcumgr-toolkit/issues"
 
 [tool.maturin]
-module-name = "zephyr_mcumgr"
+module-name = "mcumgr_toolkit"

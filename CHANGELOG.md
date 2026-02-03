@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.8.0] - xxxx-xx-xx
 
+### Project Rename
+
+The existing project name `zephyr-mcumgr` violated Zephyr's trademark guidelines.
+
+For that reason, the project was renamed to `mcumgr-toolkit`:
+
+- Rust library crate: `zephyr-mcumgr` -> `mcumgr-toolkit`
+- Rust CLI crate: `zephyr-mcumgr-cli` -> `mcumgr-toolkit-cli`
+   - CLI executable: `zephyr-mcumgr` -> `mcumgrctl`
+- Python package: `zepyr-mcumgr` -> `mcumgr-toolkit`
+
 ### Breaking Changes
 
 - Rename CLI subcommand `mcuboot` to `firmware`
@@ -255,21 +266,21 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
-[0.8.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.7.0...0.8.0
-[0.7.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.6.2...0.7.0
-[0.6.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.6.1...0.6.2
-[0.6.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.6.0...0.6.1
-[0.6.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.1...0.6.0
-[0.5.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.5.0...0.5.1
-[0.5.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.2...0.5.0
-[0.4.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.1...0.4.2
-[0.4.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.4.0...0.4.1
-[0.4.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.3.1...0.4.0
-[0.3.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.3.0...0.3.1
-[0.3.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.2.1...0.3.0
-[0.2.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.2.0...0.2.1
-[0.2.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.1.1...0.2.0
-[0.1.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.1.0...0.1.1
-[0.1.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.0.2...0.1.0
-[0.0.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.0.1...0.0.2
-[0.0.1]: https://github.com/Finomnis/zephyr-mcumgr-client/releases/tag/0.0.1
+[0.8.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.7.0...0.8.0
+[0.7.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.6.2...0.7.0
+[0.6.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.6.1...0.6.2
+[0.6.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.6.0...0.6.1
+[0.6.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.5.1...0.6.0
+[0.5.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.5.0...0.5.1
+[0.5.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.4.2...0.5.0
+[0.4.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.4.1...0.4.2
+[0.4.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.4.0...0.4.1
+[0.4.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.3.1...0.4.0
+[0.3.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.3.0...0.3.1
+[0.3.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.2.1...0.3.0
+[0.2.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.2.0...0.2.1
+[0.2.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.1.1...0.2.0
+[0.1.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.2...0.1.0
+[0.0.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.1...0.0.2
+[0.0.1]: https://github.com/Finomnis/mcumgr-toolkit/releases/tag/0.0.1

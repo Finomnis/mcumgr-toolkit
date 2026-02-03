@@ -1,5 +1,5 @@
 [package]
-name = "zephyr-mcumgr-python"
+name = "mcumgr-toolkit-python"
 description = "Python API for Zephyr's MCUmgr protocol"
 
 rust-version = "1.91"
@@ -42,7 +42,7 @@ pyo3-log.workspace = true
 serde-pyobject.workspace = true
 serde.workspace = true
 ciborium.workspace = true
-zephyr-mcumgr.workspace = true
+mcumgr-toolkit.workspace = true
 serialport.workspace = true
 miette = { workspace = true, features = ["fancy"] }
 hex.workspace = true

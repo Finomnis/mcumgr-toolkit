@@ -1,5 +1,5 @@
 [package]
-name = "zephyr-mcumgr"
+name = "mcumgr-toolkit"
 description = "Core library of the software suite for Zephyr's MCUmgr protocol"
 
 version.workspace = true

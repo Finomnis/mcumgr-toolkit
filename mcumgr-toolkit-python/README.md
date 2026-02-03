@@ -1,11 +1,11 @@
-# Zephyr MCUmgr Client
+# MCUmgr Client for Zephyr
 
-[![Crates.io](https://img.shields.io/crates/v/zephyr-mcumgr)](https://crates.io/crates/zephyr-mcumgr)
-[![PyPI - Version](https://img.shields.io/pypi/v/zephyr_mcumgr)](https://pypi.org/project/zephyr-mcumgr)
-[![PyPI - Downloads](https://img.shields.io/pypi/dw/zephyr-mcumgr)](https://pypi.org/project/zephyr-mcumgr)
-[![License](https://img.shields.io/crates/l/zephyr-mcumgr)](https://github.com/Finomnis/zephyr-mcumgr-client/blob/main/LICENSE-MIT)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Finomnis/zephyr-mcumgr-client/ci.yml?branch=main)](https://github.com/Finomnis/zephyr-mcumgr-client/actions/workflows/ci.yml?query=branch%3Amain)
-[![Docs Status](https://img.shields.io/github/actions/workflow/status/Finomnis/zephyr-mcumgr-client/python-docs.yml?branch=main&label=docs)](https://finomnis.github.io/zephyr-mcumgr-client)
+[![Crates.io](https://img.shields.io/crates/v/mcumgr-toolkit)](https://crates.io/crates/mcumgr-toolkit)
+[![PyPI - Version](https://img.shields.io/pypi/v/mcumgr_toolkit)](https://pypi.org/project/mcumgr-toolkit)
+[![PyPI - Downloads](https://img.shields.io/pypi/dw/mcumgr-toolkit)](https://pypi.org/project/mcumgr-toolkit)
+[![License](https://img.shields.io/crates/l/mcumgr-toolkit)](https://github.com/Finomnis/mcumgr-toolkit/blob/main/LICENSE-MIT)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Finomnis/mcumgr-toolkit/ci.yml?branch=main)](https://github.com/Finomnis/mcumgr-toolkit/actions/workflows/ci.yml?query=branch%3Amain)
+[![Docs Status](https://img.shields.io/github/actions/workflow/status/Finomnis/mcumgr-toolkit/python-docs.yml?branch=main&label=docs)](https://finomnis.github.io/mcumgr-toolkit)
 
 This library provides a Rust-based Python API for Zephyr's [MCUmgr protocol](https://docs.zephyrproject.org/latest/services/device_mgmt/mcumgr.html).
 
@@ -14,7 +14,7 @@ It might be compatible with other MCUmgr/SMP-based systems, but it is developed 
 Its primary design goals are:
 - Completeness
   - cover all use cases of Zephyr's MCUmgr
-  - for implementation progress, see this [tracking issue](https://github.com/Finomnis/zephyr-mcumgr-client/issues/32)
+  - for implementation progress, see this [tracking issue](https://github.com/Finomnis/mcumgr-toolkit/issues/32)
 - Performance
   - use static memory and large buffers to prioritize performance
     over memory footprint
@@ -27,7 +27,7 @@ Its primary design goals are:
 Connect to a serial port:
 
 ```python no_run
-from zephyr_mcumgr import MCUmgrClient
+from mcumgr_toolkit import MCUmgrClient
 
 with MCUmgrClient.serial("/dev/ttyACM0") as client:
     client.use_auto_frame_size()
@@ -42,7 +42,7 @@ Hello world!
 Or a USB-based serial port:
 
 ```python no_run
-from zephyr_mcumgr import MCUmgrClient
+from mcumgr_toolkit import MCUmgrClient
 
 with MCUmgrClient.usb_serial("2fe3:0004") as client:
     client.use_auto_frame_size()
@@ -54,7 +54,7 @@ with MCUmgrClient.usb_serial("2fe3:0004") as client:
 Hello world!
 ```
 
-For more information, take a look at the [API reference](https://finomnis.github.io/zephyr-mcumgr-client).
+For more information, take a look at the [API reference](https://finomnis.github.io/mcumgr-toolkit).
 
 ## Performance
 
