@@ -223,10 +223,9 @@ pub(crate) fn firmware_update(
             let image_state = client
                 .image_get_state()
                 .map_err(FirmwareUpdateError::GetStateFailed)?;
-            if image_state
-                .iter()
-                .any(|img| img.image == 0 && img.slot == 0 && img.hash == Some(image_id_hash))
-            {
+            if image_state.iter().any(|img| {
+                img.image == actual_target_image && img.slot == 0 && img.hash == Some(image_id_hash)
+            }) {
                 image_already_active = true;
             }
         }
