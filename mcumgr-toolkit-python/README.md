@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/mcumgr-toolkit)](https://crates.io/crates/mcumgr-toolkit)
 [![PyPI - Version](https://img.shields.io/pypi/v/mcumgr_toolkit)](https://pypi.org/project/mcumgr-toolkit)
-[![PyPI - Downloads](https://img.shields.io/pypi/dw/mcumgr-toolkit)](https://pypi.org/project/mcumgr-toolkit)
+[![PyPI - Downloads](https://img.shields.io/pypi/dw/mcumgr_toolkit)](https://pypi.org/project/mcumgr-toolkit)
 [![License](https://img.shields.io/crates/l/mcumgr-toolkit)](https://github.com/Finomnis/mcumgr-toolkit/blob/main/LICENSE-MIT)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Finomnis/mcumgr-toolkit/ci.yml?branch=main)](https://github.com/Finomnis/mcumgr-toolkit/actions/workflows/ci.yml?query=branch%3Amain)
 [![Docs Status](https://img.shields.io/github/actions/workflow/status/Finomnis/mcumgr-toolkit/python-docs.yml?branch=main&label=docs)](https://finomnis.github.io/mcumgr-toolkit)
