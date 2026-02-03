@@ -14,8 +14,8 @@ It might be compatible with other MCUmgr/SMP-based systems, but it is developed 
 
 Specifically, it provides:
 
+- [`mcumgrctl`](https://crates.io/crates/mcumgr-toolkit-cli), a CLI tool for running MCUmgr actions via command line
 - A [Rust library](https://crates.io/crates/mcumgr-toolkit) that supports all Zephyr MCUmgr commands
-- A [CLI tool](https://crates.io/crates/mcumgr-toolkit-cli) that allows most of the commands to be run via command line
 - A [Python interface](https://pypi.org/project/mcumgr-toolkit/) for the library
 
 Its primary design goals are:
@@ -49,14 +49,6 @@ fn main() {
 "Hello world!"
 ```
 
-## Usage as a library
-
-To use this library in your project, enter your project directory and run:
-
-```none
-cargo add mcumgr-toolkit
-```
-
 ## Installation as command line tool
 
 ```none
@@ -65,17 +57,44 @@ cargo install mcumgr-toolkit-cli
 
 ### Usage examples
 
-Send an echo over a serial connection:
+List all available USB serial ports:
 
 ```none
-$ mcumgrctl --serial COM42 os echo "Hello world!"
-Hello world!
+$ mcumgrctl --usb-serial
+
+Available USB serial ports:
+
+ - 2fe3:0004:0 (/dev/ttyACM0) - Zephyr Project CDC ACM serial backend
+```
+
+> [!TIP]
+> `2fe3:0004` is the default VID/PID of Zephyr samples.
+
+Run a simple connection test:
+
+```none
+$ mcumgrctl --usb-serial 2fe3:0004
+Device alive and responsive.
+```
+
+You can even use a Regex if you want:
+
+```none
+$ mcumgrctl --usb-serial "2fe3:.*"
+Device alive and responsive.
+```
+
+Or a normal serial port descriptor:
+
+```none
+$ mcumgrctl --serial COM42
+Device alive and responsive.
 ```
 
 Perform a firmware update:
 
 ```none
-$ mcumgrctl --serial COM42 firmware update zephyr.signed.encrypted.bin
+$ mcumgrctl -u 2fe3:0004 firmware update zephyr.signed.encrypted.bin
 Detecting bootloader ...
 Found bootloader: MCUboot
 Parsing firmware image ...
@@ -88,39 +107,32 @@ Success.
 Device should reboot with new firmware.
 ```
 
-Omit the command to run a simple connection test:
+Or show device information:
 
 ```none
-$ mcumgrctl --serial COM42
-Device alive and responsive.
+$ mcumgrctl -u 2fe3:0004 os application-info
+
+OS/Application Info:
+    Kernel name:       Zephyr
+    Node name:         unknown
+    Kernel release:    v4.3.0-3-gc87e528897ea
+    Kernel version:    4.3.0
+    Build time:        Sat Jan 24 10:39:08 2026
+    Machine:           arm
+    Processor:         cortex-m4
+    Hardware platform: nrf52840dongle/nrf52840/bare
+    Operating system:  Zephyr
 ```
 
-Connect to a USB serial port using USB VID/PID:
+For more information, run `mcumgrctl --help`.
+
+## Usage as a library
+
+To use this library in your project, enter your project directory and run:
 
 ```none
-$ mcumgrctl --usb-serial 2fe3:0004
-Device alive and responsive.
+cargo add mcumgr-toolkit
 ```
-
-Or without an identifier to list all available ports:
-
-```none
-$ mcumgrctl --usb-serial
-
-Available USB serial ports:
-
- - 2fe3:0004:0 (/dev/ttyACM0) - Zephyr Project CDC ACM serial backend
-```
-
-You can even use a Regex if you want:
-
-```none
-$ mcumgrctl --usb-serial "2fe3:.*"
-Device alive and responsive.
-```
-
-> [!TIP]
-> `2fe3:0004` is the default VID/PID of Zephyr samples.
 
 ## Performance
 
