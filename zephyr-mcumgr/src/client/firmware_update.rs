@@ -18,6 +18,7 @@ pub enum FirmwareUpdateError {
     /// An error occurred while trying to detect the bootloader.
     #[error("Failed to detect bootloader")]
     #[diagnostic(code(zephyr_mcumgr::firmware_update::detect_bootloader))]
+    #[diagnostic(help("try to specify the bootloader type manually"))]
     BootloaderDetectionFailed(#[source] ExecuteError),
     /// The device contains a bootloader that is not supported.
     #[error("Bootloader '{0}' not supported")]
