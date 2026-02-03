@@ -136,11 +136,6 @@ pub(crate) fn firmware_update(
         bootloader_type
     };
 
-    progress("Querying device state ...".into(), None)?;
-    let image_state = client
-        .image_get_state()
-        .map_err(FirmwareUpdateError::GetStateFailed)?;
-
     progress("Parsing firmware image ...".into(), None)?;
     let (image_version, image_id_hash) = match bootloader_type {
         BootloaderType::MCUboot => {
@@ -154,6 +149,11 @@ pub(crate) fn firmware_update(
         image_version,
         hex::encode(&image_id_hash[..SHOWN_HASH_DIGITS])
     );
+
+    progress("Querying device state ...".into(), None)?;
+    let image_state = client
+        .image_get_state()
+        .map_err(FirmwareUpdateError::GetStateFailed)?;
 
     let active_image = image_state
         .iter()
