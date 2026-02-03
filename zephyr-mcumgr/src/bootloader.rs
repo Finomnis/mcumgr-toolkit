@@ -29,7 +29,7 @@ impl serde::Serialize for BootloaderInfo {
         match self {
             BootloaderInfo::MCUboot { mode, no_downgrade } => {
                 let mut s = serializer.serialize_struct(struct_name, 3)?;
-                s.serialize_field("name", "MCUboot")?;
+                s.serialize_field("name", &BootloaderType::MCUboot.to_string())?;
                 s.serialize_field("mode", mode)?;
                 s.serialize_field("no_downgrade", no_downgrade)?;
                 s.end()
@@ -40,6 +40,27 @@ impl serde::Serialize for BootloaderInfo {
                 s.serialize_field("name", name)?;
                 s.end()
             }
+        }
+    }
+}
+
+/// Supported bootloader/image types
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, strum::Display, strum::EnumString,
+)]
+pub enum BootloaderType {
+    /// MCUboot Bootloader
+    MCUboot,
+}
+
+impl BootloaderInfo {
+    /// Extract the bootloader type
+    ///
+    /// If the type is unknown, returns the name of the bootloader `Err` value.
+    pub fn get_bootloader_type(&self) -> Result<BootloaderType, String> {
+        match self {
+            BootloaderInfo::MCUboot { .. } => Ok(BootloaderType::MCUboot),
+            BootloaderInfo::Unknown { name } => Err(name.clone()),
         }
     }
 }

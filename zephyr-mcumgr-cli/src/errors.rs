@@ -3,7 +3,9 @@ use thiserror::Error;
 
 use zephyr_mcumgr::{
     Errno,
-    client::{FileDownloadError, FileUploadError, ImageUploadError, UsbSerialError},
+    client::{
+        FileDownloadError, FileUploadError, FirmwareUpdateError, ImageUploadError, UsbSerialError,
+    },
     connection::ExecuteError,
     mcuboot::ImageParseError,
 };
@@ -56,4 +58,7 @@ pub enum CliError {
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(zephyr_mcumgr::cli::image_parse))]
     ImageParseFailed(#[from] ImageParseError),
+    #[error("Firmware update failed")]
+    #[diagnostic(code(zephyr_mcumgr::cli::firmware_update))]
+    FirmwareUpdateFailed(#[from] FirmwareUpdateError),
 }

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - xxxx-xx-xx
+
+### Breaking Changes
+
+- Rename CLI subcommand `mcuboot` to `firmware`
+  - Add parameter to `firmware get-image-info` that specifies the
+    bootloader type
+
+### Changes
+
+- Implement high-level firmware update routine
+- Add Python/Rust library commands:
+  - `firmware_update`
+- Add CLI commands:
+  - `firmware`
+    - `update`
+- Increase default timeout to `10000 ms`
+
+### Fixes
+
+- Firmware upload to MCUboot recovery mode failed with `MGMT_ERR_EOK`
+
 ## [0.7.0] - 2026-01-24
 
 ### Breaking Changes
@@ -233,6 +255,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.8.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/Finomnis/zephyr-mcumgr-client/compare/0.6.0...0.6.1

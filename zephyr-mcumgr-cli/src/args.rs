@@ -38,7 +38,7 @@ pub struct App {
     pub baud: u32,
 
     /// Communication timeout (in ms)
-    #[arg(short, long, default_value_t = 2000)]
+    #[arg(short, long, default_value_t = 10000)]
     pub timeout: u64,
 
     /// Settings that customize runtime behaviour

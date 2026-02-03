@@ -1,3 +1,10 @@
+/// High-level firmware update routine
+mod firmware_update;
+
+pub use firmware_update::{
+    FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback,
+};
+
 use std::{
     collections::HashMap,
     io::{self, Read, Write},
@@ -25,7 +32,7 @@ use crate::{
 /// Matches Zephyr default value of [MCUMGR_TRANSPORT_NETBUF_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
 const ZEPHYR_DEFAULT_SMP_FRAME_SIZE: usize = 384;
 
-/// A high level client for Zephyr's MCUmgr SMP protocol.
+/// A high-level client for Zephyr's MCUmgr SMP protocol.
 ///
 /// This struct is the central entry point of this crate.
 pub struct MCUmgrClient {
@@ -131,6 +138,12 @@ pub struct UsbSerialPortInfo {
 pub struct UsbSerialPorts(pub Vec<UsbSerialPortInfo>);
 impl std::fmt::Display for UsbSerialPorts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.is_empty() {
+            writeln!(f)?;
+            write!(f, " - None -")?;
+            return Ok(());
+        }
+
         for UsbSerialPortInfo {
             identifier,
             port_name,
@@ -226,7 +239,7 @@ impl MCUmgrClient {
     /// # use zephyr_mcumgr::MCUmgrClient;
     /// # fn main() {
     /// let serial = serialport::new("COM42", 115200)
-    ///     .timeout(std::time::Duration::from_millis(2000))
+    ///     .timeout(std::time::Duration::from_millis(10000))
     ///     .open()
     ///     .unwrap();
     ///
@@ -392,6 +405,25 @@ impl MCUmgrClient {
                 crate::transport::ReceiveError::UnexpectedResponse,
             ))
         }
+    }
+
+    /// High-level firmware update routine.
+    ///
+    /// # Arguments
+    ///
+    /// * `firmware` - The firmware image data.
+    /// * `checksum` - SHA256 of the firmware image. Optional.
+    /// * `params` - Configurable parameters.
+    /// * `progress` - A callback that receives progress updates.
+    ///
+    pub fn firmware_update(
+        &self,
+        firmware: impl AsRef<[u8]>,
+        checksum: Option<[u8; 32]>,
+        params: FirmwareUpdateParams,
+        progress: Option<&mut FirmwareUpdateProgressCallback>,
+    ) -> Result<(), FirmwareUpdateError> {
+        firmware_update::firmware_update(self, firmware, checksum, params, progress)
     }
 
     /// Sends a message to the device and expects the same message back as response.

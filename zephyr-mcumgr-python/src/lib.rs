@@ -1,30 +1,34 @@
 #![forbid(unsafe_code)]
+#![allow(clippy::too_many_arguments)]
 
 use miette::IntoDiagnostic;
 use pyo3::types::PyDateTime;
 use pyo3::{prelude::*, types::PyBytes};
 
 use pyo3::exceptions::PyRuntimeError;
-use pyo3_stub_gen::{
-    define_stub_info_gatherer,
-    derive::{gen_stub_pyclass, gen_stub_pymethods},
-};
+use pyo3_stub_gen::{derive::*, *};
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use ::zephyr_mcumgr::bootloader::BootloaderType;
+use ::zephyr_mcumgr::client::FirmwareUpdateParams;
+
+use crate::errors::McubootPythonError;
 use crate::raw_py_any_command::RawPyAnyCommand;
 use crate::sha256_type::Sha256;
 
 mod return_types;
 pub use return_types::*;
 
+mod errors;
 mod mcuboot;
 mod raw_py_any_command;
 mod repr_macro;
 mod sha256_type;
 
-/// A high level client for Zephyr's MCUmgr SMP functionality
+/// A high-level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 struct MCUmgrClient {
@@ -59,7 +63,7 @@ impl MCUmgrClient {
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
-    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=2000))]
+    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=10000))]
     fn serial(serial: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let serial = serialport::new(serial, baud_rate)
             .timeout(Duration::from_millis(timeout_ms))
@@ -90,7 +94,7 @@ impl MCUmgrClient {
     /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
     ///
     #[staticmethod]
-    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=2000))]
+    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=10000))]
     fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let client = ::zephyr_mcumgr::MCUmgrClient::new_from_usb_serial(
             identifier,
@@ -138,6 +142,74 @@ impl MCUmgrClient {
     /// Raises an error if the device is not alive and responding.
     pub fn check_connection(&self) -> PyResult<()> {
         self.get_client()?.check_connection().map_err(err_to_pyerr)
+    }
+
+    /// High-level firmware update routine.
+    ///
+    /// ### Arguments
+    ///
+    /// * `firmware` - The firmware image data.
+    /// * `checksum` - SHA256 of the firmware image. Optional.
+    /// * `bootloader_type` - The type of bootloader. Auto-detect bootloader if missing.
+    /// * `skip_reboot` - Do not reboot device after the update.
+    /// * `force_confirm` - Skip test boot and confirm directly.
+    /// * `upgrade_only` - Prevent firmware downgrades.
+    /// * `progress` - A callback that receives progress updates.
+    ///
+    #[pyo3(signature = (firmware, checksum=None, bootloader_type=None, skip_reboot=false, force_confirm=false, upgrade_only=false, progress=None))]
+    pub fn firmware_update<'py>(
+        &self,
+        firmware: &Bound<'py, PyBytes>,
+        checksum: Option<Sha256>,
+        #[gen_stub(override_type(type_repr="typing.Optional[typing.Literal['MCUboot']]", imports=("typing")))]
+        bootloader_type: Option<String>,
+        skip_reboot: bool,
+        force_confirm: bool,
+        upgrade_only: bool,
+        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.str, typing.Optional[builtins.tuple[builtins.int, builtins.int]]], None]]", imports=("builtins", "collections.abc", "typing")))]
+        progress: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<()> {
+        let firmware_bytes: &[u8] = firmware.extract()?;
+        let checksum = checksum.map(|val| val.0);
+
+        let bootloader_type = match bootloader_type {
+            Some(bootloader_type) => Some(
+                BootloaderType::from_str(&bootloader_type)
+                    .map_err(|e| McubootPythonError::InvalidBootloaderString(e, bootloader_type))
+                    .map_err(err_to_pyerr)?,
+            ),
+            None => None,
+        };
+
+        let params = FirmwareUpdateParams {
+            bootloader_type,
+            skip_reboot,
+            force_confirm,
+            upgrade_only,
+        };
+
+        let mut cb_error = None;
+
+        let res = if let Some(progress) = progress {
+            let mut cb = |msg: &str, prog| match progress.call((msg.to_string(), prog), None) {
+                Ok(_) => true,
+                Err(e) => {
+                    cb_error = Some(e);
+                    false
+                }
+            };
+            self.get_client()?
+                .firmware_update(firmware_bytes, checksum, params, Some(&mut cb))
+        } else {
+            self.get_client()?
+                .firmware_update(firmware_bytes, checksum, params, None)
+        };
+
+        if let Some(cb_error) = cb_error {
+            return Err(cb_error);
+        }
+
+        res.map_err(err_to_pyerr)
     }
 
     /// Sends a message to the device and expects the same message back as response.

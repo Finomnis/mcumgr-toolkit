@@ -118,10 +118,10 @@ class ImageState:
 @typing.final
 class MCUmgrClient:
     r"""
-    A high level client for Zephyr's MCUmgr SMP functionality
+    A high-level client for Zephyr's MCUmgr SMP functionality
     """
     @staticmethod
-    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 2000) -> 'MCUmgrClient':
+    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 10000) -> 'MCUmgrClient':
         r"""
         Creates a new serial port based Zephyr MCUmgr SMP client.
         
@@ -132,7 +132,7 @@ class MCUmgrClient:
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod
-    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 2000) -> 'MCUmgrClient':
+    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 10000) -> 'MCUmgrClient':
         r"""
         Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
         
@@ -178,6 +178,20 @@ class MCUmgrClient:
         Runs a simple echo with random data and checks if the response matches.
         
         Raises an error if the device is not alive and responding.
+        """
+    def firmware_update(self, firmware: bytes, checksum: typing.Optional[builtins.str | builtins.bytes] = None, bootloader_type: typing.Optional[typing.Literal['MCUboot']] = None, skip_reboot: builtins.bool = False, force_confirm: builtins.bool = False, upgrade_only: builtins.bool = False, progress: typing.Optional[collections.abc.Callable[[builtins.str, typing.Optional[builtins.tuple[builtins.int, builtins.int]]], None]] = None) -> None:
+        r"""
+        High-level firmware update routine.
+        
+        ### Arguments
+        
+        * `firmware` - The firmware image data.
+        * `checksum` - SHA256 of the firmware image. Optional.
+        * `bootloader_type` - The type of bootloader. Auto-detect bootloader if missing.
+        * `skip_reboot` - Do not reboot device after the update.
+        * `force_confirm` - Skip test boot and confirm directly.
+        * `upgrade_only` - Prevent firmware downgrades.
+        * `progress` - A callback that receives progress updates.
         """
     def os_echo(self, msg: builtins.str) -> builtins.str:
         r"""
