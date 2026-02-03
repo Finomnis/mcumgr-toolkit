@@ -5,6 +5,6 @@ use thiserror::Error;
 #[derive(Error, Debug, Diagnostic)]
 pub(crate) enum McubootPythonError {
     #[error("Failed to find bootloader type '{1}'")]
-    #[diagnostic(code(zephyr_mcumgr::python::parse_bootloader_type))]
+    #[diagnostic(code(mcumgr_toolkit::python::parse_bootloader_type))]
     InvalidBootloaderString(#[source] strum::ParseError, String),
 }

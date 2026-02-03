@@ -45,27 +45,27 @@ pub struct MCUmgrClient {
 pub enum FileDownloadError {
     /// The command failed in the SMP protocol layer.
     #[error("Command execution failed")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_download::execute))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_download::execute))]
     ExecuteError(#[from] ExecuteError),
     /// A device response contained an unexpected offset value.
     #[error("Received offset does not match requested offset")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_download::offset_mismatch))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_download::offset_mismatch))]
     UnexpectedOffset,
     /// The writer returned an error.
     #[error("Writer returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_download::writer))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_download::writer))]
     WriterError(#[from] io::Error),
     /// The received data does not match the reported file size.
     #[error("Received data does not match reported size")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_download::size_mismatch))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_download::size_mismatch))]
     SizeMismatch,
     /// The received data unexpectedly did not report the file size.
     #[error("Received data is missing file size information")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_download::missing_size))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_download::missing_size))]
     MissingSize,
     /// The progress callback returned an error.
     #[error("Progress callback returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_download::progress_cb_error))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_download::progress_cb_error))]
     ProgressCallbackError,
 }
 
@@ -74,19 +74,19 @@ pub enum FileDownloadError {
 pub enum FileUploadError {
     /// The command failed in the SMP protocol layer.
     #[error("Command execution failed")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_upload::execute))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_upload::execute))]
     ExecuteError(#[from] ExecuteError),
     /// The reader returned an error.
     #[error("Reader returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_upload::reader))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_upload::reader))]
     ReaderError(#[from] io::Error),
     /// The progress callback returned an error.
     #[error("Progress callback returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_upload::progress_cb_error))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_upload::progress_cb_error))]
     ProgressCallbackError,
     /// The current SMP frame size is too small for this command.
     #[error("SMP frame size too small for this command")]
-    #[diagnostic(code(zephyr_mcumgr::client::file_upload::framesize_too_small))]
+    #[diagnostic(code(mcumgr_toolkit::client::file_upload::framesize_too_small))]
     FrameSizeTooSmall(#[source] io::Error),
 }
 
@@ -95,27 +95,27 @@ pub enum FileUploadError {
 pub enum ImageUploadError {
     /// The command failed in the SMP protocol layer.
     #[error("Command execution failed")]
-    #[diagnostic(code(zephyr_mcumgr::client::image_upload::execute))]
+    #[diagnostic(code(mcumgr_toolkit::client::image_upload::execute))]
     ExecuteError(#[from] ExecuteError),
     /// The progress callback returned an error.
     #[error("Progress callback returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::client::image_upload::progress_cb_error))]
+    #[diagnostic(code(mcumgr_toolkit::client::image_upload::progress_cb_error))]
     ProgressCallbackError,
     /// The current SMP frame size is too small for this command.
     #[error("SMP frame size too small for this command")]
-    #[diagnostic(code(zephyr_mcumgr::client::image_upload::framesize_too_small))]
+    #[diagnostic(code(mcumgr_toolkit::client::image_upload::framesize_too_small))]
     FrameSizeTooSmall(#[source] io::Error),
     /// A device response contained an unexpected offset value.
     #[error("Received offset out of expected range")]
-    #[diagnostic(code(zephyr_mcumgr::client::image_upload::invalid_offset))]
+    #[diagnostic(code(mcumgr_toolkit::client::image_upload::invalid_offset))]
     UnexpectedOffset,
     /// The device reported a checksum mismatch
     #[error("Device reported checksum mismatch")]
-    #[diagnostic(code(zephyr_mcumgr::client::image_upload::checksum_mismatch_on_device))]
+    #[diagnostic(code(mcumgr_toolkit::client::image_upload::checksum_mismatch_on_device))]
     ChecksumMismatchOnDevice,
     /// The firmware image does not match the given checksum
     #[error("Firmware image does not match given checksum")]
-    #[diagnostic(code(zephyr_mcumgr::client::image_upload::checksum_mismatch))]
+    #[diagnostic(code(mcumgr_toolkit::client::image_upload::checksum_mismatch))]
     ChecksumMismatch,
 }
 
@@ -198,11 +198,11 @@ impl std::fmt::Debug for UsbSerialPorts {
 pub enum UsbSerialError {
     /// Serialport error
     #[error("Serialport returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::usb_serial::serialport_error))]
+    #[diagnostic(code(mcumgr_toolkit::usb_serial::serialport_error))]
     SerialPortError(#[from] serialport::Error),
     /// No port matched the given identifier
     #[error("No serial port matched the identifier '{identifier}'\nAvailable ports:\n{available}")]
-    #[diagnostic(code(zephyr_mcumgr::usb_serial::no_matches))]
+    #[diagnostic(code(mcumgr_toolkit::usb_serial::no_matches))]
     NoMatchingPort {
         /// The original identifier provided by the user
         identifier: String,
@@ -211,7 +211,7 @@ pub enum UsbSerialError {
     },
     /// More than one port matched the given identifier
     #[error("Multiple serial ports matched the identifier '{identifier}'\n{ports}")]
-    #[diagnostic(code(zephyr_mcumgr::usb_serial::multiple_matches))]
+    #[diagnostic(code(mcumgr_toolkit::usb_serial::multiple_matches))]
     MultipleMatchingPorts {
         /// The original identifier provided by the user
         identifier: String,
@@ -221,14 +221,14 @@ pub enum UsbSerialError {
     /// Returned when the identifier was empty;
     /// can be used to query all available ports
     #[error("An empty identifier was provided")]
-    #[diagnostic(code(zephyr_mcumgr::usb_serial::empty_identifier))]
+    #[diagnostic(code(mcumgr_toolkit::usb_serial::empty_identifier))]
     IdentifierEmpty {
         /// A list of available ports
         ports: UsbSerialPorts,
     },
     /// The given identifier was not a valid RegEx
     #[error("The given identifier was not a valid RegEx")]
-    #[diagnostic(code(zephyr_mcumgr::usb_serial::regex_error))]
+    #[diagnostic(code(mcumgr_toolkit::usb_serial::regex_error))]
     RegexError(#[from] regex::Error),
 }
 
@@ -236,7 +236,7 @@ impl MCUmgrClient {
     /// Creates a Zephyr MCUmgr SMP client based on a configured and opened serial port.
     ///
     /// ```no_run
-    /// # use zephyr_mcumgr::MCUmgrClient;
+    /// # use mcumgr_toolkit::MCUmgrClient;
     /// # fn main() {
     /// let serial = serialport::new("COM42", 115200)
     ///     .timeout(std::time::Duration::from_millis(10000))

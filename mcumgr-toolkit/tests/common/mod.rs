@@ -5,7 +5,7 @@ use std::{
     io::{Read, Write},
 };
 
-use zephyr_mcumgr::transport::serial::ConfigurableTimeout;
+use mcumgr_toolkit::transport::serial::ConfigurableTimeout;
 
 #[derive(Default)]
 pub(crate) struct LoopbackSerial {

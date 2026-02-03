@@ -1,6 +1,6 @@
+use mcumgr_toolkit::commands::McuMgrCommand;
 use pyo3::{Bound, PyAny, PyResult, Python};
 use serde_pyobject::{from_pyobject, to_pyobject};
-use zephyr_mcumgr::commands::McuMgrCommand;
 
 pub struct RawPyAnyCommand {
     write_operation: bool,

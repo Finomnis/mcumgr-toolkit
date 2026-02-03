@@ -1,4 +1,4 @@
-use zephyr_mcumgr::MCUmgrClient;
+use mcumgr_toolkit::MCUmgrClient;
 
 use crate::errors::CliError;
 

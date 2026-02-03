@@ -27,7 +27,7 @@ pub struct RawCommand {
     pub data: ciborium::Value,
 }
 
-impl zephyr_mcumgr::commands::McuMgrCommand for RawCommand {
+impl mcumgr_toolkit::commands::McuMgrCommand for RawCommand {
     type Payload = ciborium::Value;
     type Response = ciborium::Value;
 

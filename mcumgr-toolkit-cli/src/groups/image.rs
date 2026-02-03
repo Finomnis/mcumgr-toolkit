@@ -1,5 +1,5 @@
 use indicatif::MultiProgress;
-use zephyr_mcumgr::commands::image::ImageState;
+use mcumgr_toolkit::commands::image::ImageState;
 
 use crate::{
     args::CommonArgs, client::Client, errors::CliError, file_read_write::read_input_file,

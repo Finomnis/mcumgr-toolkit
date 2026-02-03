@@ -41,8 +41,8 @@ jobs:
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel - universal2
         run: |
-          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
-          python -c "import zephyr_mcumgr"
+          pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
+          python -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -68,8 +68,8 @@ jobs:
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel
         run: |
-          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
-          python -c "import zephyr_mcumgr"
+          pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
+          python -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -96,8 +96,8 @@ jobs:
       - name: Install built wheel
         if: matrix.target == 'x86_64'
         run: |
-          pip install zephyr_mcumgr --no-index --find-links dist --force-reinstall
-          python -c "import zephyr_mcumgr"
+          pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
+          python -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -133,8 +133,8 @@ jobs:
             pip3 install -U pip
           run: |
             ls -la dist/
-            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall
-            python3 -c "import zephyr_mcumgr"
+            pip3 install mcumgr_toolkit --no-index --find-links dist/ --force-reinstall
+            python3 -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -169,8 +169,8 @@ jobs:
           run: |
             apk add py3-pip
             pip3 install -U pip --break-system-packages
-            pip3 install zephyr_mcumgr --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
-            python3 -c "import zephyr_mcumgr"
+            pip3 install mcumgr_toolkit --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
+            python3 -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -207,8 +207,8 @@ jobs:
             apk add py3-pip
             pip3 install -U pip --break-system-packages
           run: |
-            pip3 install zephyr_mcumgr --no-index --find-links dist/ --force-reinstall --break-system-packages
-            python3 -c "import zephyr_mcumgr"
+            pip3 install mcumgr_toolkit --no-index --find-links dist/ --force-reinstall --break-system-packages
+            python3 -c "import mcumgr_toolkit"
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
@@ -250,7 +250,7 @@ jobs:
         run: test -n "${{ env.release_tag_version }}"
 
       - name: Check for correct version
-        run: find wheels -name "zephyr_mcumgr-${{ env.release_tag_version }}-*" | grep .
+        run: find wheels -name "mcumgr_toolkit-${{ env.release_tag_version }}-*" | grep .
 
       - name: Publish to PyPI
         env:

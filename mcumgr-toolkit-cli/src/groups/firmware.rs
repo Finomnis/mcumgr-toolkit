@@ -1,6 +1,6 @@
 use clap::ValueEnum;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
-use zephyr_mcumgr::client::FirmwareUpdateParams;
+use mcumgr_toolkit::client::FirmwareUpdateParams;
 
 use crate::{
     args::CommonArgs, client::Client, errors::CliError, file_read_write::read_input_file,
@@ -12,7 +12,7 @@ pub enum BootloaderType {
     Mcuboot,
 }
 
-impl From<BootloaderType> for zephyr_mcumgr::bootloader::BootloaderType {
+impl From<BootloaderType> for mcumgr_toolkit::bootloader::BootloaderType {
     fn from(value: BootloaderType) -> Self {
         match value {
             BootloaderType::Mcuboot => Self::MCUboot,
@@ -116,9 +116,9 @@ pub fn run(
 
             match r#type {
                 BootloaderType::Mcuboot => {
-                    let image_info = zephyr_mcumgr::mcuboot::get_image_info(std::io::Cursor::new(
-                        image_data.as_ref(),
-                    ))?;
+                    let image_info = mcumgr_toolkit::mcuboot::get_image_info(
+                        std::io::Cursor::new(image_data.as_ref()),
+                    )?;
 
                     structured_print(Some(file), args.json, |s| {
                         s.key_value("version", image_info.version.to_string());

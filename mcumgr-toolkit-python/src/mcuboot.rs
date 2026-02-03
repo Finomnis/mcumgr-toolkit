@@ -31,7 +31,7 @@ pub fn mcuboot_get_image_info<'py>(
     image_data: Bound<'py, PyBytes>,
 ) -> PyResult<McubootImageInfo> {
     let data = image_data.as_bytes();
-    let image_info = zephyr_mcumgr::mcuboot::get_image_info(std::io::Cursor::new(data))
+    let image_info = mcumgr_toolkit::mcuboot::get_image_info(std::io::Cursor::new(data))
         .map_err(super::err_to_pyerr)?;
 
     Ok(McubootImageInfo {

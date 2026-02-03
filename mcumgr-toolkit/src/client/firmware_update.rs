@@ -13,40 +13,40 @@ use crate::{
 pub enum FirmwareUpdateError {
     /// The progress callback returned an error.
     #[error("Progress callback returned an error")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::progress_cb_error))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::progress_cb_error))]
     ProgressCallbackError,
     /// An error occurred while trying to detect the bootloader.
     #[error("Failed to detect bootloader")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::detect_bootloader))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::detect_bootloader))]
     #[diagnostic(help("try to specify the bootloader type manually"))]
     BootloaderDetectionFailed(#[source] ExecuteError),
     /// The device contains a bootloader that is not supported.
     #[error("Bootloader '{0}' not supported")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::unknown_bootloader))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::unknown_bootloader))]
     BootloaderNotSupported(String),
     /// Failed to parse the firmware image as MCUboot firmware.
     #[error("Firmware is not a valid MCUboot image")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::mcuboot_image))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::mcuboot_image))]
     InvalidMcuBootFirmwareImage(#[from] mcuboot::ImageParseError),
     /// Fetching the image state returned an error.
     #[error("Failed to fetch image state from device")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::get_image_state))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::get_image_state))]
     GetStateFailed(#[source] ExecuteError),
     /// Uploading the firmware image returned an error.
     #[error("Failed to upload firmware image to device")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::image_upload))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::image_upload))]
     ImageUploadFailed(#[from] ImageUploadError),
     /// Writing the new image state to the device failed
     #[error("Failed to activate new firmware image")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::set_image_state))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::set_image_state))]
     SetStateFailed(#[source] ExecuteError),
     /// Performing device reset failed
     #[error("Failed to trigger device reboot")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::reboot))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::reboot))]
     RebootFailed(#[source] ExecuteError),
     /// The given firmware is already installed on the device
     #[error("The device is already running the given firmware")]
-    #[diagnostic(code(zephyr_mcumgr::firmware_update::already_installed))]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::already_installed))]
     AlreadyInstalled,
 }
 

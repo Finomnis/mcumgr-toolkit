@@ -40,19 +40,19 @@ pub struct ImageInfo {
 pub enum ImageParseError {
     /// The given image file is not an MCUboot image.
     #[error("Image is not an MCUboot image")]
-    #[diagnostic(code(zephyr_mcumgr::mcuboot::image::unknown_type))]
+    #[diagnostic(code(mcumgr_toolkit::mcuboot::image::unknown_type))]
     UnknownImageType,
     /// The given image file does not contain TLV entries.
     #[error("Image does not contain TLV entries")]
-    #[diagnostic(code(zephyr_mcumgr::mcuboot::image::tlv_missing))]
+    #[diagnostic(code(mcumgr_toolkit::mcuboot::image::tlv_missing))]
     TlvMissing,
     /// The given image file does not contain an SHA256 id hash.
     #[error("Image does not contain an SHA256 id hash")]
-    #[diagnostic(code(zephyr_mcumgr::mcuboot::image::id_hash_missing))]
+    #[diagnostic(code(mcumgr_toolkit::mcuboot::image::id_hash_missing))]
     IdHashMissing,
     /// Failed to read from the image
     #[error("Image read failed")]
-    #[diagnostic(code(zephyr_mcumgr::mcuboot::image::read))]
+    #[diagnostic(code(mcumgr_toolkit::mcuboot::image::read))]
     ReadFailed(#[from] std::io::Error),
 }
 

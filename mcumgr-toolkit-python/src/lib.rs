@@ -12,8 +12,8 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use ::zephyr_mcumgr::bootloader::BootloaderType;
-use ::zephyr_mcumgr::client::FirmwareUpdateParams;
+use ::mcumgr_toolkit::bootloader::BootloaderType;
+use ::mcumgr_toolkit::client::FirmwareUpdateParams;
 
 use crate::errors::McubootPythonError;
 use crate::raw_py_any_command::RawPyAnyCommand;
@@ -33,7 +33,7 @@ mod sha256_type;
 #[pyclass(frozen)]
 struct MCUmgrClient {
     // Mutex<Option<Arc<>>> so we can delete the client in __exit__()
-    client: Mutex<Option<Arc<::zephyr_mcumgr::MCUmgrClient>>>,
+    client: Mutex<Option<Arc<::mcumgr_toolkit::MCUmgrClient>>>,
 }
 
 fn err_to_pyerr<E: Into<miette::Report>>(err: E) -> PyErr {
@@ -42,7 +42,7 @@ fn err_to_pyerr<E: Into<miette::Report>>(err: E) -> PyErr {
 }
 
 impl MCUmgrClient {
-    fn get_client(&self) -> PyResult<Arc<::zephyr_mcumgr::MCUmgrClient>> {
+    fn get_client(&self) -> PyResult<Arc<::mcumgr_toolkit::MCUmgrClient>> {
         let locked_client = self.client.lock().unwrap();
         locked_client
             .as_ref()
@@ -70,7 +70,7 @@ impl MCUmgrClient {
             .open()
             .into_diagnostic()
             .map_err(err_to_pyerr)?;
-        let client = ::zephyr_mcumgr::MCUmgrClient::new_from_serial(serial);
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_serial(serial);
         Ok(MCUmgrClient {
             client: Mutex::new(Some(Arc::new(client))),
         })
@@ -96,7 +96,7 @@ impl MCUmgrClient {
     #[staticmethod]
     #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=10000))]
     fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
-        let client = ::zephyr_mcumgr::MCUmgrClient::new_from_usb_serial(
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_usb_serial(
             identifier,
             baud_rate,
             Duration::from_millis(timeout_ms),
@@ -609,7 +609,7 @@ impl MCUmgrClient {
         if exitcode < 0 {
             return Err(PyRuntimeError::new_err(format!(
                 "Shell command returned error exit code: {}\n{}",
-                ::zephyr_mcumgr::Errno::errno_to_string(exitcode),
+                ::mcumgr_toolkit::Errno::errno_to_string(exitcode),
                 data
             )));
         }
@@ -682,7 +682,7 @@ impl MCUmgrClient {
 /// ### Example
 ///
 /// ```python
-/// from zephyr_mcumgr import MCUmgrClient
+/// from mcumgr_toolkit import MCUmgrClient
 ///
 /// with MCUmgrClient.serial("/dev/ttyACM0") as client:
 ///     client.use_auto_frame_size()
@@ -692,7 +692,7 @@ impl MCUmgrClient {
 /// ```
 ///
 #[pymodule]
-mod zephyr_mcumgr {
+mod mcumgr_toolkit {
     use pyo3::prelude::*;
 
     #[pymodule_export]

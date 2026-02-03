@@ -15,7 +15,7 @@ use indicatif_log_bridge::LogWrapper;
 use std::time::Duration;
 
 use clap::Parser;
-use zephyr_mcumgr::{MCUmgrClient, client::UsbSerialError};
+use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 
 use crate::errors::CliError;
 

@@ -28,23 +28,23 @@ pub struct Connection {
 pub enum ExecuteError {
     /// An error happened on SMP transport level while sending a request
     #[error("Sending failed")]
-    #[diagnostic(code(zephyr_mcumgr::connection::execute::send))]
+    #[diagnostic(code(mcumgr_toolkit::connection::execute::send))]
     SendFailed(#[from] SendError),
     /// An error happened on SMP transport level while receiving a response
     #[error("Receiving failed")]
-    #[diagnostic(code(zephyr_mcumgr::connection::execute::receive))]
+    #[diagnostic(code(mcumgr_toolkit::connection::execute::receive))]
     ReceiveFailed(#[from] ReceiveError),
     /// An error happened while CBOR encoding the request payload
     #[error("CBOR encoding failed")]
-    #[diagnostic(code(zephyr_mcumgr::connection::execute::encode))]
+    #[diagnostic(code(mcumgr_toolkit::connection::execute::encode))]
     EncodeFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync>),
     /// An error happened while CBOR decoding the response payload
     #[error("CBOR decoding failed")]
-    #[diagnostic(code(zephyr_mcumgr::connection::execute::decode))]
+    #[diagnostic(code(mcumgr_toolkit::connection::execute::decode))]
     DecodeFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync>),
     /// The device returned an SMP error
     #[error("Device returned error code: {0}")]
-    #[diagnostic(code(zephyr_mcumgr::connection::execute::device_error))]
+    #[diagnostic(code(mcumgr_toolkit::connection::execute::device_error))]
     ErrorResponse(DeviceError),
 }
 

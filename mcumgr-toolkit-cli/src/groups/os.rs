@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use indicatif::MultiProgress;
-use zephyr_mcumgr::{
+use mcumgr_toolkit::{
     bootloader::{BootloaderInfo, MCUbootMode},
     commands::os::ThreadStateFlags,
     connection::ExecuteError,

@@ -1,7 +1,7 @@
 use pyo3::{PyClass, prelude::*, types::PyBytes};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum};
 
-use ::zephyr_mcumgr::commands;
+use ::mcumgr_toolkit::commands;
 use serde::{Serialize, ser::SerializeSeq};
 
 use crate::repr_macro::generate_repr_from_serialize;

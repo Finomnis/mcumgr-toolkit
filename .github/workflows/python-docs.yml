@@ -26,7 +26,7 @@ jobs:
       - name: Build static files
         run: |
           pip3 install ./mcumgr-toolkit-python
-          pdoc -o mcumgr-toolkit-python/doc zephyr_mcumgr
+          pdoc -o mcumgr-toolkit-python/doc mcumgr_toolkit
 
       - name: Upload static files as artifact
         id: deployment

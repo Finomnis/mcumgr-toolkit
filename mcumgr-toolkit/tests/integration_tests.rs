@@ -1,7 +1,7 @@
 mod common;
 use common::EchoSerial;
+use mcumgr_toolkit::MCUmgrClient;
 use rand::prelude::*;
-use zephyr_mcumgr::MCUmgrClient;
 
 #[test]
 fn echo() {
