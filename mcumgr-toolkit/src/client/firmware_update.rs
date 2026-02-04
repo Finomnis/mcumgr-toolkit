@@ -51,7 +51,7 @@ pub enum FirmwareUpdateError {
 }
 
 /// Configurable parameters for [`MCUmgrClient::firmware_update`].
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct FirmwareUpdateParams {
     /// Default: `None`
     ///
