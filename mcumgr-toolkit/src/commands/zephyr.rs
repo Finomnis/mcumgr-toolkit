@@ -3,12 +3,12 @@ use crate::commands::macros::{
 };
 
 /// [Erase Storage](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_63.html#erase-storage-command) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct EraseStorage;
 impl_serialize_as_empty_map!(EraseStorage);
 
 /// Response for [`EraseStorage`] command
-#[derive(Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct EraseStorageResponse;
 impl_deserialize_from_empty_map_and_into_unit!(EraseStorageResponse);
 

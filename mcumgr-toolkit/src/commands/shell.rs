@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 /// [Shell command line execute](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_9.html#shell-command-line-execute) command
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ShellCommandLineExecute<'a> {
     /// array consisting of strings representing command and its arguments
     pub argv: &'a [String],
 }
 
 /// Response for [`ShellCommandLineExecute`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ShellCommandLineExecuteResponse {
     /// command output
     pub o: String,

@@ -9,26 +9,26 @@ use super::{
 };
 
 /// [Echo](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#echo-command) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct Echo<'a> {
     /// string to be replied by echo service
     pub d: &'a str,
 }
 
 /// Response for [`Echo`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct EchoResponse {
     /// replying echo string
     pub r: String,
 }
 
 /// [Task statistics](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#task-statistics-command) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TaskStatistics;
 impl_serialize_as_empty_map!(TaskStatistics);
 
 /// Statistics of an MCU task/thread
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct TaskStatisticsEntry {
     /// task priority
     pub prio: i32,
@@ -93,7 +93,7 @@ impl ThreadStateFlags {
 }
 
 /// Response for [`TaskStatistics`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct TaskStatisticsResponse {
     /// Dictionary of task names with their respective statistics
     pub tasks: HashMap<String, TaskStatisticsEntry>,
@@ -136,12 +136,12 @@ where
 }
 
 /// [Date-Time Get](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#date-time-get) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DateTimeGet;
 impl_serialize_as_empty_map!(DateTimeGet);
 
 /// Response for [`DateTimeGet`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct DateTimeGetResponse {
     /// String in format: `yyyy-MM-dd'T'HH:mm:ss.SSS`.
     #[serde(deserialize_with = "deserialize_datetime_and_ignore_timezone")]
@@ -149,7 +149,7 @@ pub struct DateTimeGetResponse {
 }
 
 /// [Date-Time Set](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#date-time-set) command
-#[derive(Serialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Debug, Eq, PartialEq)]
 pub struct DateTimeSet {
     /// String in format: `yyyy-MM-dd'T'HH:mm:ss.SSS`.
     #[serde(serialize_with = "serialize_datetime_for_zephyr")]
@@ -157,12 +157,12 @@ pub struct DateTimeSet {
 }
 
 /// Response for [`DateTimeSet`] command
-#[derive(Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct DateTimeSetResponse;
 impl_deserialize_from_empty_map_and_into_unit!(DateTimeSetResponse);
 
 /// [System Reset](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#system-reset) command
-#[derive(Serialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Debug, Eq, PartialEq)]
 pub struct SystemReset {
     /// Forces reset
     #[serde(skip_serializing_if = "is_default")]
@@ -177,17 +177,17 @@ pub struct SystemReset {
 }
 
 /// Response for [`SystemReset`] command
-#[derive(Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct SystemResetResponse;
 impl_deserialize_from_empty_map_and_into_unit!(SystemResetResponse);
 
 /// [MCUmgr Parameters](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#mcumgr-parameters) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MCUmgrParameters;
 impl_serialize_as_empty_map!(MCUmgrParameters);
 
 /// Response for [`MCUmgrParameters`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MCUmgrParametersResponse {
     /// Single SMP buffer size, this includes SMP header and CBOR payload
     pub buf_size: u32,
@@ -196,7 +196,7 @@ pub struct MCUmgrParametersResponse {
 }
 
 /// [OS/Application Info](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info) command
-#[derive(Serialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Debug, Eq, PartialEq)]
 pub struct ApplicationInfo<'a> {
     /// Format specifier of returned response
     ///
@@ -206,31 +206,31 @@ pub struct ApplicationInfo<'a> {
 }
 
 /// Response for [`ApplicationInfo`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ApplicationInfoResponse {
     /// Text response including requested parameters
     pub output: String,
 }
 
 /// [Bootloader Information](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#bootloader-information) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BootloaderInfo;
 impl_serialize_as_empty_map!(BootloaderInfo);
 
 /// Response for [`BootloaderInfo`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct BootloaderInfoResponse {
     /// String representing bootloader name
     pub bootloader: String,
 }
 
 /// [Bootloader Information MCUboot Mode](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#bootloader-information-mcuboot) subcommand
-#[derive(Serialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Debug, Eq, PartialEq)]
 #[serde(tag = "query", rename = "mode")]
 pub struct BootloaderInfoMcubootMode {}
 
 /// Response for [`BootloaderInfoMcubootMode`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct BootloaderInfoMcubootModeResponse {
     /// The bootloader mode
     pub mode: i32,

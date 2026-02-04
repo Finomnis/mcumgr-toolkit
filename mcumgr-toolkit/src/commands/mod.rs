@@ -15,7 +15,7 @@ use macros::impl_mcumgr_command;
 use serde::{Deserialize, Serialize};
 
 /// SMP version 2 group based error message
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ErrResponseV2 {
     /// group of the group-based error code
     pub group: u16,
@@ -24,7 +24,7 @@ pub struct ErrResponseV2 {
 }
 
 /// [SMP error message](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_protocol.html#minimal-response-smp-data)
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ErrResponse {
     /// SMP version 1 error code
     pub rc: Option<i32>,

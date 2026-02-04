@@ -16,7 +16,7 @@ where
 }
 
 /// The state of an image slot
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct ImageState {
     /// image number
     #[serde(default)]
@@ -50,12 +50,12 @@ pub struct ImageState {
 }
 
 /// [Get Image State](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html#get-state-of-images-request) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GetImageState;
 impl_serialize_as_empty_map!(GetImageState);
 
 /// Response for [`GetImageState`] and [`SetImageState`] commands
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ImageStateResponse {
     /// List of all images and their state
     pub images: Vec<ImageState>,
@@ -64,7 +64,7 @@ pub struct ImageStateResponse {
 }
 
 /// [Set Image State](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html#set-state-of-image-request) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct SetImageState<'a> {
     /// SHA256 hash of the image header and body
     ///
@@ -84,7 +84,7 @@ pub struct SetImageState<'a> {
 }
 
 /// [Image Upload](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html#image-upload) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct ImageUpload<'a, 'b> {
     /// optional image number, it does not have to appear in request at all, in which case it is assumed to be 0.
     ///
@@ -119,7 +119,7 @@ pub struct ImageUpload<'a, 'b> {
 }
 
 /// Response for [`ImageUpload`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ImageUploadResponse {
     /// offset of last successfully written byte of update.
     pub off: u64,
@@ -184,7 +184,7 @@ pub fn image_upload_max_data_chunk_size(smp_frame_size: usize) -> std::io::Resul
 }
 
 /// [Image Erase](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html#image-erase) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct ImageErase {
     /// slot number; it does not have to appear in the request at all, in which case it is assumed to be 1
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -192,17 +192,17 @@ pub struct ImageErase {
 }
 
 /// Response for [`ImageErase`] command
-#[derive(Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct ImageEraseResponse;
 impl_deserialize_from_empty_map_and_into_unit!(ImageEraseResponse);
 
 /// [Slot Info](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html#slot-info) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SlotInfo;
 impl_serialize_as_empty_map!(SlotInfo);
 
 /// Information about a firmware image type returned by [`SlotInfo`]
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct SlotInfoImage {
     /// The number of the image
     pub image: u32,
@@ -214,7 +214,7 @@ pub struct SlotInfoImage {
 }
 
 /// Information about a slot that can hold a firmware image
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct SlotInfoImageSlot {
     /// The slot inside the image being enumerated
     pub slot: u32,
@@ -226,7 +226,7 @@ pub struct SlotInfoImageSlot {
 }
 
 /// Response for [`SlotInfo`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct SlotInfoResponse {
     /// List of all image slot collections on the device
     pub images: Vec<SlotInfoImage>,

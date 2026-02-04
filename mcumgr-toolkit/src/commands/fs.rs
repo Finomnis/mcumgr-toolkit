@@ -12,7 +12,7 @@ use crate::commands::{
 use super::is_default;
 
 /// [File Download](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-download) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct FileDownload<'a> {
     /// offset to start download at
     pub off: u64,
@@ -21,7 +21,7 @@ pub struct FileDownload<'a> {
 }
 
 /// Response for [`FileDownload`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FileDownloadResponse {
     /// offset the response is for
     pub off: u64,
@@ -89,7 +89,7 @@ pub fn file_upload_max_data_chunk_size(
 }
 
 /// [File Upload](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-upload) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct FileUpload<'a, 'b> {
     /// offset to start/continue upload at
     pub off: u64,
@@ -104,28 +104,28 @@ pub struct FileUpload<'a, 'b> {
 }
 
 /// Response for [`FileUpload`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FileUploadResponse {
     /// offset of last successfully written data
     pub off: u64,
 }
 
 /// [File Status](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-status) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct FileStatus<'a> {
     /// absolute path to a file
     pub name: &'a str,
 }
 
 /// Response for [`FileStatus`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FileStatusResponse {
     /// length of file (in bytes)
     pub len: u64,
 }
 
 /// [File Hash/Checksum](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-hash-checksum) command
-#[derive(Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct FileChecksum<'a, 'b> {
     /// absolute path to a file
     pub name: &'a str,
@@ -141,7 +141,7 @@ pub struct FileChecksum<'a, 'b> {
 }
 
 /// Response for [`FileChecksum`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FileChecksumResponse {
     /// type of hash/checksum that was performed
     pub r#type: String,
@@ -155,7 +155,7 @@ pub struct FileChecksumResponse {
 }
 
 /// Hash data of [`FileChecksumResponse`]
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum FileChecksumData {
     /// hash bytes
@@ -176,12 +176,12 @@ impl FileChecksumData {
 }
 
 /// [Supported file hash/checksum types](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#supported-file-hash-checksum-types) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SupportedFileChecksumTypes;
 impl_serialize_as_empty_map!(SupportedFileChecksumTypes);
 
 /// Response for [`SupportedFileChecksumTypes`] command
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct SupportedFileChecksumTypesResponse {
     /// names and properties of the hash/checksum types
     pub r#types: HashMap<String, FileChecksumProperties>,
@@ -199,7 +199,7 @@ pub enum FileChecksumDataFormat {
 }
 
 /// Properties of a hash/checksum algorithm
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FileChecksumProperties {
     /// format that the hash/checksum returns
     pub format: FileChecksumDataFormat,
@@ -208,12 +208,12 @@ pub struct FileChecksumProperties {
 }
 
 /// [File Close](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html#file-close) command
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FileClose;
 impl_serialize_as_empty_map!(FileClose);
 
 /// Response for [`FileClose`] command
-#[derive(Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct FileCloseResponse;
 impl_deserialize_from_empty_map_and_into_unit!(FileCloseResponse);
 
