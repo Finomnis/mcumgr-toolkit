@@ -2,7 +2,7 @@
 mod firmware_update;
 
 pub use firmware_update::{
-    FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback,
+    FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
 
 use std::{
