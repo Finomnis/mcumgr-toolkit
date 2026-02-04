@@ -9,7 +9,7 @@ use crate::repr_macro::generate_repr_from_serialize;
 /// Return value of `MCUmgrClient.fs_file_status`.
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct FileStatus {
     /// length of file (in bytes)
     #[pyo3(get)]
@@ -25,7 +25,7 @@ impl From<commands::fs::FileStatusResponse> for FileStatus {
 /// Return value of `MCUmgrClient.os_mcumgr_parameters`.
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct MCUmgrParameters {
     /// Single SMP buffer size, this includes SMP header and CBOR payload
     #[pyo3(get)]
@@ -47,7 +47,7 @@ impl From<commands::os::MCUmgrParametersResponse> for MCUmgrParameters {
 /// Return value of `MCUmgrClient.fs_file_checksum`.
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct FileChecksum {
     /// type of hash/checksum that was performed
     #[pyo3(name = "type", get)]
@@ -88,7 +88,7 @@ impl FileChecksum {
 /// Data format of the hash/checksum type
 #[gen_stub_pyclass_enum]
 #[pyclass(frozen, eq, eq_int)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Serialize)]
 pub enum FileChecksumDataFormat {
     /// Data is a number
     Numerical = 0,
@@ -99,7 +99,7 @@ pub enum FileChecksumDataFormat {
 /// Properties of a hash/checksum algorithm
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct FileChecksumProperties {
     /// format that the hash/checksum returns
     #[pyo3(get)]
@@ -129,7 +129,7 @@ impl From<commands::fs::FileChecksumProperties> for FileChecksumProperties {
 /// Statistics of an MCU task/thread
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct TaskStatistics {
     /// task priority
     #[pyo3(get)]
@@ -172,7 +172,7 @@ impl From<commands::os::TaskStatisticsEntry> for TaskStatistics {
 /// The state of an image slot
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct ImageState {
     /// image number
     #[pyo3(get)]
@@ -243,7 +243,7 @@ where
 /// Information about a firmware image type returned by `MCUmgrClient.image_slot_info`
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct SlotInfoImage {
     /// number of the image
     #[pyo3(get)]
@@ -261,7 +261,7 @@ generate_repr_from_serialize!(SlotInfoImage);
 /// Information about a slot that can hold a firmware image
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Serialize)]
 pub struct SlotInfoImageSlot {
     /// slot inside the image being enumerated
     #[pyo3(get)]

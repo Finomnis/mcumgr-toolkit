@@ -7,7 +7,7 @@ use crate::repr_macro::generate_repr_from_serialize;
 /// Information about an MCUboot firmware image
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
-#[derive(Clone, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct McubootImageInfo {
     /// Firmware version
     #[pyo3(get)]
