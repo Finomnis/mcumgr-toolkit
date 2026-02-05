@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::Display};
+use std::fmt::Display;
 
 use miette::Diagnostic;
 use thiserror::Error;
@@ -72,15 +72,29 @@ pub struct FirmwareUpdateParams {
     pub upgrade_only: bool,
 }
 
+/// The step of the firmware update that is currently being performed
 #[derive(Clone, Debug)]
 pub enum FirmwareUpdateStep {
+    /// Querying which bootloader the device is running
     DetectingBootloader,
+    /// The bootloader was found
     BootloaderFound(BootloaderType),
+    /// Extracting meta information from the new firmware image
     ParsingFirmwareImage,
+    /// Querying the current firmware state of the device
     QueryingDeviceState,
-    UpdateInfo(),
+    /// A summary of what update exactly we will perform now
+    UpdateInfo {
+        /// The current version with the current ID hash, if available
+        current_version: Option<(String, Option<[u8; 32]>)>,
+        /// The new version with the new ID hash
+        new_version: (String, [u8; 32]),
+    },
+    /// Uploading the new firmware to the device
     UploadingFirmware,
+    /// Marking the new firmware to be swapped to active during next boot
     ActivatingFirmware,
+    /// Triggering a system reboot so that the bootloader switches to the new image
     TriggeringReboot,
 }
 
@@ -93,7 +107,29 @@ impl Display for FirmwareUpdateStep {
             }
             Self::ParsingFirmwareImage => f.write_str("Parsing firmware image ..."),
             Self::QueryingDeviceState => f.write_str("Querying device state ..."),
-            Self::UpdateInfo() => todo!(),
+            Self::UpdateInfo {
+                current_version,
+                new_version,
+            } => {
+                f.write_str("Update: ")?;
+
+                if let Some((version_str, version_hash)) = &current_version {
+                    f.write_str(version_str)?;
+
+                    if let Some(version_hash) = version_hash {
+                        write!(f, "-{}", hex::encode(&version_hash[..SHOWN_HASH_DIGITS]))?;
+                    }
+                } else {
+                    f.write_str("Empty")?;
+                };
+
+                write!(
+                    f,
+                    " -> {}-{}",
+                    new_version.0,
+                    hex::encode(&new_version.1[..SHOWN_HASH_DIGITS])
+                )
+            }
             Self::UploadingFirmware => f.write_str("Uploading new firmware ..."),
             Self::ActivatingFirmware => f.write_str("Activating new firmware ..."),
             Self::TriggeringReboot => f.write_str("Triggering device reboot ..."),
@@ -174,12 +210,6 @@ pub(crate) fn firmware_update(
         }
     };
 
-    let new_image_string = format!(
-        "{}-{}",
-        image_version,
-        hex::encode(&image_id_hash[..SHOWN_HASH_DIGITS])
-    );
-
     progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
     let image_state = client
         .image_get_state()
@@ -194,22 +224,11 @@ pub(crate) fn firmware_update(
                 .find(|img| img.image == actual_target_image && img.slot == 0)
         });
 
-    let active_image_string = if let Some(active_image) = &active_image {
-        if let Some(active_hash) = active_image.hash {
-            format!(
-                "{}-{}",
-                active_image.version,
-                hex::encode(&active_hash[..SHOWN_HASH_DIGITS]),
-            )
-        } else {
-            active_image.version.clone()
-        }
-    } else {
-        "Empty".to_string()
-    };
-
     progress(
-        format!("Update: {} -> {}", active_image_string, new_image_string),
+        FirmwareUpdateStep::UpdateInfo {
+            current_version: active_image.map(|img| (img.version.clone(), img.hash)),
+            new_version: (image_version.to_string(), image_id_hash),
+        },
         None,
     )?;
 

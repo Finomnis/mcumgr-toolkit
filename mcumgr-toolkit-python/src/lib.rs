@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use ::mcumgr_toolkit::bootloader::BootloaderType;
-use ::mcumgr_toolkit::client::FirmwareUpdateParams;
+use ::mcumgr_toolkit::client::{FirmwareUpdateParams, FirmwareUpdateStep};
 
 use crate::errors::McubootPythonError;
 use crate::raw_py_any_command::RawPyAnyCommand;
@@ -191,7 +191,9 @@ impl MCUmgrClient {
         let mut cb_error = None;
 
         let res = if let Some(progress) = progress {
-            let mut cb = |msg: &str, prog| match progress.call((msg.to_string(), prog), None) {
+            let mut cb = |msg: FirmwareUpdateStep, prog| match progress
+                .call((msg.to_string(), prog), None)
+            {
                 Ok(_) => true,
                 Err(e) => {
                     cb_error = Some(e);

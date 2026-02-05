@@ -154,7 +154,9 @@ pub fn run(
                     firmware,
                     checksum,
                     params,
-                    Some(&mut move |msg, progress| progress_handler.update(msg, progress)),
+                    Some(&mut move |msg, progress| {
+                        progress_handler.update(&msg.to_string(), progress)
+                    }),
                 )
             }?;
 
