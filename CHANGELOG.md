@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Rust library:
-  - Progress callback of `firmware_update` now takes a `FirmwareUpdateStep` enum instead of a `&str`
+  - Progress callback of `firmware_update` now takes a `enum FirmwareUpdateStep` instead of a `&str`
 
 ### Fixes
 
