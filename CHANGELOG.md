@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - xxxx-xx-xx
+## [0.9.0] - 2026-02-06
+
+### Breaking Changes
+
+- Rust library: Progress callback of `firmware_update` now takes a `FirmwareUpdateStep` enum instead of a `&str`
 
 ### Fixes
 
