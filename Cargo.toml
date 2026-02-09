@@ -42,7 +42,7 @@ pyo3-stub-gen = "0.18.0"
 pyo3-log = "0.13.2"
 serde-pyobject = "0.8.0"
 hex = "0.4.3"
-regex = "1.12.2"
+regex = "1.12.3"
 console = "0.16.2"
 
 [patch.crates-io]
