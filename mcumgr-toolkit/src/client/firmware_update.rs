@@ -3,10 +3,7 @@ use std::fmt::Display;
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::{
-    MCUmgrClient, bootloader::BootloaderType, client::ImageUploadError, connection::ExecuteError,
-    mcuboot,
-};
+use crate::{MCUmgrClient, bootloader::BootloaderType, client::MCUmgrClientError, mcuboot};
 
 /// Possible error values of [`MCUmgrClient::firmware_update`].
 #[derive(Error, Debug, Diagnostic)]
@@ -19,7 +16,7 @@ pub enum FirmwareUpdateError {
     #[error("Failed to detect bootloader")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::detect_bootloader))]
     #[diagnostic(help("try to specify the bootloader type manually"))]
-    BootloaderDetectionFailed(#[source] ExecuteError),
+    BootloaderDetectionFailed(#[source] MCUmgrClientError),
     /// The device contains a bootloader that is not supported.
     #[error("Bootloader '{0}' not supported")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::unknown_bootloader))]
@@ -31,19 +28,19 @@ pub enum FirmwareUpdateError {
     /// Fetching the image state returned an error.
     #[error("Failed to fetch image state from device")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::get_image_state))]
-    GetStateFailed(#[source] ExecuteError),
+    GetStateFailed(#[source] MCUmgrClientError),
     /// Uploading the firmware image returned an error.
     #[error("Failed to upload firmware image to device")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::image_upload))]
-    ImageUploadFailed(#[from] ImageUploadError),
+    ImageUploadFailed(#[source] MCUmgrClientError),
     /// Writing the new image state to the device failed
     #[error("Failed to activate new firmware image")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::set_image_state))]
-    SetStateFailed(#[source] ExecuteError),
+    SetStateFailed(#[source] MCUmgrClientError),
     /// Performing device reset failed
     #[error("Failed to trigger device reboot")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::reboot))]
-    RebootFailed(#[source] ExecuteError),
+    RebootFailed(#[source] MCUmgrClientError),
     /// The given firmware is already installed on the device
     #[error("The device is already running the given firmware")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::already_installed))]
@@ -254,7 +251,7 @@ pub(crate) fn firmware_update(
             has_progress.then_some(&mut upload_progress_cb),
         )
         .map_err(|err| {
-            if let ImageUploadError::ProgressCallbackError = err {
+            if let MCUmgrClientError::ProgressCallbackError = err {
                 // Users expect this error when the progress callback errors
                 FirmwareUpdateError::ProgressCallbackError
             } else {

@@ -40,83 +40,64 @@ pub struct MCUmgrClient {
     smp_frame_size: AtomicUsize,
 }
 
-/// Possible error values of [`MCUmgrClient::fs_file_download`].
+/// Possible error values of [`MCUmgrClient`].
 #[derive(Error, Debug, Diagnostic)]
-pub enum FileDownloadError {
+pub enum MCUmgrClientError {
     /// The command failed in the SMP protocol layer.
     #[error("Command execution failed")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_download::execute))]
+    #[diagnostic(code(mcumgr_toolkit::client::execute))]
     ExecuteError(#[from] ExecuteError),
     /// A device response contained an unexpected offset value.
-    #[error("Received offset does not match requested offset")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_download::offset_mismatch))]
+    #[error("Received an unexpected offset value")]
+    #[diagnostic(code(mcumgr_toolkit::client::unexpected_offset))]
     UnexpectedOffset,
     /// The writer returned an error.
     #[error("Writer returned an error")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_download::writer))]
-    WriterError(#[from] io::Error),
+    #[diagnostic(code(mcumgr_toolkit::client::writer))]
+    WriterError(#[source] io::Error),
+    /// The reader returned an error.
+    #[error("Reader returned an error")]
+    #[diagnostic(code(mcumgr_toolkit::client::reader))]
+    ReaderError(#[source] io::Error),
     /// The received data does not match the reported file size.
     #[error("Received data does not match reported size")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_download::size_mismatch))]
+    #[diagnostic(code(mcumgr_toolkit::client::size_mismatch))]
     SizeMismatch,
     /// The received data unexpectedly did not report the file size.
     #[error("Received data is missing file size information")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_download::missing_size))]
+    #[diagnostic(code(mcumgr_toolkit::client::missing_size))]
     MissingSize,
     /// The progress callback returned an error.
     #[error("Progress callback returned an error")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_download::progress_cb_error))]
-    ProgressCallbackError,
-}
-
-/// Possible error values of [`MCUmgrClient::fs_file_upload`].
-#[derive(Error, Debug, Diagnostic)]
-pub enum FileUploadError {
-    /// The command failed in the SMP protocol layer.
-    #[error("Command execution failed")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_upload::execute))]
-    ExecuteError(#[from] ExecuteError),
-    /// The reader returned an error.
-    #[error("Reader returned an error")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_upload::reader))]
-    ReaderError(#[from] io::Error),
-    /// The progress callback returned an error.
-    #[error("Progress callback returned an error")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_upload::progress_cb_error))]
+    #[diagnostic(code(mcumgr_toolkit::client::progress_cb_error))]
     ProgressCallbackError,
     /// The current SMP frame size is too small for this command.
     #[error("SMP frame size too small for this command")]
-    #[diagnostic(code(mcumgr_toolkit::client::file_upload::framesize_too_small))]
+    #[diagnostic(code(mcumgr_toolkit::client::framesize_too_small))]
     FrameSizeTooSmall(#[source] io::Error),
-}
-
-/// Possible error values of [`MCUmgrClient::image_upload`].
-#[derive(Error, Debug, Diagnostic)]
-pub enum ImageUploadError {
-    /// The command failed in the SMP protocol layer.
-    #[error("Command execution failed")]
-    #[diagnostic(code(mcumgr_toolkit::client::image_upload::execute))]
-    ExecuteError(#[from] ExecuteError),
-    /// The progress callback returned an error.
-    #[error("Progress callback returned an error")]
-    #[diagnostic(code(mcumgr_toolkit::client::image_upload::progress_cb_error))]
-    ProgressCallbackError,
-    /// The current SMP frame size is too small for this command.
-    #[error("SMP frame size too small for this command")]
-    #[diagnostic(code(mcumgr_toolkit::client::image_upload::framesize_too_small))]
-    FrameSizeTooSmall(#[source] io::Error),
-    /// A device response contained an unexpected offset value.
-    #[error("Received offset out of expected range")]
-    #[diagnostic(code(mcumgr_toolkit::client::image_upload::invalid_offset))]
-    UnexpectedOffset,
     /// The device reported a checksum mismatch
     #[error("Device reported checksum mismatch")]
-    #[diagnostic(code(mcumgr_toolkit::client::image_upload::checksum_mismatch_on_device))]
+    #[diagnostic(code(mcumgr_toolkit::client::checksum_mismatch_on_device))]
     ChecksumMismatchOnDevice,
     /// The firmware image does not match the given checksum
     #[error("Firmware image does not match given checksum")]
-    #[diagnostic(code(mcumgr_toolkit::client::image_upload::checksum_mismatch))]
+    #[diagnostic(code(mcumgr_toolkit::client::checksum_mismatch))]
     ChecksumMismatch,
+    /// Setting the device timeout failed
+    #[error("Failed to set the device timeout")]
+    #[diagnostic(code(mcumgr_toolkit::client::set_timeout))]
+    SetTimeoutFailed(#[source] Box<dyn std::error::Error + Send + Sync>),
+}
+
+impl MCUmgrClientError {
+    /// Checks if the device reported the command as unsupported
+    pub fn command_not_supported(&self) -> bool {
+        if let Self::ExecuteError(err) = self {
+            err.command_not_supported()
+        } else {
+            false
+        }
+    }
 }
 
 /// Information about a serial port
@@ -365,7 +346,7 @@ impl MCUmgrClient {
     /// Configures the maximum SMP frame size that we can send to the device automatically
     /// by reading the value of [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40)
     /// from the device.
-    pub fn use_auto_frame_size(&self) -> Result<(), ExecuteError> {
+    pub fn use_auto_frame_size(&self) -> Result<(), MCUmgrClientError> {
         let mcumgr_params = self
             .connection
             .execute_command(&commands::os::MCUmgrParameters)?;
@@ -384,8 +365,10 @@ impl MCUmgrClient {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    pub fn set_timeout(&self, timeout: Duration) -> Result<(), miette::Report> {
-        self.connection.set_timeout(timeout)
+    pub fn set_timeout(&self, timeout: Duration) -> Result<(), MCUmgrClientError> {
+        self.connection
+            .set_timeout(timeout)
+            .map_err(|err| MCUmgrClientError::SetTimeoutFailed(err.into()))
     }
 
     /// Checks if the device is alive and responding.
@@ -395,7 +378,7 @@ impl MCUmgrClient {
     /// # Return
     ///
     /// An error if the device is not alive and responding.
-    pub fn check_connection(&self) -> Result<(), ExecuteError> {
+    pub fn check_connection(&self) -> Result<(), MCUmgrClientError> {
         let random_message = rand::distr::Alphanumeric.sample_string(&mut rand::rng(), 16);
         let response = self.os_echo(&random_message)?;
         if random_message == response {
@@ -404,6 +387,7 @@ impl MCUmgrClient {
             Err(ExecuteError::ReceiveFailed(
                 crate::transport::ReceiveError::UnexpectedResponse,
             ))
+            .map_err(Into::into)
         }
     }
 
@@ -429,10 +413,11 @@ impl MCUmgrClient {
     /// Sends a message to the device and expects the same message back as response.
     ///
     /// This can be used as a sanity check for whether the device is connected and responsive.
-    pub fn os_echo(&self, msg: impl AsRef<str>) -> Result<String, ExecuteError> {
+    pub fn os_echo(&self, msg: impl AsRef<str>) -> Result<String, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::Echo { d: msg.as_ref() })
             .map(|resp| resp.r)
+            .map_err(Into::into)
     }
 
     /// Queries live task statistics
@@ -447,7 +432,7 @@ impl MCUmgrClient {
     /// A map of task names with their respective statistics
     pub fn os_task_statistics(
         &self,
-    ) -> Result<HashMap<String, commands::os::TaskStatisticsEntry>, ExecuteError> {
+    ) -> Result<HashMap<String, commands::os::TaskStatisticsEntry>, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::TaskStatistics)
             .map(|resp| {
@@ -458,20 +443,26 @@ impl MCUmgrClient {
                 }
                 tasks
             })
+            .map_err(Into::into)
     }
 
     /// Sets the RTC of the device to the given datetime.
-    pub fn os_set_datetime(&self, datetime: chrono::NaiveDateTime) -> Result<(), ExecuteError> {
+    pub fn os_set_datetime(
+        &self,
+        datetime: chrono::NaiveDateTime,
+    ) -> Result<(), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::DateTimeSet { datetime })
             .map(Into::into)
+            .map_err(Into::into)
     }
 
     /// Retrieves the device RTC's datetime.
-    pub fn os_get_datetime(&self) -> Result<chrono::NaiveDateTime, ExecuteError> {
+    pub fn os_get_datetime(&self) -> Result<chrono::NaiveDateTime, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::DateTimeGet)
             .map(|val| val.datetime)
+            .map_err(Into::into)
     }
 
     /// Issues a system reset.
@@ -487,18 +478,24 @@ impl MCUmgrClient {
     ///
     /// Note that `boot_mode` only works if [`MCUMGR_GRP_OS_RESET_BOOT_MODE`](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_MCUMGR_GRP_OS_RESET_BOOT_MODE) is enabled.
     ///
-    pub fn os_system_reset(&self, force: bool, boot_mode: Option<u8>) -> Result<(), ExecuteError> {
+    pub fn os_system_reset(
+        &self,
+        force: bool,
+        boot_mode: Option<u8>,
+    ) -> Result<(), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::SystemReset { force, boot_mode })
             .map(Into::into)
+            .map_err(Into::into)
     }
 
     /// Fetch parameters from the MCUmgr library
     pub fn os_mcumgr_parameters(
         &self,
-    ) -> Result<commands::os::MCUmgrParametersResponse, ExecuteError> {
+    ) -> Result<commands::os::MCUmgrParametersResponse, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::MCUmgrParameters)
+            .map_err(Into::into)
     }
 
     /// Fetch information on the running image
@@ -512,14 +509,15 @@ impl MCUmgrClient {
     /// For more information about the format specifier fields, see
     /// the [SMP documentation](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#os-application-info-request).
     ///
-    pub fn os_application_info(&self, format: Option<&str>) -> Result<String, ExecuteError> {
+    pub fn os_application_info(&self, format: Option<&str>) -> Result<String, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::ApplicationInfo { format })
             .map(|resp| resp.output)
+            .map_err(Into::into)
     }
 
     /// Fetch information on the device's bootloader
-    pub fn os_bootloader_info(&self) -> Result<BootloaderInfo, ExecuteError> {
+    pub fn os_bootloader_info(&self) -> Result<BootloaderInfo, MCUmgrClientError> {
         Ok(
             match self
                 .connection
@@ -544,10 +542,11 @@ impl MCUmgrClient {
     }
 
     /// Obtain a list of images with their current state.
-    pub fn image_get_state(&self) -> Result<Vec<commands::image::ImageState>, ExecuteError> {
+    pub fn image_get_state(&self) -> Result<Vec<commands::image::ImageState>, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::image::GetImageState)
             .map(|val| val.images)
+            .map_err(Into::into)
     }
 
     /// Modify the current image state
@@ -569,13 +568,14 @@ impl MCUmgrClient {
         &self,
         hash: Option<[u8; 32]>,
         confirm: bool,
-    ) -> Result<Vec<commands::image::ImageState>, ExecuteError> {
+    ) -> Result<Vec<commands::image::ImageState>, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::image::SetImageState {
                 hash: hash.as_ref(),
                 confirm,
             })
             .map(|val| val.images)
+            .map_err(Into::into)
     }
 
     /// Upload a firmware image to an image slot.
@@ -595,19 +595,19 @@ impl MCUmgrClient {
         checksum: Option<[u8; 32]>,
         upgrade_only: bool,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
-    ) -> Result<(), ImageUploadError> {
+    ) -> Result<(), MCUmgrClientError> {
         let chunk_size_max = image_upload_max_data_chunk_size(
             self.smp_frame_size
                 .load(std::sync::atomic::Ordering::SeqCst),
         )
-        .map_err(ImageUploadError::FrameSizeTooSmall)?;
+        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
 
         let data = data.as_ref();
 
         let actual_checksum: [u8; 32] = Sha256::digest(data).into();
         if let Some(checksum) = checksum {
             if actual_checksum != checksum {
-                return Err(ImageUploadError::ChecksumMismatch);
+                return Err(MCUmgrClientError::ChecksumMismatch);
             }
         }
 
@@ -645,15 +645,15 @@ impl MCUmgrClient {
             offset = upload_response
                 .off
                 .try_into()
-                .map_err(|_| ImageUploadError::UnexpectedOffset)?;
+                .map_err(|_| MCUmgrClientError::UnexpectedOffset)?;
 
             if offset > size {
-                return Err(ImageUploadError::UnexpectedOffset);
+                return Err(MCUmgrClientError::UnexpectedOffset);
             }
 
             if let Some(progress) = &mut progress {
                 if !progress(offset as u64, size as u64) {
-                    return Err(ImageUploadError::ProgressCallbackError);
+                    return Err(MCUmgrClientError::ProgressCallbackError);
                 };
             }
 
@@ -664,7 +664,7 @@ impl MCUmgrClient {
 
         if let Some(checksum_matched) = checksum_matched {
             if !checksum_matched {
-                return Err(ImageUploadError::ChecksumMismatchOnDevice);
+                return Err(MCUmgrClientError::ChecksumMismatchOnDevice);
             }
         } else {
             log::warn!("Device did not perform image checksum verification");
@@ -679,17 +679,21 @@ impl MCUmgrClient {
     ///
     /// * `slot` - The slot ID of the image to erase. Slot `1` if omitted.
     ///
-    pub fn image_erase(&self, slot: Option<u32>) -> Result<(), ExecuteError> {
+    pub fn image_erase(&self, slot: Option<u32>) -> Result<(), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::image::ImageErase { slot })
             .map(Into::into)
+            .map_err(Into::into)
     }
 
     /// Obtain a list of available image slots.
-    pub fn image_slot_info(&self) -> Result<Vec<commands::image::SlotInfoImage>, ExecuteError> {
+    pub fn image_slot_info(
+        &self,
+    ) -> Result<Vec<commands::image::SlotInfoImage>, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::image::SlotInfo)
             .map(|val| val.images)
+            .map_err(Into::into)
     }
 
     /// Load a file from the device.
@@ -710,31 +714,33 @@ impl MCUmgrClient {
         name: impl AsRef<str>,
         mut writer: T,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
-    ) -> Result<(), FileDownloadError> {
+    ) -> Result<(), MCUmgrClientError> {
         let name = name.as_ref();
         let response = self
             .connection
             .execute_command(&commands::fs::FileDownload { name, off: 0 })?;
 
-        let file_len = response.len.ok_or(FileDownloadError::MissingSize)?;
+        let file_len = response.len.ok_or(MCUmgrClientError::MissingSize)?;
         if response.off != 0 {
-            return Err(FileDownloadError::UnexpectedOffset);
+            return Err(MCUmgrClientError::UnexpectedOffset);
         }
 
         let mut offset = 0;
 
         if let Some(progress) = &mut progress {
             if !progress(offset, file_len) {
-                return Err(FileDownloadError::ProgressCallbackError);
+                return Err(MCUmgrClientError::ProgressCallbackError);
             };
         }
 
-        writer.write_all(&response.data)?;
+        writer
+            .write_all(&response.data)
+            .map_err(MCUmgrClientError::WriterError)?;
         offset += response.data.len() as u64;
 
         if let Some(progress) = &mut progress {
             if !progress(offset, file_len) {
-                return Err(FileDownloadError::ProgressCallbackError);
+                return Err(MCUmgrClientError::ProgressCallbackError);
             };
         }
 
@@ -744,21 +750,23 @@ impl MCUmgrClient {
                 .execute_command(&commands::fs::FileDownload { name, off: offset })?;
 
             if response.off != offset {
-                return Err(FileDownloadError::UnexpectedOffset);
+                return Err(MCUmgrClientError::UnexpectedOffset);
             }
 
-            writer.write_all(&response.data)?;
+            writer
+                .write_all(&response.data)
+                .map_err(MCUmgrClientError::WriterError)?;
             offset += response.data.len() as u64;
 
             if let Some(progress) = &mut progress {
                 if !progress(offset, file_len) {
-                    return Err(FileDownloadError::ProgressCallbackError);
+                    return Err(MCUmgrClientError::ProgressCallbackError);
                 };
             }
         }
 
         if offset != file_len {
-            return Err(FileDownloadError::SizeMismatch);
+            return Err(MCUmgrClientError::SizeMismatch);
         }
 
         Ok(())
@@ -785,7 +793,7 @@ impl MCUmgrClient {
         mut reader: T,
         size: u64,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
-    ) -> Result<(), FileUploadError> {
+    ) -> Result<(), MCUmgrClientError> {
         let name = name.as_ref();
 
         let chunk_size_max = file_upload_max_data_chunk_size(
@@ -793,7 +801,7 @@ impl MCUmgrClient {
                 .load(std::sync::atomic::Ordering::SeqCst),
             name,
         )
-        .map_err(FileUploadError::FrameSizeTooSmall)?;
+        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
         let mut data_buffer = vec![0u8; chunk_size_max].into_boxed_slice();
 
         let mut offset = 0;
@@ -802,7 +810,9 @@ impl MCUmgrClient {
             let current_chunk_size = (size - offset).min(data_buffer.len() as u64) as usize;
 
             let chunk_buffer = &mut data_buffer[..current_chunk_size];
-            reader.read_exact(chunk_buffer)?;
+            reader
+                .read_exact(chunk_buffer)
+                .map_err(MCUmgrClientError::ReaderError)?;
 
             self.connection.execute_command(&commands::fs::FileUpload {
                 off: offset,
@@ -815,7 +825,7 @@ impl MCUmgrClient {
 
             if let Some(progress) = &mut progress {
                 if !progress(offset, size) {
-                    return Err(FileUploadError::ProgressCallbackError);
+                    return Err(MCUmgrClientError::ProgressCallbackError);
                 };
             }
         }
@@ -827,10 +837,12 @@ impl MCUmgrClient {
     pub fn fs_file_status(
         &self,
         name: impl AsRef<str>,
-    ) -> Result<commands::fs::FileStatusResponse, ExecuteError> {
-        self.connection.execute_command(&commands::fs::FileStatus {
-            name: name.as_ref(),
-        })
+    ) -> Result<commands::fs::FileStatusResponse, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::fs::FileStatus {
+                name: name.as_ref(),
+            })
+            .map_err(Into::into)
     }
 
     /// Computes the hash/checksum of a file
@@ -850,7 +862,7 @@ impl MCUmgrClient {
         algorithm: Option<impl AsRef<str>>,
         offset: u64,
         length: Option<u64>,
-    ) -> Result<commands::fs::FileChecksumResponse, ExecuteError> {
+    ) -> Result<commands::fs::FileChecksumResponse, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::fs::FileChecksum {
                 name: name.as_ref(),
@@ -858,22 +870,25 @@ impl MCUmgrClient {
                 off: offset,
                 len: length,
             })
+            .map_err(Into::into)
     }
 
     /// Queries which hash/checksum algorithms are available on the target
     pub fn fs_supported_checksum_types(
         &self,
-    ) -> Result<HashMap<String, commands::fs::FileChecksumProperties>, ExecuteError> {
+    ) -> Result<HashMap<String, commands::fs::FileChecksumProperties>, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::fs::SupportedFileChecksumTypes)
             .map(|val| val.types)
+            .map_err(Into::into)
     }
 
     /// Close all device files MCUmgr has currently open
-    pub fn fs_file_close(&self) -> Result<(), ExecuteError> {
+    pub fn fs_file_close(&self) -> Result<(), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::fs::FileClose)
             .map(Into::into)
+            .map_err(Into::into)
     }
 
     /// Run a shell command.
@@ -885,17 +900,19 @@ impl MCUmgrClient {
     /// # Return
     ///
     /// A tuple of (returncode, stdout) produced by the command execution.
-    pub fn shell_execute(&self, argv: &[String]) -> Result<(i32, String), ExecuteError> {
+    pub fn shell_execute(&self, argv: &[String]) -> Result<(i32, String), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::shell::ShellCommandLineExecute { argv })
             .map(|ret| (ret.ret, ret.o))
+            .map_err(Into::into)
     }
 
     /// Erase the `storage_partition` flash partition.
-    pub fn zephyr_erase_storage(&self) -> Result<(), ExecuteError> {
+    pub fn zephyr_erase_storage(&self) -> Result<(), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::zephyr::EraseStorage)
             .map(Into::into)
+            .map_err(Into::into)
     }
 
     /// Execute a raw [`commands::McuMgrCommand`].
@@ -906,7 +923,7 @@ impl MCUmgrClient {
     pub fn raw_command<T: commands::McuMgrCommand>(
         &self,
         command: &T,
-    ) -> Result<T::Response, ExecuteError> {
-        self.connection.execute_command(command)
+    ) -> Result<T::Response, MCUmgrClientError> {
+        self.connection.execute_command(command).map_err(Into::into)
     }
 }
