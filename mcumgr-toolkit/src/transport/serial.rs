@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use base64::prelude::*;
-use miette::IntoDiagnostic;
 use ringbuf::{
     LocalRb,
     storage::Heap,
@@ -268,7 +267,10 @@ where
         Ok(data)
     }
 
-    fn set_timeout(&mut self, timeout: std::time::Duration) -> Result<(), miette::Report> {
+    fn set_timeout(
+        &mut self,
+        timeout: std::time::Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         ConfigurableTimeout::set_timeout(&mut self.serial, timeout)
     }
 }
@@ -279,11 +281,17 @@ pub trait ConfigurableTimeout {
     ///
     /// When the device does not respond within the set duration,
     /// an error will be returned.
-    fn set_timeout(&mut self, duration: Duration) -> Result<(), miette::Report>;
+    fn set_timeout(
+        &mut self,
+        duration: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
 
 impl<T: AsMut<dyn SerialPort> + ?Sized> ConfigurableTimeout for T {
-    fn set_timeout(&mut self, timeout: Duration) -> Result<(), miette::Report> {
-        SerialPort::set_timeout(self.as_mut(), timeout).into_diagnostic()
+    fn set_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        SerialPort::set_timeout(self.as_mut(), timeout).map_err(Into::into)
     }
 }

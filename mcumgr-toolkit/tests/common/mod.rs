@@ -29,7 +29,10 @@ impl Write for LoopbackSerial {
 }
 
 impl ConfigurableTimeout for LoopbackSerial {
-    fn set_timeout(&mut self, _: std::time::Duration) -> Result<(), miette::Report> {
+    fn set_timeout(
+        &mut self,
+        _: std::time::Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
 }
@@ -160,7 +163,10 @@ impl Write for EchoSerial {
 }
 
 impl ConfigurableTimeout for EchoSerial {
-    fn set_timeout(&mut self, _: std::time::Duration) -> Result<(), miette::Report> {
+    fn set_timeout(
+        &mut self,
+        _: std::time::Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
 }
