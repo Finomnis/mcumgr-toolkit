@@ -368,7 +368,7 @@ impl MCUmgrClient {
     pub fn set_timeout(&self, timeout: Duration) -> Result<(), MCUmgrClientError> {
         self.connection
             .set_timeout(timeout)
-            .map_err(|err| MCUmgrClientError::SetTimeoutFailed(err.into()))
+            .map_err(MCUmgrClientError::SetTimeoutFailed)
     }
 
     /// Checks if the device is alive and responding.
@@ -384,10 +384,10 @@ impl MCUmgrClient {
         if random_message == response {
             Ok(())
         } else {
-            Err(ExecuteError::ReceiveFailed(
-                crate::transport::ReceiveError::UnexpectedResponse,
-            ))
-            .map_err(Into::into)
+            Err(
+                ExecuteError::ReceiveFailed(crate::transport::ReceiveError::UnexpectedResponse)
+                    .into(),
+            )
         }
     }
 
