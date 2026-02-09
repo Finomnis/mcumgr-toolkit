@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Merge `FileUploadError`, `FileDownloadError` and `ImageUploadError` into `MCUmgrClientError`
+- Change error type of `set_timeout` to `Box<dyn Error>`
 
 ## [0.9.0] - 2026-02-06
 
