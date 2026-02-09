@@ -3,7 +3,7 @@ resolver = "3"
 members = ["mcumgr-toolkit", "mcumgr-toolkit-cli", "mcumgr-toolkit-python"]
 
 [workspace.package]
-version = "0.9.0"
+version = "0.10.0"
 authors = ["Finomnis <finomnis@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
@@ -16,7 +16,7 @@ keywords = ["zephyr", "mcumgr", "smp"]
 exclude = ["/.gitignore", "/.github/"]
 
 [workspace.dependencies]
-mcumgr-toolkit = { version = "0.9.0", path = "./mcumgr-toolkit" }
+mcumgr-toolkit = { version = "0.10.0", path = "./mcumgr-toolkit" }
 serialport = { version = "4.7.3", default-features = false }
 thiserror = "2.0.17"
 miette = "7.6.0"

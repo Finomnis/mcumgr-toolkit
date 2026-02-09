@@ -3,10 +3,7 @@ use thiserror::Error;
 
 use mcumgr_toolkit::{
     Errno,
-    client::{
-        FileDownloadError, FileUploadError, FirmwareUpdateError, ImageUploadError, UsbSerialError,
-    },
-    connection::ExecuteError,
+    client::{FirmwareUpdateError, MCUmgrClientError, UsbSerialError},
     mcuboot::ImageParseError,
 };
 
@@ -27,7 +24,7 @@ pub enum CliError {
     // SetTimeoutFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync + 'static>),
     #[error("Command execution failed")]
     #[diagnostic(code(mcumgrctl::execution_failed))]
-    CommandExecutionFailed(#[from] ExecuteError),
+    CommandExecutionFailed(#[from] MCUmgrClientError),
     #[error("Json encode failed")]
     #[diagnostic(code(mcumgrctl::json_encode))]
     JsonEncodeError(#[source] serde_json::Error),
@@ -43,15 +40,6 @@ pub enum CliError {
     #[error("Unable to determine output file name")]
     #[diagnostic(code(mcumgrctl::destination_unknown))]
     DestinationFilenameUnknown,
-    #[error("File upload failed")]
-    #[diagnostic(code(mcumgrctl::file_upload))]
-    FileUploadFailed(#[from] FileUploadError),
-    #[error("File download failed")]
-    #[diagnostic(code(mcumgrctl::file_download))]
-    FileDownloadFailed(#[from] FileDownloadError),
-    #[error("Image upload failed")]
-    #[diagnostic(code(mcumgrctl::image_upload))]
-    ImageUploadFailed(#[from] ImageUploadError),
     #[error("Failed to parse datetime string")]
     #[diagnostic(code(mcumgrctl::chrono_parse))]
     ChronoParseFailed(#[from] chrono::ParseError),

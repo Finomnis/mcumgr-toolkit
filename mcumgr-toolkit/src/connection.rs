@@ -75,7 +75,10 @@ impl Connection {
     ///
     /// When the device does not respond to packets within the set
     /// duration, an error will be raised.
-    pub fn set_timeout(&self, timeout: Duration) -> Result<(), miette::Report> {
+    pub fn set_timeout(
+        &self,
+        timeout: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.inner.lock().unwrap().transport.set_timeout(timeout)
     }
 
