@@ -121,7 +121,7 @@ class MCUmgrClient:
     A high-level client for Zephyr's MCUmgr SMP functionality
     """
     @staticmethod
-    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 10000) -> 'MCUmgrClient':
+    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> 'MCUmgrClient':
         r"""
         Creates a new serial port based Zephyr MCUmgr SMP client.
         
@@ -132,7 +132,7 @@ class MCUmgrClient:
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod
-    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 10000) -> 'MCUmgrClient':
+    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> 'MCUmgrClient':
         r"""
         Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
         
@@ -170,6 +170,13 @@ class MCUmgrClient:
         
         When the device does not respond to packets within the set
         duration, an error will be raised.
+        """
+    def set_retries(self, retries: builtins.int) -> None:
+        r"""
+        Changes the retry amount.
+        
+        When the device encounters a transport error, it will retry
+        this many times until giving up.
         """
     def check_connection(self) -> None:
         r"""
@@ -377,13 +384,15 @@ class MCUmgrClient:
         r"""
         Close all device files MCUmgr has currently open
         """
-    def shell_execute(self, argv: typing.Sequence[builtins.str]) -> builtins.str:
+    def shell_execute(self, argv: typing.Sequence[builtins.str], use_retries: builtins.bool = True) -> builtins.str:
         r"""
         Run a shell command.
         
         ### Arguments
         
         * `argv` - The shell command to be executed.
+        * `use_retries` - Retry request a certain amount of times if a transport error occurs.
+          Be aware that this might cause the command to be executed multiple times.
         
         ### Return
         

@@ -3,7 +3,7 @@ resolver = "3"
 members = ["mcumgr-toolkit", "mcumgr-toolkit-cli", "mcumgr-toolkit-python"]
 
 [workspace.package]
-version = "0.10.0"
+version = "0.11.0"
 authors = ["Finomnis <finomnis@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
@@ -16,11 +16,11 @@ keywords = ["zephyr", "mcumgr", "smp"]
 exclude = ["/.gitignore", "/.github/"]
 
 [workspace.dependencies]
-mcumgr-toolkit = { version = "0.10.0", path = "./mcumgr-toolkit" }
+mcumgr-toolkit = { version = "0.11.0", path = "./mcumgr-toolkit" }
 serialport = { version = "4.7.3", default-features = false }
 thiserror = "2.0.17"
 miette = "7.6.0"
-rand = "0.9.2"
+rand = "0.10.0"
 base64 = "0.22.1"
 crc = "3.4.0"
 sha2 = "0.10.9"
@@ -44,6 +44,7 @@ serde-pyobject = "0.8.0"
 hex = "0.4.3"
 regex = "1.12.2"
 console = "0.16.2"
+polonius-the-crab = "0.5.0"
 
 [patch.crates-io]
 pyo3-stub-gen = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', rev = '1999efc189fe29e35d099acd5e5ec4a5d78190db' }

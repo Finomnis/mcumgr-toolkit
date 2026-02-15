@@ -29,6 +29,7 @@ strum = { workspace = true, features = ["derive"] }
 chrono = { workspace = true, features = ["serde"] }
 hex = { workspace = true, features = ["serde"] }
 regex.workspace = true
+polonius-the-crab.workspace = true
 
 [dev-dependencies]
 proptest = "1.9.0"

@@ -220,7 +220,6 @@ impl MCUmgrClient {
     /// # use mcumgr_toolkit::MCUmgrClient;
     /// # fn main() {
     /// let serial = serialport::new("COM42", 115200)
-    ///     .timeout(std::time::Duration::from_millis(10000))
     ///     .open()
     ///     .unwrap();
     ///
@@ -369,6 +368,14 @@ impl MCUmgrClient {
         self.connection
             .set_timeout(timeout)
             .map_err(MCUmgrClientError::SetTimeoutFailed)
+    }
+
+    /// Changes the retry amount.
+    ///
+    /// When the device encounters a transport error, it will retry
+    /// this many times until giving up.
+    pub fn set_retries(&self, retries: u8) {
+        self.connection.set_retries(retries)
     }
 
     /// Checks if the device is alive and responding.
@@ -896,15 +903,26 @@ impl MCUmgrClient {
     /// # Arguments
     ///
     /// * `argv` - The shell command to be executed.
+    /// * `use_retries` - Retry request a certain amount of times if a transport error occurs.
+    ///   Be aware that this might cause the command to be executed multiple times.
     ///
     /// # Return
     ///
     /// A tuple of (returncode, stdout) produced by the command execution.
-    pub fn shell_execute(&self, argv: &[String]) -> Result<(i32, String), MCUmgrClientError> {
-        self.connection
-            .execute_command(&commands::shell::ShellCommandLineExecute { argv })
-            .map(|ret| (ret.ret, ret.o))
-            .map_err(Into::into)
+    pub fn shell_execute(
+        &self,
+        argv: &[String],
+        use_retries: bool,
+    ) -> Result<(i32, String), MCUmgrClientError> {
+        let command = commands::shell::ShellCommandLineExecute { argv };
+
+        if use_retries {
+            self.connection.execute_command(&command)
+        } else {
+            self.connection.execute_command_without_retries(&command)
+        }
+        .map(|ret| (ret.ret, ret.o))
+        .map_err(Into::into)
     }
 
     /// Erase the `storage_partition` flash partition.

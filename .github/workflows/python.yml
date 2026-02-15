@@ -162,15 +162,17 @@ jobs:
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
       - name: Install built wheel
         if: matrix.target == 'x86_64-unknown-linux-musl'
-        uses: addnab/docker-run-action@v3
-        with:
-          image: alpine:latest
-          options: -v ${{ github.workspace }}:/io -w /io
-          run: |
-            apk add py3-pip
-            pip3 install -U pip --break-system-packages
-            pip3 install mcumgr_toolkit --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
-            python3 -c "import mcumgr_toolkit"
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/io" \
+            -w /io \
+            alpine:latest \
+            sh -euxc '
+              apk add py3-pip
+              pip3 install -U pip --break-system-packages
+              pip3 install mcumgr_toolkit --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
+              python3 -c "import mcumgr_toolkit"
+            '
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:

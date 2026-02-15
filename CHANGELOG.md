@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-02-15
+
+### Breaking Changes
+
+- Add retry mechanism for transport errors
+    - `MCUmgrClient`:
+        - Add `set_retries`
+        - Add `use_retries` parameter to `shell_execute`
+    - `Connection`:
+        - Add `set_retries`
+        - Add `execute_command_without_retries`
+        - Add `use_retries` parameter to `execute_raw_command`
+    - CLI: Add `--retries` parameter
+
+### Changes
+
+- Decrease default timeout to `500 ms`
+- Improve error message formatting
+
 ## [0.10.0] - 2026-02-09
 
 ### Breaking Changes
@@ -290,6 +309,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.11.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.10.0...0.11.0
 [0.10.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.8.1...0.9.0
 [0.8.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.8.0...0.8.1
