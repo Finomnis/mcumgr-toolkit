@@ -1,4 +1,4 @@
-use std::{io::Cursor, sync::Mutex, time::Duration};
+use std::{error::Error, io::Cursor, sync::Mutex, time::Duration};
 
 use crate::{
     DEFAULT_RETRIES,
@@ -114,7 +114,13 @@ impl Transceiver {
 
             match result {
                 Ok(_) => polonius_return!(result),
-                Err(e) => log::warn!("Retry transmission, error occurred: {e}"),
+                Err(e) => {
+                    let mut lowest_err: &dyn Error = &e;
+                    while let Some(lower_err) = lowest_err.source() {
+                        lowest_err = lower_err;
+                    }
+                    log::warn!("Retry transmission, error occurred: {lowest_err}");
+                }
             }
         })
     }
