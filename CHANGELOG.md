@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-02-15
+
+### Changes
+
+- Print help message when first image transfer chunk times out
+    - This is a strong indicator the the device should use
+      [progressive erase](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_IMG_ERASE_PROGRESSIVELY) while receiving the firmware image
+
 ## [0.11.0] - 2026-02-15
 
 ### Breaking Changes
@@ -309,6 +317,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.11.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.0...0.11.1
 [0.11.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.10.0...0.11.0
 [0.10.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.8.1...0.9.0
