@@ -1,6 +1,7 @@
 use std::{io::Cursor, sync::Mutex, time::Duration};
 
 use crate::{
+    DEFAULT_RETRIES,
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
     smp_errors::{DeviceError, MCUmgrErr},
     transport::{ReceiveError, SendError, Transport},
@@ -121,7 +122,7 @@ impl Transceiver {
 
 impl Connection {
     /// Creates a new SMP connection
-    pub fn new<T: Transport + Send + 'static>(transport: T, retries: u8) -> Self {
+    pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {
         Self {
             inner: Mutex::new(Inner {
                 transceiver: Transceiver {
@@ -130,7 +131,7 @@ impl Connection {
                     receive_buffer: Box::new([0; u16::MAX as usize]),
                 },
                 send_buffer: Box::new([0; u16::MAX as usize]),
-                retries,
+                retries: DEFAULT_RETRIES,
             }),
         }
     }

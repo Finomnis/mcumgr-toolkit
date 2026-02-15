@@ -87,6 +87,8 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     };
 
     if let Ok(client) = client.get() {
+        client.set_retries(args.retries);
+
         if let Err(e) = client.use_auto_frame_size() {
             log::warn!("Failed to read SMP frame size from device, using slow default");
             log::warn!("Reason: {e}");

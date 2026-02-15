@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Add retry mechanism for transport errors
-    - Add `MCUmgrClient::set_retries`
-    - Add `use_retries` parameter to:
-        - `MCUmgrClient::shell_execute`
-        - `Connection::execute_raw_command`
+    - `MCUmgrClient`:
+        - Add `set_retries`
+        - Add `use_retries` parameter to `shell_execute`
+    - `Connection`:
+        - Add `set_retries`
+        - Add `use_retries` parameter to `execute_raw_command`
     - CLI: Add `--retries` parameter
 
 ### Changes

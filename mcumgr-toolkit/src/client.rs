@@ -32,12 +32,6 @@ use crate::{
 /// Matches Zephyr default value of [MCUMGR_TRANSPORT_NETBUF_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
 const ZEPHYR_DEFAULT_SMP_FRAME_SIZE: usize = 384;
 
-/// The default timeout used by this crate
-pub const DEFAULT_TIMEOUT_MS: u64 = 500;
-
-/// THe default retry count used by this crate
-pub const DEFAULT_RETRIES: u8 = 5;
-
 /// A high-level client for Zephyr's MCUmgr SMP protocol.
 ///
 /// This struct is the central entry point of this crate.
@@ -236,7 +230,7 @@ impl MCUmgrClient {
         serial: T,
     ) -> Self {
         Self {
-            connection: Connection::new(SerialTransport::new(serial), DEFAULT_RETRIES),
+            connection: Connection::new(SerialTransport::new(serial)),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
         }
     }
