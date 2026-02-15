@@ -3,6 +3,7 @@ use common::LoopbackSerial;
 
 use mcumgr_toolkit::transport::{Transport, serial::SerialTransport};
 use proptest::prelude::*;
+use rand::RngExt;
 
 fn create_loopback_transport() -> Box<dyn Transport> {
     Box::new(SerialTransport::new(LoopbackSerial::default())) as Box<dyn Transport>
