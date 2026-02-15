@@ -186,8 +186,7 @@ impl Connection {
         let mut lock_guard = self.inner.lock().unwrap();
         let locked_self: &mut Inner = &mut lock_guard;
 
-        let cursor_buffer: &mut [u8] = locked_self.send_buffer.as_mut_slice();
-        let mut cursor = Cursor::new(cursor_buffer);
+        let mut cursor = Cursor::new(locked_self.send_buffer.as_mut_slice());
         ciborium::into_writer(request.data(), &mut cursor)
             .into_diagnostic()
             .map_err(Into::into)
