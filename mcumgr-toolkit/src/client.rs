@@ -38,7 +38,6 @@ const ZEPHYR_DEFAULT_SMP_FRAME_SIZE: usize = 384;
 pub struct MCUmgrClient {
     connection: Connection,
     smp_frame_size: AtomicUsize,
-    num_retries: u8,
 }
 
 /// Possible error values of [`MCUmgrClient`].
@@ -232,9 +231,8 @@ impl MCUmgrClient {
         serial: T,
     ) -> Self {
         Self {
-            connection: Connection::new(SerialTransport::new(serial)),
+            connection: Connection::new(SerialTransport::new(serial), 5),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-            num_retries: 5, // Hard coded for now
         }
     }
 
@@ -351,7 +349,7 @@ impl MCUmgrClient {
     pub fn use_auto_frame_size(&self) -> Result<(), MCUmgrClientError> {
         let mcumgr_params = self
             .connection
-            .execute_command(&commands::os::MCUmgrParameters, self.num_retries)?;
+            .execute_command(&commands::os::MCUmgrParameters)?;
 
         log::debug!("Using frame size {}.", mcumgr_params.buf_size);
 
@@ -417,7 +415,7 @@ impl MCUmgrClient {
     /// This can be used as a sanity check for whether the device is connected and responsive.
     pub fn os_echo(&self, msg: impl AsRef<str>) -> Result<String, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::os::Echo { d: msg.as_ref() }, self.num_retries)
+            .execute_command(&commands::os::Echo { d: msg.as_ref() })
             .map(|resp| resp.r)
             .map_err(Into::into)
     }
@@ -436,7 +434,7 @@ impl MCUmgrClient {
         &self,
     ) -> Result<HashMap<String, commands::os::TaskStatisticsEntry>, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::os::TaskStatistics, self.num_retries)
+            .execute_command(&commands::os::TaskStatistics)
             .map(|resp| {
                 let mut tasks = resp.tasks;
                 for (_, stats) in tasks.iter_mut() {
@@ -454,7 +452,7 @@ impl MCUmgrClient {
         datetime: chrono::NaiveDateTime,
     ) -> Result<(), MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::os::DateTimeSet { datetime }, self.num_retries)
+            .execute_command(&commands::os::DateTimeSet { datetime })
             .map(Into::into)
             .map_err(Into::into)
     }
@@ -462,7 +460,7 @@ impl MCUmgrClient {
     /// Retrieves the device RTC's datetime.
     pub fn os_get_datetime(&self) -> Result<chrono::NaiveDateTime, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::os::DateTimeGet, self.num_retries)
+            .execute_command(&commands::os::DateTimeGet)
             .map(|val| val.datetime)
             .map_err(Into::into)
     }
@@ -486,10 +484,7 @@ impl MCUmgrClient {
         boot_mode: Option<u8>,
     ) -> Result<(), MCUmgrClientError> {
         self.connection
-            .execute_command(
-                &commands::os::SystemReset { force, boot_mode },
-                self.num_retries,
-            )
+            .execute_command(&commands::os::SystemReset { force, boot_mode })
             .map(Into::into)
             .map_err(Into::into)
     }
@@ -516,7 +511,7 @@ impl MCUmgrClient {
     ///
     pub fn os_application_info(&self, format: Option<&str>) -> Result<String, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::os::ApplicationInfo { format }, self.num_retries)
+            .execute_command(&commands::os::ApplicationInfo { format })
             .map(|resp| resp.output)
             .map_err(Into::into)
     }
@@ -526,15 +521,14 @@ impl MCUmgrClient {
         Ok(
             match self
                 .connection
-                .execute_command(&commands::os::BootloaderInfo, self.num_retries)?
+                .execute_command(&commands::os::BootloaderInfo)?
                 .bootloader
                 .as_str()
             {
                 "MCUboot" => {
-                    let mode_data = self.connection.execute_command(
-                        &commands::os::BootloaderInfoMcubootMode {},
-                        self.num_retries,
-                    )?;
+                    let mode_data = self
+                        .connection
+                        .execute_command(&commands::os::BootloaderInfoMcubootMode {})?;
                     BootloaderInfo::MCUboot {
                         mode: mode_data.mode,
                         no_downgrade: mode_data.no_downgrade,
@@ -550,7 +544,7 @@ impl MCUmgrClient {
     /// Obtain a list of images with their current state.
     pub fn image_get_state(&self) -> Result<Vec<commands::image::ImageState>, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::image::GetImageState, self.num_retries)
+            .execute_command(&commands::image::GetImageState)
             .map(|val| val.images)
             .map_err(Into::into)
     }
@@ -576,13 +570,10 @@ impl MCUmgrClient {
         confirm: bool,
     ) -> Result<Vec<commands::image::ImageState>, MCUmgrClientError> {
         self.connection
-            .execute_command(
-                &commands::image::SetImageState {
-                    hash: hash.as_ref(),
-                    confirm,
-                },
-                self.num_retries,
-            )
+            .execute_command(&commands::image::SetImageState {
+                hash: hash.as_ref(),
+                confirm,
+            })
             .map(|val| val.images)
             .map_err(Into::into)
     }
@@ -630,29 +621,25 @@ impl MCUmgrClient {
             let chunk_data = &data[offset..offset + current_chunk_size];
 
             let upload_response = if offset == 0 {
-                self.connection.execute_command(
-                    &commands::image::ImageUpload {
+                self.connection
+                    .execute_command(&commands::image::ImageUpload {
                         image,
                         len: Some(size as u64),
                         off: offset as u64,
                         sha: Some(&actual_checksum),
                         data: chunk_data,
                         upgrade: Some(upgrade_only),
-                    },
-                    self.num_retries,
-                )?
+                    })?
             } else {
-                self.connection.execute_command(
-                    &commands::image::ImageUpload {
+                self.connection
+                    .execute_command(&commands::image::ImageUpload {
                         image: None,
                         len: None,
                         off: offset as u64,
                         sha: None,
                         data: chunk_data,
                         upgrade: None,
-                    },
-                    self.num_retries,
-                )?
+                    })?
             };
 
             offset = upload_response
@@ -694,7 +681,7 @@ impl MCUmgrClient {
     ///
     pub fn image_erase(&self, slot: Option<u32>) -> Result<(), MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::image::ImageErase { slot }, self.num_retries)
+            .execute_command(&commands::image::ImageErase { slot })
             .map(Into::into)
             .map_err(Into::into)
     }
@@ -704,7 +691,7 @@ impl MCUmgrClient {
         &self,
     ) -> Result<Vec<commands::image::SlotInfoImage>, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::image::SlotInfo, self.num_retries)
+            .execute_command(&commands::image::SlotInfo)
             .map(|val| val.images)
             .map_err(Into::into)
     }
@@ -729,10 +716,9 @@ impl MCUmgrClient {
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), MCUmgrClientError> {
         let name = name.as_ref();
-        let response = self.connection.execute_command(
-            &commands::fs::FileDownload { name, off: 0 },
-            self.num_retries,
-        )?;
+        let response = self
+            .connection
+            .execute_command(&commands::fs::FileDownload { name, off: 0 })?;
 
         let file_len = response.len.ok_or(MCUmgrClientError::MissingSize)?;
         if response.off != 0 {
@@ -759,10 +745,9 @@ impl MCUmgrClient {
         }
 
         while offset < file_len {
-            let response = self.connection.execute_command(
-                &commands::fs::FileDownload { name, off: offset },
-                self.num_retries,
-            )?;
+            let response = self
+                .connection
+                .execute_command(&commands::fs::FileDownload { name, off: offset })?;
 
             if response.off != offset {
                 return Err(MCUmgrClientError::UnexpectedOffset);
@@ -829,15 +814,12 @@ impl MCUmgrClient {
                 .read_exact(chunk_buffer)
                 .map_err(MCUmgrClientError::ReaderError)?;
 
-            self.connection.execute_command(
-                &commands::fs::FileUpload {
-                    off: offset,
-                    data: chunk_buffer,
-                    name,
-                    len: if offset == 0 { Some(size) } else { None },
-                },
-                self.num_retries,
-            )?;
+            self.connection.execute_command(&commands::fs::FileUpload {
+                off: offset,
+                data: chunk_buffer,
+                name,
+                len: if offset == 0 { Some(size) } else { None },
+            })?;
 
             offset += chunk_buffer.len() as u64;
 
@@ -896,7 +878,7 @@ impl MCUmgrClient {
         &self,
     ) -> Result<HashMap<String, commands::fs::FileChecksumProperties>, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::fs::SupportedFileChecksumTypes, self.num_retries)
+            .execute_command(&commands::fs::SupportedFileChecksumTypes)
             .map(|val| val.types)
             .map_err(Into::into)
     }
@@ -904,7 +886,7 @@ impl MCUmgrClient {
     /// Close all device files MCUmgr has currently open
     pub fn fs_file_close(&self) -> Result<(), MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::fs::FileClose, self.num_retries)
+            .execute_command(&commands::fs::FileClose)
             .map(Into::into)
             .map_err(Into::into)
     }
@@ -914,21 +896,32 @@ impl MCUmgrClient {
     /// # Arguments
     ///
     /// * `argv` - The shell command to be executed.
+    /// * `use_retries` - Retry request a certain amount of times if a transport error occurs.
+    ///   Be aware that this might cause the command to be executed multiple times.
     ///
     /// # Return
     ///
     /// A tuple of (returncode, stdout) produced by the command execution.
-    pub fn shell_execute(&self, argv: &[String]) -> Result<(i32, String), MCUmgrClientError> {
-        self.connection
-            .execute_command(&commands::shell::ShellCommandLineExecute { argv }, 0)
-            .map(|ret| (ret.ret, ret.o))
-            .map_err(Into::into)
+    pub fn shell_execute(
+        &self,
+        argv: &[String],
+        use_retries: bool,
+    ) -> Result<(i32, String), MCUmgrClientError> {
+        let command = commands::shell::ShellCommandLineExecute { argv };
+
+        if use_retries {
+            self.connection.execute_command(&command)
+        } else {
+            self.connection.execute_command_without_retries(&command)
+        }
+        .map(|ret| (ret.ret, ret.o))
+        .map_err(Into::into)
     }
 
     /// Erase the `storage_partition` flash partition.
     pub fn zephyr_erase_storage(&self) -> Result<(), MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::zephyr::EraseStorage, self.num_retries)
+            .execute_command(&commands::zephyr::EraseStorage)
             .map(Into::into)
             .map_err(Into::into)
     }

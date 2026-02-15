@@ -19,6 +19,7 @@ struct Transceiver {
 struct Inner {
     transceiver: Transceiver,
     send_buffer: Box<[u8; u16::MAX as usize]>,
+    retries: u8,
 }
 
 /// An SMP protocol layer connection to a device.
@@ -119,8 +120,8 @@ impl Transceiver {
 }
 
 impl Connection {
-    /// Creates a new SMP
-    pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {
+    /// Creates a new SMP connection
+    pub fn new<T: Transport + Send + 'static>(transport: T, retries: u8) -> Self {
         Self {
             inner: Mutex::new(Inner {
                 transceiver: Transceiver {
@@ -129,6 +130,7 @@ impl Connection {
                     receive_buffer: Box::new([0; u16::MAX as usize]),
                 },
                 send_buffer: Box::new([0; u16::MAX as usize]),
+                retries,
             }),
         }
     }
@@ -141,14 +143,44 @@ impl Connection {
         &self,
         timeout: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.inner.lock().unwrap().transport.set_timeout(timeout)
+        self.inner
+            .lock()
+            .unwrap()
+            .transceiver
+            .transport
+            .set_timeout(timeout)
+    }
+
+    /// Changes the retry amount.
+    ///
+    /// When the device encounters a transport error, it will retry
+    /// this many times until giving up.
+    pub fn set_retries(&self, retries: u8) {
+        self.inner.lock().unwrap().retries = retries;
     }
 
     /// Executes a given CBOR based SMP command.
     pub fn execute_command<R: McuMgrCommand>(
         &self,
         request: &R,
-        num_retries: u8,
+    ) -> Result<R::Response, ExecuteError> {
+        self.execute_command_impl(request, true)
+    }
+
+    /// Executes a given CBOR based SMP command.
+    ///
+    /// Does not use retries.
+    pub fn execute_command_without_retries<R: McuMgrCommand>(
+        &self,
+        request: &R,
+    ) -> Result<R::Response, ExecuteError> {
+        self.execute_command_impl(request, false)
+    }
+
+    fn execute_command_impl<R: McuMgrCommand>(
+        &self,
+        request: &R,
+        use_retries: bool,
     ) -> Result<R::Response, ExecuteError> {
         let mut lock_guard = self.inner.lock().unwrap();
         let locked_self: &mut Inner = &mut lock_guard;
@@ -173,7 +205,7 @@ impl Connection {
             group_id,
             command_id,
             data,
-            num_retries,
+            if use_retries { locked_self.retries } else { 0 },
         )?;
 
         log::debug!("RX data: {}", hex::encode(response));
@@ -219,7 +251,7 @@ impl Connection {
         group_id: u16,
         command_id: u8,
         data: &[u8],
-        num_retries: u8,
+        use_retries: bool,
     ) -> Result<Box<[u8]>, ExecuteError> {
         let mut lock_guard = self.inner.lock().unwrap();
         let locked_self: &mut Inner = &mut lock_guard;
@@ -231,7 +263,7 @@ impl Connection {
                 group_id,
                 command_id,
                 data,
-                num_retries,
+                if use_retries { locked_self.retries } else { 0 },
             )
             .map(|val| val.into())
     }
