@@ -40,8 +40,12 @@ pub struct App {
     pub baud: u32,
 
     /// Communication timeout (in ms)
-    #[arg(short, long, default_value_t = 500)]
+    #[arg(short, long, default_value_t = mcumgr_toolkit::client::DEFAULT_TIMEOUT_MS)]
     pub timeout: u64,
+
+    /// Retry count
+    #[arg(short, long, default_value_t = mcumgr_toolkit::client::DEFAULT_RETRIES)]
+    pub retries: u8,
 
     /// Settings that customize runtime behaviour
     #[command(flatten)]

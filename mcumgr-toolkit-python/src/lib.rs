@@ -63,7 +63,7 @@ impl MCUmgrClient {
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
-    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=500))]
+    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=::mcumgr_toolkit::client::DEFAULT_TIMEOUT_MS))]
     fn serial(serial: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let serial = serialport::new(serial, baud_rate)
             .timeout(Duration::from_millis(timeout_ms))
@@ -94,7 +94,7 @@ impl MCUmgrClient {
     /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
     ///
     #[staticmethod]
-    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=500))]
+    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=::mcumgr_toolkit::client::DEFAULT_TIMEOUT_MS))]
     fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_usb_serial(
             identifier,
@@ -133,6 +133,16 @@ impl MCUmgrClient {
         self.get_client()?
             .set_timeout(Duration::from_millis(timeout_ms))
             .map_err(err_to_pyerr)
+    }
+
+    /// Changes the retry amount.
+    ///
+    /// When the device encounters a transport error, it will retry
+    /// this many times until giving up.
+    pub fn set_retries(&self, retries: u8) -> PyResult<()> {
+        self.get_client()?.set_retries(retries);
+
+        Ok(())
     }
 
     /// Checks if the device is alive and responding.
@@ -597,15 +607,18 @@ impl MCUmgrClient {
     /// ### Arguments
     ///
     /// * `argv` - The shell command to be executed.
+    /// * `use_retries` - Retry request a certain amount of times if a transport error occurs.
+    ///   Be aware that this might cause the command to be executed multiple times.
     ///
     /// ### Return
     ///
     /// The command output
     ///
-    pub fn shell_execute(&self, argv: Vec<String>) -> PyResult<String> {
+    #[pyo3(signature = (argv, use_retries=true))]
+    pub fn shell_execute(&self, argv: Vec<String>, use_retries: bool) -> PyResult<String> {
         let (exitcode, data) = self
             .get_client()?
-            .shell_execute(&argv)
+            .shell_execute(&argv, use_retries)
             .map_err(err_to_pyerr)?;
 
         if exitcode < 0 {

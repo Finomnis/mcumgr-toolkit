@@ -9,7 +9,7 @@ pub fn run(
     argv: Vec<String>,
 ) -> Result<(), CliError> {
     let client = client.get()?;
-    let (returncode, output) = client.shell_execute(&argv)?;
+    let (returncode, output) = client.shell_execute(&argv, true)?;
     println!("{output}");
     if returncode < 0 {
         return Err(CliError::ShellExitCode(returncode));
