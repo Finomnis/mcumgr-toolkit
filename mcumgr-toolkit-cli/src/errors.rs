@@ -50,6 +50,6 @@ pub enum CliError {
     #[diagnostic(code(mcumgrctl::image_parse))]
     ImageParseFailed(#[from] ImageParseError),
     #[error(transparent)]
-    #[diagnostic(code(mcumgrctl::firmware_update))]
+    #[diagnostic(transparent)]
     FirmwareUpdateFailed(#[from] FirmwareUpdateError),
 }
