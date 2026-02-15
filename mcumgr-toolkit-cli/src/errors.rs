@@ -49,7 +49,7 @@ pub enum CliError {
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(mcumgrctl::image_parse))]
     ImageParseFailed(#[from] ImageParseError),
-    #[error("Firmware update failed")]
+    #[error(transparent)]
     #[diagnostic(code(mcumgrctl::firmware_update))]
     FirmwareUpdateFailed(#[from] FirmwareUpdateError),
 }
