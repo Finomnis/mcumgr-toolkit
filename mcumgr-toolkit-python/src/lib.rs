@@ -63,7 +63,7 @@ impl MCUmgrClient {
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
-    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=10000))]
+    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=500))]
     fn serial(serial: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let serial = serialport::new(serial, baud_rate)
             .timeout(Duration::from_millis(timeout_ms))
@@ -94,7 +94,7 @@ impl MCUmgrClient {
     /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
     ///
     #[staticmethod]
-    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=10000))]
+    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=500))]
     fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_usb_serial(
             identifier,

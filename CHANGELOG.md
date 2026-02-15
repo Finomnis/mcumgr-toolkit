@@ -56,7 +56,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - Add CLI commands:
   - `firmware`
     - `update`
-- Increase default timeout to `10000 ms`
+- Increase default timeout to `500 ms`
 
 ### Fixes
 

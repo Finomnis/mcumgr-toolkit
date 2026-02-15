@@ -7,12 +7,18 @@ use crate::{
 };
 
 use miette::{Diagnostic, IntoDiagnostic};
+use polonius_the_crab::prelude::*;
 use thiserror::Error;
 
-struct Inner {
+struct Transceiver {
     transport: Box<dyn Transport + Send>,
     next_seqnum: u8,
-    transport_buffer: Box<[u8; u16::MAX as usize]>,
+    receive_buffer: Box<[u8; u16::MAX as usize]>,
+}
+
+struct Inner {
+    transceiver: Transceiver,
+    send_buffer: Box<[u8; u16::MAX as usize]>,
 }
 
 /// An SMP protocol layer connection to a device.
@@ -59,14 +65,70 @@ impl ExecuteError {
     }
 }
 
+impl Transceiver {
+    fn transceive_command(
+        &mut self,
+        write_operation: bool,
+        group_id: u16,
+        command_id: u8,
+        data: &[u8],
+    ) -> Result<&'_ [u8], ExecuteError> {
+        let sequence_num = self.next_seqnum;
+        self.next_seqnum = self.next_seqnum.wrapping_add(1);
+
+        self.transport
+            .send_frame(write_operation, sequence_num, group_id, command_id, data)?;
+
+        self.transport
+            .receive_frame(
+                &mut self.receive_buffer,
+                write_operation,
+                sequence_num,
+                group_id,
+                command_id,
+            )
+            .map_err(Into::into)
+    }
+
+    fn transceive_command_with_retries(
+        &mut self,
+        write_operation: bool,
+        group_id: u16,
+        command_id: u8,
+        data: &[u8],
+        num_retries: u8,
+    ) -> Result<&'_ [u8], ExecuteError> {
+        let mut this = self;
+
+        let mut counter = 0;
+
+        polonius_loop!(|this| -> Result<&'polonius [u8], ExecuteError> {
+            let result = this.transceive_command(write_operation, group_id, command_id, data);
+
+            if counter >= num_retries {
+                polonius_return!(result)
+            }
+            counter += 1;
+
+            match result {
+                Ok(_) => polonius_return!(result),
+                Err(e) => log::warn!("Retry transmission, error occurred: {e}"),
+            }
+        })
+    }
+}
+
 impl Connection {
     /// Creates a new SMP
     pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {
         Self {
             inner: Mutex::new(Inner {
-                transport: Box::new(transport),
-                next_seqnum: rand::random(),
-                transport_buffer: Box::new([0; u16::MAX as usize]),
+                transceiver: Transceiver {
+                    transport: Box::new(transport),
+                    next_seqnum: rand::random(),
+                    receive_buffer: Box::new([0; u16::MAX as usize]),
+                },
+                send_buffer: Box::new([0; u16::MAX as usize]),
             }),
         }
     }
@@ -86,41 +148,32 @@ impl Connection {
     pub fn execute_command<R: McuMgrCommand>(
         &self,
         request: &R,
+        num_retries: u8,
     ) -> Result<R::Response, ExecuteError> {
         let mut lock_guard = self.inner.lock().unwrap();
         let locked_self: &mut Inner = &mut lock_guard;
 
-        let mut cursor = Cursor::new(locked_self.transport_buffer.as_mut_slice());
+        let cursor_buffer: &mut [u8] = locked_self.send_buffer.as_mut_slice();
+        let mut cursor = Cursor::new(cursor_buffer);
         ciborium::into_writer(request.data(), &mut cursor)
             .into_diagnostic()
             .map_err(Into::into)
             .map_err(ExecuteError::EncodeFailed)?;
         let data_size = cursor.position() as usize;
-        let data = &locked_self.transport_buffer[..data_size];
+        let data = &locked_self.send_buffer[..data_size];
 
         log::debug!("TX data: {}", hex::encode(data));
-
-        let sequence_num = locked_self.next_seqnum;
-        locked_self.next_seqnum = locked_self.next_seqnum.wrapping_add(1);
 
         let write_operation = request.is_write_operation();
         let group_id = request.group_id();
         let command_id = request.command_id();
 
-        locked_self.transport.send_frame(
+        let response = locked_self.transceiver.transceive_command_with_retries(
             write_operation,
-            sequence_num,
             group_id,
             command_id,
             data,
-        )?;
-
-        let response = locked_self.transport.receive_frame(
-            &mut locked_self.transport_buffer,
-            write_operation,
-            sequence_num,
-            group_id,
-            command_id,
+            num_retries,
         )?;
 
         log::debug!("RX data: {}", hex::encode(response));
@@ -166,31 +219,20 @@ impl Connection {
         group_id: u16,
         command_id: u8,
         data: &[u8],
+        num_retries: u8,
     ) -> Result<Box<[u8]>, ExecuteError> {
         let mut lock_guard = self.inner.lock().unwrap();
         let locked_self: &mut Inner = &mut lock_guard;
 
-        let sequence_num = locked_self.next_seqnum;
-        locked_self.next_seqnum = locked_self.next_seqnum.wrapping_add(1);
-
-        locked_self.transport.send_frame(
-            write_operation,
-            sequence_num,
-            group_id,
-            command_id,
-            data,
-        )?;
-
         locked_self
-            .transport
-            .receive_frame(
-                &mut locked_self.transport_buffer,
+            .transceiver
+            .transceive_command_with_retries(
                 write_operation,
-                sequence_num,
                 group_id,
                 command_id,
+                data,
+                num_retries,
             )
-            .map_err(Into::into)
             .map(|val| val.into())
     }
 }
