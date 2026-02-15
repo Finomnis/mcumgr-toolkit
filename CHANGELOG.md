@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Print help message when first image transfer chunk times out
-    - This is a strong indicator the the device should use
+    - This is a strong indicator that the device should use
       [progressive erase](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_IMG_ERASE_PROGRESSIVELY) while receiving the firmware image
 
 ## [0.11.0] - 2026-02-15
