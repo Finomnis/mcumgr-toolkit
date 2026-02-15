@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - Add `use_retries` parameter to `shell_execute`
     - `Connection`:
         - Add `set_retries`
+        - Add `execute_command_without_retries`
         - Add `use_retries` parameter to `execute_raw_command`
     - CLI: Add `--retries` parameter
 
