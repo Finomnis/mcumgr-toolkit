@@ -24,7 +24,10 @@ use crate::{
         self, fs::file_upload_max_data_chunk_size, image::image_upload_max_data_chunk_size,
     },
     connection::{Connection, ExecuteError},
-    transport::serial::{ConfigurableTimeout, SerialTransport},
+    transport::{
+        ReceiveError,
+        serial::{ConfigurableTimeout, SerialTransport},
+    },
 };
 
 /// The default SMP frame size of Zephyr.
@@ -628,7 +631,8 @@ impl MCUmgrClient {
             let chunk_data = &data[offset..offset + current_chunk_size];
 
             let upload_response = if offset == 0 {
-                self.connection
+                let result = self
+                    .connection
                     .execute_command(&commands::image::ImageUpload {
                         image,
                         len: Some(size as u64),
@@ -636,7 +640,17 @@ impl MCUmgrClient {
                         sha: Some(&actual_checksum),
                         data: chunk_data,
                         upgrade: Some(upgrade_only),
-                    })?
+                    });
+
+                if let Err(ExecuteError::ReceiveFailed(ReceiveError::TransportError(e))) = &result {
+                    if let io::ErrorKind::TimedOut = e.kind() {
+                        log::warn!(
+                            "Timed out during transfer of first chunk. Consider enabling CONFIG_IMG_ERASE_PROGRESSIVELY."
+                        )
+                    }
+                }
+
+                result?
             } else {
                 self.connection
                     .execute_command(&commands::image::ImageUpload {
