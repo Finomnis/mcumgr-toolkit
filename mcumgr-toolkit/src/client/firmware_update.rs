@@ -70,7 +70,7 @@ pub struct FirmwareUpdateParams {
 }
 
 /// The step of the firmware update that is currently being performed
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub enum FirmwareUpdateStep {
     /// Querying which bootloader the device is running
     DetectingBootloader,
