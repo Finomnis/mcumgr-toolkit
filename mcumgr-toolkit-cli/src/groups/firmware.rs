@@ -1,6 +1,6 @@
 use clap::ValueEnum;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
-use mcumgr_toolkit::client::FirmwareUpdateParams;
+use mcumgr_toolkit::client::{FirmwareUpdateParams, FirmwareUpdateStep};
 
 use crate::{
     args::CommonArgs, client::Client, errors::CliError, file_read_write::read_input_file,
@@ -54,7 +54,7 @@ pub enum FirmwareCommand {
 }
 
 struct FirmwareUpgradeProgressHandler<'a> {
-    previous_message: String,
+    previous_step: Option<FirmwareUpdateStep>,
     multiprogress: &'a MultiProgress,
     progressbar: Option<ProgressBar>,
 }
@@ -62,15 +62,15 @@ struct FirmwareUpgradeProgressHandler<'a> {
 impl<'a> FirmwareUpgradeProgressHandler<'a> {
     fn new(multiprogress: &'a MultiProgress) -> Self {
         Self {
-            previous_message: "".to_string(),
+            previous_step: None,
             multiprogress,
             progressbar: None,
         }
     }
-    fn update(&mut self, msg: &str, progress: Option<(u64, u64)>) -> bool {
-        if msg != self.previous_message {
-            self.previous_message = msg.to_string();
-            self.multiprogress.println(msg).ok();
+    fn update(&mut self, step: FirmwareUpdateStep, progress: Option<(u64, u64)>) -> bool {
+        if Some(&step) != self.previous_step.as_ref() {
+            self.multiprogress.println(step.to_string()).ok();
+            self.previous_step = Some(step);
         }
 
         if let Some((current, total)) = progress {
@@ -154,9 +154,7 @@ pub fn run(
                     firmware,
                     checksum,
                     params,
-                    Some(&mut move |msg, progress| {
-                        progress_handler.update(&msg.to_string(), progress)
-                    }),
+                    Some(&mut move |step, progress| progress_handler.update(step, progress)),
                 )
             }?;
 
