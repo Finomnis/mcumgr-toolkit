@@ -87,8 +87,8 @@ impl FileChecksum {
 
 /// Data format of the hash/checksum type
 #[gen_stub_pyclass_enum]
-#[pyclass(frozen, eq, eq_int)]
-#[derive(Copy, Clone, Eq, PartialEq, Serialize)]
+#[pyclass(frozen, eq, eq_int, hash, skip_from_py_object)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Serialize)]
 pub enum FileChecksumDataFormat {
     /// Data is a number
     Numerical = 0,
