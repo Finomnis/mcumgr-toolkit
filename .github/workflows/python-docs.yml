@@ -23,6 +23,9 @@ jobs:
       - name: Install pdoc
         run: pip3 install pdoc
 
+      - name: Patch pyi file
+        run: sed -i '1s;^;from __future__ import annotations\n;' mcumgr-toolkit-python/mcumgr_toolkit.pyi
+
       - name: Build static files
         run: |
           pip3 install ./mcumgr-toolkit-python

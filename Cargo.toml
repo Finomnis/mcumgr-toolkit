@@ -33,19 +33,15 @@ ciborium = "0.2.2"
 log = "0.4.28"
 env_logger = "0.11.8"
 clap = "4.5.51"
-strum = "0.27.2"
+strum = "0.28.0"
 indicatif = "0.18.3"
 indicatif-log-bridge = "0.2.3"
 chrono = "0.4.42"
-pyo3 = "0.27.2"
-pyo3-stub-gen = "0.18.0"
-pyo3-log = "0.13.2"
+pyo3 = "0.28.2"
+pyo3-stub-gen = "0.19.0"
+pyo3-log = "0.13.3"
 serde-pyobject = "0.8.0"
 hex = "0.4.3"
 regex = "1.12.2"
 console = "0.16.2"
 polonius-the-crab = "0.5.0"
-
-[patch.crates-io]
-pyo3-stub-gen = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', rev = '1999efc189fe29e35d099acd5e5ec4a5d78190db' }
-pyo3-stub-gen-derive = { git = 'https://github.com/finomnis/pyo3-stub-gen.git', rev = '1999efc189fe29e35d099acd5e5ec4a5d78190db' }
