@@ -450,6 +450,23 @@ impl MCUmgrClient {
             .collect::<PyResult<_>>()
     }
 
+    /// Query the current values of a given stats group
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - The name of the group. See [`stats_list_groups`].
+    ///
+    pub fn stats_group_data(&self, name: &str) -> PyResult<HashMap<String, u64>> {
+        self.get_client()?
+            .stats_group_data(name)
+            .map_err(err_to_pyerr)
+    }
+
+    /// Query the list of available stats groups
+    pub fn stats_list_groups(&self) -> PyResult<Vec<String>> {
+        self.get_client()?.stats_list_groups().map_err(err_to_pyerr)
+    }
+
     /// Load a file from the device.
     ///
     /// ### Arguments

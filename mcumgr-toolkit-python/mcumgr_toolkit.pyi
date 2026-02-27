@@ -335,6 +335,18 @@ class MCUmgrClient:
         r"""
         Obtain a list of available image slots.
         """
+    def stats_group_data(self, name: builtins.str) -> builtins.dict[builtins.str, builtins.int]:
+        r"""
+        Query the current values of a given stats group
+        
+        ### Arguments
+        
+        * `name` - The name of the group. See [`stats_list_groups`].
+        """
+    def stats_list_groups(self) -> builtins.list[builtins.str]:
+        r"""
+        Query the list of available stats groups
+        """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""
         Load a file from the device.
