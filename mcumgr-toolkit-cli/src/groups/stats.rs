@@ -60,7 +60,7 @@ pub fn run(
                 .collect::<Result<Vec<_>, _>>()?;
 
             structured_print(None, args.json, |s| {
-                for (name, stats) in groups.into_iter().zip(stats.into_iter()) {
+                for (name, stats) in groups.into_iter().zip(stats) {
                     s.sublist(name, |s| {
                         let mut keys = stats.keys().collect::<Vec<_>>();
                         keys.sort();
