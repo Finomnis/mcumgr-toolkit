@@ -717,6 +717,32 @@ impl MCUmgrClient {
             .map_err(Into::into)
     }
 
+    /// Query the current values of a given stats group
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the group. See [`stats_list_groups`].
+    ///
+    pub fn stats_group_data(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<HashMap<String, u64>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::stats::GroupData {
+                name: name.as_ref(),
+            })
+            .map(|val| val.fields)
+            .map_err(Into::into)
+    }
+
+    /// Query the list of available stats groups
+    pub fn stats_list_groups(&self) -> Result<Vec<String>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::stats::ListGroups)
+            .map(|val| val.stat_list)
+            .map_err(Into::into)
+    }
+
     /// Load a file from the device.
     ///
     /// # Arguments
