@@ -8,6 +8,7 @@ mod image;
 mod os;
 mod raw;
 mod shell;
+mod stats;
 mod zephyr;
 
 #[derive(Debug, clap::Subcommand)]
@@ -21,6 +22,11 @@ pub enum Group {
     Image {
         #[command(subcommand)]
         command: image::ImageCommand,
+    },
+    /// Statistics Management
+    Stats {
+        #[command(subcommand)]
+        command: stats::StatsCommand,
     },
     /// High-level firmware update utilities
     Firmware {
@@ -56,6 +62,7 @@ pub fn run(
     match group {
         Group::Os { command } => os::run(client, multiprogress, args, command),
         Group::Image { command } => image::run(client, multiprogress, args, command),
+        Group::Stats { command } => stats::run(client, multiprogress, args, command),
         Group::Firmware { command } => firmware::run(client, multiprogress, args, command),
         Group::Fs { command } => fs::run(client, multiprogress, args, command),
         Group::Shell { argv } => shell::run(client, multiprogress, args, argv),
