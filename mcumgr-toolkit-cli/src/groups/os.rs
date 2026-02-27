@@ -12,12 +12,12 @@ use crate::{args::CommonArgs, client::Client, errors::CliError, formatting::stru
 
 #[derive(Debug, clap::Subcommand)]
 pub enum OsCommand {
-    /// Executes an echo command on the device
+    /// Execute an echo command on the device
     Echo {
         /// The message to echo
         msg: String,
     },
-    /// Queries live task statistics
+    /// Query live task statistics
     TaskStatistics,
     /// Set the device's RTC datetime
     SetDatetime {

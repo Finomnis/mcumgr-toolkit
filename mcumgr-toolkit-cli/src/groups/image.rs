@@ -10,7 +10,7 @@ use crate::{
 pub enum ImageCommand {
     /// Obtain a list of images with their current state
     GetState,
-    /// Changes the image state
+    /// Change the image state
     SetState {
         /// Boot to the image with the given hash ID
         #[arg(long, value_parser=parse_sha256, required_unless_present = "confirm")]

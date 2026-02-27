@@ -13,26 +13,26 @@ use crate::{
 
 #[derive(Debug, clap::Subcommand)]
 pub enum FsCommand {
-    /// Downloads a file from the device
+    /// Download a file from the device
     Download {
         /// The file path on the device.
         remote: String,
         /// The target path. '-' for stdout.
         local: String,
     },
-    /// Uploads a file to the device
+    /// Upload a file to the device
     Upload {
         /// The file to copy. '-' for stdin.
         local: String,
         /// The target path on the device.
         remote: String,
     },
-    /// Shows status details about a file
+    /// Show status details about a file
     Status {
         /// The path of the file on the device
         name: String,
     },
-    /// Computes the checksum of a file
+    /// Compute the checksum of a file
     Checksum {
         /// The path of the file on the device
         name: String,
@@ -47,9 +47,9 @@ pub enum FsCommand {
         #[arg(long)]
         length: Option<u64>,
     },
-    /// Shows supported checksum algorithms
+    /// Show supported checksum algorithms
     SupportedChecksums,
-    /// Closes all files currently opened by MCUmgr
+    /// Close all files currently opened by MCUmgr
     Close,
 }
 

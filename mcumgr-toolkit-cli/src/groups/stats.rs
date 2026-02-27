@@ -4,7 +4,7 @@ use crate::{args::CommonArgs, client::Client, errors::CliError, formatting::stru
 
 #[derive(Debug, clap::Subcommand)]
 pub enum StatsCommand {
-    /// Retrieves device statistics
+    /// Retrieve device statistics
     Get {
         /// Group name
         ///
