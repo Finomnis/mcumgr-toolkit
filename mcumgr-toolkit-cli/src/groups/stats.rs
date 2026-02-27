@@ -1,4 +1,5 @@
 use indicatif::MultiProgress;
+use mcumgr_toolkit::MCUmgrClient;
 
 use crate::{args::CommonArgs, client::Client, errors::CliError, formatting::structured_print};
 
@@ -15,6 +16,12 @@ pub enum StatsCommand {
     ListGroups,
 }
 
+fn get_group_list_sorted(client: &MCUmgrClient) -> Result<Vec<String>, CliError> {
+    let mut groups = client.stats_list_groups()?;
+    groups.sort();
+    Ok(groups)
+}
+
 pub fn run(
     client: &Client,
     _multiprogress: &MultiProgress,
@@ -24,11 +31,7 @@ pub fn run(
     let client = client.get()?;
     match command {
         StatsCommand::ListGroups => {
-            let groups = {
-                let mut groups = client.stats_list_groups()?;
-                groups.sort();
-                groups
-            };
+            let groups = get_group_list_sorted(client)?;
 
             if args.json {
                 println!(
@@ -49,9 +52,7 @@ pub fn run(
             let groups = if let Some(group) = group {
                 vec![group]
             } else {
-                let mut groups = client.stats_list_groups()?;
-                groups.sort();
-                groups
+                get_group_list_sorted(client)?
             };
 
             let stats = groups
