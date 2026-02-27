@@ -341,7 +341,7 @@ class MCUmgrClient:
         
         ### Arguments
         
-        * `name` - The name of the group. See [`stats_list_groups`].
+        * `name` - The name of the group. See `stats_list_groups`.
         """
     def stats_list_groups(self) -> builtins.list[builtins.str]:
         r"""

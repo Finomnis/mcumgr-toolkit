@@ -721,7 +721,7 @@ impl MCUmgrClient {
     ///
     /// # Arguments
     ///
-    /// * `name` - The name of the group. See [`stats_list_groups`].
+    /// * `name` - The name of the group. See [`stats_list_groups`](Self::stats_list_groups).
     ///
     pub fn stats_group_data(
         &self,
