@@ -307,6 +307,13 @@ class MCUmgrClient:
         r"""
         Upload a firmware image to an image slot.
         
+        ### Note
+        
+        This only uploads the image to a slot on the device, it has to be activated
+        through `image_set_state` for an actual update to happen.
+        
+        For a full firmware update algorithm in a single step, see `firmware_update`.
+        
         ### Arguments
         
         * `data` - The firmware image data
@@ -334,6 +341,18 @@ class MCUmgrClient:
     def image_slot_info(self) -> builtins.list[SlotInfoImage]:
         r"""
         Obtain a list of available image slots.
+        """
+    def stats_get_group_data(self, name: builtins.str) -> builtins.dict[builtins.str, builtins.int]:
+        r"""
+        Query the current values of a given stats group
+        
+        ### Arguments
+        
+        * `name` - The name of the group. See `stats_list_groups`.
+        """
+    def stats_list_groups(self) -> builtins.list[builtins.str]:
+        r"""
+        Query the list of available stats groups
         """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""

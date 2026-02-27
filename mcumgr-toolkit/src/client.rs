@@ -590,6 +590,13 @@ impl MCUmgrClient {
 
     /// Upload a firmware image to an image slot.
     ///
+    /// # Note
+    ///
+    /// This only uploads the image to a slot on the device, it has to be activated
+    /// through [`image_set_state`](Self::image_set_state) for an actual update to happen.
+    ///
+    /// For a full firmware update algorithm in a single step, see [`firmware_update`](Self::firmware_update).
+    ///
     /// # Arguments
     ///
     /// * `data` - The firmware image data
@@ -714,6 +721,32 @@ impl MCUmgrClient {
         self.connection
             .execute_command(&commands::image::SlotInfo)
             .map(|val| val.images)
+            .map_err(Into::into)
+    }
+
+    /// Query the current values of a given stats group
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the group. See [`stats_list_groups`](Self::stats_list_groups).
+    ///
+    pub fn stats_get_group_data(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<HashMap<String, u64>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::stats::GroupData {
+                name: name.as_ref(),
+            })
+            .map(|val| val.fields)
+            .map_err(Into::into)
+    }
+
+    /// Query the list of available stats groups
+    pub fn stats_list_groups(&self) -> Result<Vec<String>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::stats::ListGroups)
+            .map(|val| val.stat_list)
             .map_err(Into::into)
     }
 

@@ -6,6 +6,8 @@ pub mod image;
 pub mod os;
 /// [Shell management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_9.html) group commands
 pub mod shell;
+/// [Statistics management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_2.html) group commands
+pub mod stats;
 /// [Zephyr management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_63.html) group commands
 pub mod zephyr;
 
@@ -100,6 +102,9 @@ impl_mcumgr_command!((write,  MGMT_GROUP_ID_IMAGE, 0): image::SetImageState<'_> 
 impl_mcumgr_command!((write,  MGMT_GROUP_ID_IMAGE, 1): image::ImageUpload<'_, '_> => image::ImageUploadResponse);
 impl_mcumgr_command!((write,  MGMT_GROUP_ID_IMAGE, 5): image::ImageErase => image::ImageEraseResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_IMAGE, 6): image::SlotInfo => image::SlotInfoResponse);
+
+impl_mcumgr_command!((read, MGMT_GROUP_ID_STAT, 0): stats::GroupData<'_> => stats::GroupDataResponse);
+impl_mcumgr_command!((read, MGMT_GROUP_ID_STAT, 1): stats::ListGroups => stats::ListGroupsResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 0): fs::FileUpload<'_, '_> => fs::FileUploadResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 0): fs::FileDownload<'_> => fs::FileDownloadResponse);

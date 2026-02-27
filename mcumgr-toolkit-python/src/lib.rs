@@ -375,6 +375,13 @@ impl MCUmgrClient {
 
     /// Upload a firmware image to an image slot.
     ///
+    /// ### Note
+    ///
+    /// This only uploads the image to a slot on the device, it has to be activated
+    /// through `image_set_state` for an actual update to happen.
+    ///
+    /// For a full firmware update algorithm in a single step, see `firmware_update`.
+    ///
     /// ### Arguments
     ///
     /// * `data` - The firmware image data
@@ -448,6 +455,23 @@ impl MCUmgrClient {
             .into_iter()
             .map(|val| SlotInfoImage::from_response(py, val))
             .collect::<PyResult<_>>()
+    }
+
+    /// Query the current values of a given stats group
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - The name of the group. See `stats_list_groups`.
+    ///
+    pub fn stats_get_group_data(&self, name: &str) -> PyResult<HashMap<String, u64>> {
+        self.get_client()?
+            .stats_get_group_data(name)
+            .map_err(err_to_pyerr)
+    }
+
+    /// Query the list of available stats groups
+    pub fn stats_list_groups(&self) -> PyResult<Vec<String>> {
+        self.get_client()?.stats_list_groups().map_err(err_to_pyerr)
     }
 
     /// Load a file from the device.
