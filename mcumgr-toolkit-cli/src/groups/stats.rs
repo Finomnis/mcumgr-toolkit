@@ -56,7 +56,7 @@ pub fn run(
 
             let stats = groups
                 .iter()
-                .map(|name| client.stats_group_data(name))
+                .map(|name| client.stats_get_group_data(name))
                 .collect::<Result<Vec<_>, _>>()?;
 
             structured_print(None, args.json, |s| {

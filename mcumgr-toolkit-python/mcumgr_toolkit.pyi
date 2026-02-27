@@ -342,7 +342,7 @@ class MCUmgrClient:
         r"""
         Obtain a list of available image slots.
         """
-    def stats_group_data(self, name: builtins.str) -> builtins.dict[builtins.str, builtins.int]:
+    def stats_get_group_data(self, name: builtins.str) -> builtins.dict[builtins.str, builtins.int]:
         r"""
         Query the current values of a given stats group
         

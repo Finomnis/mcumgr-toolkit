@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement 'stats' group:
     - Add Python/Rust library commands:
-        - `stats_group_data`
+        - `stats_get_group_data`
         - `stats_list_groups`
     - Add CLI commands:
         - `stats`

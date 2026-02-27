@@ -463,9 +463,9 @@ impl MCUmgrClient {
     ///
     /// * `name` - The name of the group. See `stats_list_groups`.
     ///
-    pub fn stats_group_data(&self, name: &str) -> PyResult<HashMap<String, u64>> {
+    pub fn stats_get_group_data(&self, name: &str) -> PyResult<HashMap<String, u64>> {
         self.get_client()?
-            .stats_group_data(name)
+            .stats_get_group_data(name)
             .map_err(err_to_pyerr)
     }
 

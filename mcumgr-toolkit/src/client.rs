@@ -730,7 +730,7 @@ impl MCUmgrClient {
     ///
     /// * `name` - The name of the group. See [`stats_list_groups`](Self::stats_list_groups).
     ///
-    pub fn stats_group_data(
+    pub fn stats_get_group_data(
         &self,
         name: impl AsRef<str>,
     ) -> Result<HashMap<String, u64>, MCUmgrClientError> {
