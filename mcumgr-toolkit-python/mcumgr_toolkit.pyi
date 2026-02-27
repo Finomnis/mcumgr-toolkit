@@ -307,6 +307,13 @@ class MCUmgrClient:
         r"""
         Upload a firmware image to an image slot.
         
+        ### Note
+        
+        This only uploads the image to a slot on the device, it has to be activated
+        through `image_set_state` for an actual update to happen.
+        
+        For a full firmware update algorithm in a single step, see `firmware_update`.
+        
         ### Arguments
         
         * `data` - The firmware image data
