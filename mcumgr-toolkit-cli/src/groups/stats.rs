@@ -24,7 +24,11 @@ pub fn run(
     let client = client.get()?;
     match command {
         StatsCommand::ListGroups => {
-            let groups = client.stats_list_groups()?;
+            let groups = {
+                let mut groups = client.stats_list_groups()?;
+                groups.sort();
+                groups
+            };
 
             if args.json {
                 println!(
@@ -42,13 +46,13 @@ pub fn run(
             }
         }
         StatsCommand::Get { group } => {
-            let groups;
-
-            if let Some(group) = group {
-                groups = vec![group];
+            let groups = if let Some(group) = group {
+                vec![group]
             } else {
-                groups = client.stats_list_groups()?;
-            }
+                let mut groups = client.stats_list_groups()?;
+                groups.sort();
+                groups
+            };
 
             let stats = groups
                 .iter()
