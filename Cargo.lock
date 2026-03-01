@@ -847,7 +847,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcumgr-toolkit-cli"
+name = "mcumgr-toolkit-python"
+version = "0.11.3"
+dependencies = [
+ "ciborium",
+ "hex",
+ "mcumgr-toolkit",
+ "miette",
+ "pyo3",
+ "pyo3-log",
+ "pyo3-stub-gen",
+ "serde",
+ "serde-pyobject",
+ "serialport",
+ "strum",
+ "thiserror",
+]
+
+[[package]]
+name = "mcumgrctl"
 version = "0.11.3"
 dependencies = [
  "chrono",
@@ -863,24 +881,6 @@ dependencies = [
  "miette",
  "serde_json",
  "serialport",
- "thiserror",
-]
-
-[[package]]
-name = "mcumgr-toolkit-python"
-version = "0.11.3"
-dependencies = [
- "ciborium",
- "hex",
- "mcumgr-toolkit",
- "miette",
- "pyo3",
- "pyo3-log",
- "pyo3-stub-gen",
- "serde",
- "serde-pyobject",
- "serialport",
- "strum",
  "thiserror",
 ]
 

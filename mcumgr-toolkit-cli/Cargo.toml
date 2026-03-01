@@ -1,5 +1,5 @@
 [package]
-name = "mcumgr-toolkit-cli"
+name = "mcumgrctl"
 description = "Command-line interface for Zephyr's MCUmgr protocol"
 categories = ["command-line-utilities"]
 
