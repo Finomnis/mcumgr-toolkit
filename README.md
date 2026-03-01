@@ -14,7 +14,7 @@ It might be compatible with other MCUmgr/SMP-based systems, but it is developed 
 
 Specifically, it provides:
 
-- [`mcumgrctl`](https://crates.io/crates/mcumgr-toolkit-cli), a CLI tool for running MCUmgr actions via command line
+- [`mcumgrctl`](https://crates.io/crates/mcumgrctl), a CLI tool for running MCUmgr actions via command line
 - A [Rust library](https://crates.io/crates/mcumgr-toolkit) that supports all Zephyr MCUmgr commands
 - A [Python interface](https://pypi.org/project/mcumgr-toolkit/) for the library
 
@@ -52,7 +52,7 @@ fn main() {
 ## Installation as command line tool
 
 ```none
-cargo install mcumgr-toolkit-cli
+cargo install mcumgrctl
 ```
 
 ### Usage examples
