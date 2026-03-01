@@ -972,6 +972,88 @@ impl MCUmgrClient {
         .map_err(Into::into)
     }
 
+    /// Query how many MCUmgr groups are supported by the device.
+    ///
+    /// # Return
+    ///
+    /// The number of MCUmgr groups the device supports.
+    ///
+    pub fn enum_get_group_count(&self) -> Result<u16, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::r#enum::GroupCount)
+            .map(|ret| ret.count)
+            .map_err(Into::into)
+    }
+
+    /// Query all available group IDs in a single command.
+    ///
+    /// Note that this might fail if the amount of groups is too large for the
+    /// SMP frame.
+    /// But given that the Zephyr implementation contains less than 10 groups,
+    /// this is currently highly unlikely.
+    ///
+    /// If it does fail, use [`enum_iter_group_ids`](Self::enum_iter_group_ids) to iterate
+    /// through the available group IDs one by one.
+    ///
+    /// # Return
+    ///
+    /// A list of all MCUmgr group IDs the device supports.
+    ///
+    pub fn enum_get_group_ids(&self) -> Result<Vec<u16>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::r#enum::ListGroups)
+            .map(|ret| ret.groups)
+            .map_err(Into::into)
+    }
+
+    /// Query a single group ID from the device.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index in the list of group IDs.
+    ///   Must be smaller than [`enum_get_group_count`](Self::enum_get_group_count).
+    ///
+    /// # Return
+    ///
+    /// A tuple of:
+    ///  - the group ID
+    ///  - true if this is the last group in the list
+    ///
+    pub fn enum_get_group_id(&self, index: u16) -> Result<(u16, bool), MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::r#enum::GroupId { index: Some(index) })
+            .map(|ret| (ret.group, ret.end))
+            .map_err(Into::into)
+    }
+
+    /// Iterate through all supported MCUmgr Groups.
+    ///
+    /// Same as [`enum_get_group_ids`](Self::enum_get_group_ids), but does not
+    /// require large message sizes if the number of groups is large. The tradeoff is
+    /// that this function is much slower.
+    pub fn enum_iter_group_ids(&self) -> impl Iterator<Item = Result<u16, MCUmgrClientError>> {
+        let mut i = 0;
+        let mut last = false;
+
+        std::iter::from_fn(move || -> Option<Result<u16, MCUmgrClientError>> {
+            if last {
+                None
+            } else {
+                Some(match self.enum_get_group_id(i) {
+                    Ok((group_id, is_last)) => {
+                        i += 1;
+                        last = is_last;
+                        Ok(group_id)
+                    }
+                    Err(e) => {
+                        last = true;
+                        Err(e)
+                    }
+                })
+            }
+        })
+    }
+
     /// Erase the `storage_partition` flash partition.
     pub fn zephyr_erase_storage(&self) -> Result<(), MCUmgrClientError> {
         self.connection
