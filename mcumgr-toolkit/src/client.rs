@@ -1015,14 +1015,12 @@ impl MCUmgrClient {
     ///
     /// # Return
     ///
-    /// A tuple of:
-    ///  - the group ID
-    ///  - true if this is the last group in the list
+    /// The group ID of the group with the given index
     ///
-    pub fn enum_get_group_id(&self, index: u16) -> Result<(u16, bool), MCUmgrClientError> {
+    pub fn enum_get_group_id(&self, index: u16) -> Result<u16, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::r#enum::GroupId { index: Some(index) })
-            .map(|ret| (ret.group, ret.end))
+            .map(|ret| ret.group)
             .map_err(Into::into)
     }
 
@@ -1033,34 +1031,33 @@ impl MCUmgrClient {
     /// that this function is much slower.
     pub fn enum_iter_group_ids(&self) -> impl Iterator<Item = Result<u16, MCUmgrClientError>> {
         let mut i = 0;
-        let mut terminated = false;
+        let mut num_elements = None;
 
         std::iter::from_fn(move || -> Option<Result<u16, MCUmgrClientError>> {
-            if (i == 0) && !terminated {
-                match self.enum_get_group_count() {
-                    Ok(count) => {
-                        if count == 0 {
-                            terminated = true;
-                        }
-                    }
+            let mut num_elements_err = None;
+            let num_elements = {
+                *num_elements.get_or_insert_with(|| match self.enum_get_group_count() {
+                    Ok(n) => n,
                     Err(e) => {
-                        terminated = true;
-                        return Some(Err(e));
+                        num_elements_err = Some(e);
+                        0
                     }
-                }
+                })
+            };
+            if let Some(err) = num_elements_err {
+                return Some(Err(err));
             }
 
-            if terminated {
+            if i >= num_elements {
                 None
             } else {
                 Some(match self.enum_get_group_id(i) {
-                    Ok((group_id, is_last)) => {
+                    Ok(group_id) => {
                         i += 1;
-                        terminated = is_last;
                         Ok(group_id)
                     }
                     Err(e) => {
-                        terminated = true;
+                        i = num_elements;
                         Err(e)
                     }
                 })

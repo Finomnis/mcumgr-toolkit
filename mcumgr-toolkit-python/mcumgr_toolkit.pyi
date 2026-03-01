@@ -455,7 +455,7 @@ class MCUmgrClient:
         
         A list of all MCUmgr group IDs the device supports.
         """
-    def enum_get_group_id(self, index: builtins.int) -> tuple[builtins.int, builtins.bool]:
+    def enum_get_group_id(self, index: builtins.int) -> builtins.int:
         r"""
         Query a single group ID from the device.
         
@@ -466,9 +466,7 @@ class MCUmgrClient:
         
         ### Return
         
-        A tuple of:
-         - the group ID
-         - true if this is the last group in the list
+        The group ID of the group with the given index
         """
     def enum_iter_group_ids(self) -> collections.abc.Iterator[builtins.int]:
         r"""

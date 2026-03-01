@@ -310,7 +310,7 @@ impl SlotInfoImage {
 pub(crate) struct GroupIdIter {
     client: Py<crate::MCUmgrClient>,
     next_index: u16,
-    terminated: bool,
+    num_elements: Option<u16>,
 }
 
 impl GroupIdIter {
@@ -318,7 +318,20 @@ impl GroupIdIter {
         Self {
             client,
             next_index: 0,
-            terminated: false,
+            num_elements: None,
+        }
+    }
+
+    fn get_num_elements(slf: &mut PyRefMut<'_, Self>) -> PyResult<u16> {
+        match slf.num_elements {
+            Some(num_elements) => Ok(num_elements),
+            None => {
+                let res = slf.client.bind(slf.py()).get().enum_get_group_count();
+
+                slf.num_elements = Some(*res.as_ref().unwrap_or(&0));
+
+                res
+            }
         }
     }
 }
@@ -329,21 +342,9 @@ impl GroupIdIter {
         slf
     }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<u16>> {
-        if (slf.next_index == 0) && !slf.terminated {
-            match slf.client.bind(slf.py()).get().enum_get_group_count() {
-                Ok(count) => {
-                    if count == 0 {
-                        slf.terminated = true;
-                    }
-                }
-                Err(e) => {
-                    slf.terminated = true;
-                    return Err(e);
-                }
-            }
-        }
+        let num_elements = GroupIdIter::get_num_elements(&mut slf)?;
 
-        if slf.terminated {
+        if slf.next_index >= num_elements {
             return Ok(None);
         }
 
@@ -353,13 +354,12 @@ impl GroupIdIter {
             .get()
             .enum_get_group_id(slf.next_index)
         {
-            Ok((group_id, is_last)) => {
+            Ok(group_id) => {
                 slf.next_index += 1;
-                slf.terminated = is_last;
                 Ok(Some(group_id))
             }
             Err(e) => {
-                slf.terminated = true;
+                slf.next_index = num_elements;
                 Err(e)
             }
         }

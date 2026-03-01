@@ -697,11 +697,9 @@ impl MCUmgrClient {
     ///
     /// ### Return
     ///
-    /// A tuple of:
-    ///  - the group ID
-    ///  - true if this is the last group in the list
+    /// The group ID of the group with the given index
     ///
-    pub fn enum_get_group_id(&self, index: u16) -> PyResult<(u16, bool)> {
+    pub fn enum_get_group_id(&self, index: u16) -> PyResult<u16> {
         self.get_client()?
             .enum_get_group_id(index)
             .map_err(err_to_pyerr)
