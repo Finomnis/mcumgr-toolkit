@@ -1035,15 +1035,14 @@ impl MCUmgrClient {
 
         std::iter::from_fn(move || -> Option<Result<u16, MCUmgrClientError>> {
             let mut num_elements_err = None;
-            let num_elements = {
+            let num_elements =
                 *num_elements.get_or_insert_with(|| match self.enum_get_group_count() {
                     Ok(n) => n,
                     Err(e) => {
                         num_elements_err = Some(e);
                         0
                     }
-                })
-            };
+                });
             if let Some(err) = num_elements_err {
                 return Some(Err(err));
             }
