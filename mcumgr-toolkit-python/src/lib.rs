@@ -809,8 +809,6 @@ mod mcumgr_toolkit {
     #[pymodule_export]
     use super::return_types::FileStatus;
     #[pymodule_export]
-    use super::return_types::GroupIdIter;
-    #[pymodule_export]
     use super::return_types::ImageState;
     #[pymodule_export]
     use super::return_types::MCUmgrParameters;
