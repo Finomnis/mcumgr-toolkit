@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.5] - xxxx-xx-xx
+
+### Changes
+
+- Implement 'enum' group:
+    - Add Python/Rust library commands:
+        - `enum_get_group_count`
+        - `enum_get_group_ids`
+        - `enum_get_group_id`
+        - `enum_iter_group_ids`
+    - Add CLI commands:
+        - `enum`
+            - `list-groups`
+
 ## [0.11.4] - 2026-03-01
 
 ### CLI Crate Rename
@@ -343,6 +357,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.11.5]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.4...0.11.5
 [0.11.4]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.3...0.11.4
 [0.11.3]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.2...0.11.3
 [0.11.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.1...0.11.2
