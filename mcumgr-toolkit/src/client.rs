@@ -1036,6 +1036,13 @@ impl MCUmgrClient {
         let mut last = false;
 
         std::iter::from_fn(move || -> Option<Result<u16, MCUmgrClientError>> {
+            if i == 0 {
+                match self.enum_get_group_count() {
+                    Ok(count) => last = count == 0,
+                    Err(e) => return Some(Err(e)),
+                }
+            }
+
             if last {
                 None
             } else {

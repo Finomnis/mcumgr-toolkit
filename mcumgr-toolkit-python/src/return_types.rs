@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use pyo3::{PyClass, prelude::*, types::PyBytes};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum};
 
@@ -298,5 +300,57 @@ impl SlotInfoImage {
                 .collect::<PyResult<_>>()?,
             max_image_size: value.max_image_size,
         })
+    }
+}
+
+/// An iterator over enum group IDs.
+///
+/// Returned from `MCUmgrClient::enum_iter_group_ids`.
+#[pyclass]
+pub struct GroupIdIter {
+    pub(crate) client: Py<crate::MCUmgrClient>,
+    pub(crate) next_index: u16,
+    pub(crate) last: bool,
+}
+
+#[pymethods]
+impl GroupIdIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<u16>> {
+        if slf.next_index == 0 {
+            slf.last = slf.client.bind(slf.py()).get().enum_get_group_count()? == 0;
+        }
+
+        if slf.last {
+            return Ok(None);
+        }
+
+        let (id, last) = slf
+            .client
+            .bind(slf.py())
+            .get()
+            .enum_get_group_id(slf.next_index)?;
+
+        slf.next_index += 1;
+
+        slf.last = last;
+
+        Ok(Some(id))
+    }
+}
+
+impl pyo3_stub_gen::PyStubType for GroupIdIter {
+    fn type_output() -> pyo3_stub_gen::TypeInfo {
+        pyo3_stub_gen::TypeInfo {
+            name: "collections.abc.Iterator[builtins.int]".to_string(),
+            source_module: None,
+            import: HashSet::from([
+                pyo3_stub_gen::ImportRef::Module(pyo3_stub_gen::ModuleRef::from("collections.abc")),
+                pyo3_stub_gen::ImportRef::Module(pyo3_stub_gen::ModuleRef::from("builtins")),
+            ]),
+            type_refs: HashMap::new(),
+        }
     }
 }

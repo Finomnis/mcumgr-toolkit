@@ -656,6 +656,70 @@ impl MCUmgrClient {
         Ok(data)
     }
 
+    /// Query how many MCUmgr groups are supported by the device.
+    ///
+    /// ### Return
+    ///
+    /// The number of MCUmgr groups the device supports.
+    ///
+    pub fn enum_get_group_count(&self) -> PyResult<u16> {
+        self.get_client()?
+            .enum_get_group_count()
+            .map_err(err_to_pyerr)
+    }
+
+    /// Query all available group IDs in a single command.
+    ///
+    /// Note that this might fail if the amount of groups is too large for the
+    /// SMP frame.
+    /// But given that the Zephyr implementation contains less than 10 groups,
+    /// this is currently highly unlikely.
+    ///
+    /// If it does fail, use `enum_iter_group_ids` to iterate
+    /// through the available group IDs one by one.
+    ///
+    /// ### Return
+    ///
+    /// A list of all MCUmgr group IDs the device supports.
+    ///
+    pub fn enum_get_group_ids(&self) -> PyResult<Vec<u16>> {
+        self.get_client()?
+            .enum_get_group_ids()
+            .map_err(err_to_pyerr)
+    }
+
+    /// Query a single group ID from the device.
+    ///
+    /// ### Arguments
+    ///
+    /// * `index` - The index in the list of group IDs.
+    ///   Must be smaller than `enum_get_group_count`.
+    ///
+    /// ### Return
+    ///
+    /// A tuple of:
+    ///  - the group ID
+    ///  - true if this is the last group in the list
+    ///
+    pub fn enum_get_group_id(&self, index: u16) -> PyResult<(u16, bool)> {
+        self.get_client()?
+            .enum_get_group_id(index)
+            .map_err(err_to_pyerr)
+    }
+
+    /// Iterate through all supported MCUmgr Groups.
+    ///
+    /// Same as `enum_get_group_ids`, but does not
+    /// require large message sizes if the number of groups is large. The tradeoff is
+    /// that this function is much slower.
+    pub fn enum_iter_group_ids(slf: PyRef<'_, Self>) -> GroupIdIter {
+        GroupIdIter {
+            client: slf.into(),
+            next_index: 0,
+            last: false,
+        }
+    }
+
     /// Erase the `storage_partition` flash partition.
     pub fn zephyr_erase_storage(&self) -> PyResult<()> {
         self.get_client()?
@@ -744,6 +808,8 @@ mod mcumgr_toolkit {
     use super::return_types::FileChecksumProperties;
     #[pymodule_export]
     use super::return_types::FileStatus;
+    #[pymodule_export]
+    use super::return_types::GroupIdIter;
     #[pymodule_export]
     use super::return_types::ImageState;
     #[pymodule_export]
