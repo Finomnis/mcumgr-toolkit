@@ -84,8 +84,8 @@ jobs:
       - name: Check MSRV of mcumgr-toolkit
         run: cargo msrv verify --path mcumgr-toolkit --log-target=stdout --output-format=json
 
-      - name: Check MSRV of mcumgr-toolkit-cli
-        run: cargo msrv verify --path mcumgr-toolkit-cli --log-target=stdout --output-format=json
+      - name: Check MSRV of mcumgrctl
+        run: cargo msrv verify --path mcumgrctl --log-target=stdout --output-format=json
 
   semver:
     name: Semantic Versioning
