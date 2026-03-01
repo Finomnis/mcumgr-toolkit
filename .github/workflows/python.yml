@@ -1,3 +1,5 @@
+name: Python
+
 on:
   pull_request:
     branches: [main]
@@ -5,8 +7,6 @@ on:
     branches: [main]
   release:
     types: [published]
-
-name: Python
 
 jobs:
   check_stubs:
@@ -30,101 +30,152 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
+
       - uses: dtolnay/rust-toolchain@stable
+
       - name: Build wheels - universal2
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v1.50.1
         with:
+          maturin-version: v1.11.5
           target: universal2-apple-darwin
-          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
+          args: --release --locked --compatibility pypi --out dist -m mcumgr-toolkit-python/Cargo.toml
+
       - name: Install built wheel - universal2
         run: |
           pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
           python -c "import mcumgr_toolkit"
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
           name: wheels-macos
           path: dist
+          retention-days: 7
 
   windows:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [x64, x86]
+
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
           architecture: ${{ matrix.target }}
+
       - uses: dtolnay/rust-toolchain@stable
+
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v1.50.1
         with:
+          maturin-version: v1.11.5
           target: ${{ matrix.target }}
-          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
+          args: --release --locked --compatibility pypi --out dist -m mcumgr-toolkit-python/Cargo.toml
+
       - name: Install built wheel
         run: |
           pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
           python -c "import mcumgr_toolkit"
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
           name: wheels-windows-${{ matrix.target }}
           path: dist
+          retention-days: 7
 
   linux:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        target: [x86_64, i686]
+        platform:
+          - target: x86_64
+            manylinux: 2014
+            test: true
+          - target: i686
+            manylinux: 2014
+            test: false
+
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
           architecture: x64
+
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v1.50.1
         with:
-          target: ${{ matrix.target }}
-          manylinux: auto
-          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
+          maturin-version: v1.11.5
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --locked --compatibility pypi --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10
+
       - name: Install built wheel
-        if: matrix.target == 'x86_64'
+        if: matrix.platform.test
         run: |
           pip install mcumgr_toolkit --no-index --find-links dist --force-reinstall
           python -c "import mcumgr_toolkit"
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
-          name: wheels-linux-${{ matrix.target }}
+          name: wheels-linux-${{ matrix.platform.target }}
           path: dist
+          retention-days: 7
 
   linux-cross:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        target: [aarch64, armv7, s390x, ppc64le, ppc64]
+        platform:
+          - target: aarch64
+            arch: aarch64
+            manylinux: 2014
+          - target: armv7
+            arch: armv7
+            manylinux: 2014
+          - target: s390x
+            arch: s390x
+            manylinux: 2014
+          - target: ppc64le
+            arch: ppc64le
+            manylinux: 2014
+          - target: ppc64
+            arch: ppc64
+            manylinux: 2014
+
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
+
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v1.50.1
         with:
-          target: ${{ matrix.target }}
-          manylinux: auto
-          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
+          maturin-version: v1.11.5
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --locked --compatibility pypi --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10
+
       - uses: uraimo/run-on-arch-action@v3.0.1
-        if: matrix.target != 'ppc64'
+        if: matrix.platform.target != 'ppc64'
         name: Install built wheel
         with:
-          arch: ${{ matrix.target }}
+          arch: ${{ matrix.platform.arch }}
           distro: ubuntu22.04
           githubToken: ${{ github.token }}
           install: |
@@ -135,33 +186,43 @@ jobs:
             ls -la dist/
             pip3 install mcumgr_toolkit --no-index --find-links dist/ --force-reinstall
             python3 -c "import mcumgr_toolkit"
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
-          name: wheels-linux-cross-${{ matrix.target }}
+          name: wheels-linux-cross-${{ matrix.platform.target }}
           path: dist
+          retention-days: 7
 
   musllinux:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        target:
-          - x86_64-unknown-linux-musl
-          - i686-unknown-linux-musl
+        platform:
+          - target: x86_64-unknown-linux-musl
+            test: true
+          - target: i686-unknown-linux-musl
+            test: false
+
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
           architecture: x64
+
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v1.50.1
         with:
-          target: ${{ matrix.target }}
+          maturin-version: v1.11.5
+          target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
+          args: --release --locked --compatibility pypi --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10
+
       - name: Install built wheel
-        if: matrix.target == 'x86_64-unknown-linux-musl'
+        if: matrix.platform.test
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/io" \
@@ -173,32 +234,40 @@ jobs:
               pip3 install mcumgr_toolkit --no-index --find-links /io/dist/ --force-reinstall --break-system-packages
               python3 -c "import mcumgr_toolkit"
             '
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
-          name: wheels-musllinux-${{ matrix.target }}
+          name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
+          retention-days: 7
 
   musllinux-cross:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         platform:
           - target: aarch64-unknown-linux-musl
             arch: aarch64
           - target: armv7-unknown-linux-musleabihf
             arch: armv7
+
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
+
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@v1.50.1
         with:
+          maturin-version: v1.11.5
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml
+          args: --release --locked --compatibility pypi --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10
+
       - uses: uraimo/run-on-arch-action@v3.0.1
         name: Install built wheel
         with:
@@ -211,11 +280,13 @@ jobs:
           run: |
             pip3 install mcumgr_toolkit --no-index --find-links dist/ --force-reinstall --break-system-packages
             python3 -c "import mcumgr_toolkit"
+
       - name: Upload wheels
         uses: actions/upload-artifact@v6
         with:
           name: wheels-musllinux-cross-${{ matrix.platform.arch }}
           path: dist
+          retention-days: 7
 
   release:
     name: Publish version
@@ -232,12 +303,14 @@ jobs:
         musllinux,
         musllinux-cross,
       ]
+
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8.0.0
         with:
           path: wheels
           pattern: wheels-*
           merge-multiple: true
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
