@@ -23,9 +23,9 @@ pub fn run(
     match command {
         EnumCommand::ListGroups { iter } => {
             let mut groups = if iter {
-                client.enum_get_group_ids()?
-            } else {
                 client.enum_iter_group_ids().collect::<Result<_, _>>()?
+            } else {
+                client.enum_get_group_ids()?
             };
 
             groups.sort();
