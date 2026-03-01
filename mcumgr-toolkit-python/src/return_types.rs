@@ -319,7 +319,7 @@ impl GroupIdIter {
         slf
     }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<u16>> {
-        if slf.next_index == 0 {
+        if (slf.next_index == 0) && !slf.last {
             slf.last = slf.client.bind(slf.py()).get().enum_get_group_count()? == 0;
         }
 
