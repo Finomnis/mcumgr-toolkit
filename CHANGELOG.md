@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CLI Crate Rename
 
 - Rename CLI crate so its name matches the name of its binary
-    - CLI crate: `zephyr-mcumgr-cli` -> `mcumgrctl`
+    - CLI crate: `mcumgr-toolkit-cli` -> `mcumgrctl`
 
 ## [0.11.3] - 2026-02-28
 
