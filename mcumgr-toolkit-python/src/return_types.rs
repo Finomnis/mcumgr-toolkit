@@ -308,9 +308,9 @@ impl SlotInfoImage {
 /// Returned from `MCUmgrClient::enum_iter_group_ids`.
 #[pyclass]
 pub(crate) struct GroupIdIter {
-    pub(crate) client: Py<crate::MCUmgrClient>,
-    pub(crate) next_index: u16,
-    pub(crate) terminated: bool,
+    client: Py<crate::MCUmgrClient>,
+    next_index: u16,
+    terminated: bool,
 }
 
 impl GroupIdIter {
