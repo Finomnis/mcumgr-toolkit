@@ -2,6 +2,7 @@ use indicatif::MultiProgress;
 
 use crate::{args::CommonArgs, client::Client, errors::CliError};
 
+mod r#enum;
 mod firmware;
 mod fs;
 mod image;
@@ -44,6 +45,11 @@ pub enum Group {
         #[arg(required = true, trailing_var_arg = true)]
         argv: Vec<String>,
     },
+    /// Enumeration
+    Enum {
+        #[command(subcommand)]
+        command: r#enum::EnumCommand,
+    },
     /// Zephyr Management
     Zephyr {
         #[command(subcommand)]
@@ -66,6 +72,7 @@ pub fn run(
         Group::Firmware { command } => firmware::run(client, multiprogress, args, command),
         Group::Fs { command } => fs::run(client, multiprogress, args, command),
         Group::Shell { argv } => shell::run(client, multiprogress, args, argv),
+        Group::Enum { command } => r#enum::run(client, multiprogress, args, command),
         Group::Zephyr { command } => zephyr::run(client, multiprogress, args, command),
         Group::Raw(raw_command) => raw::run(client, multiprogress, args, raw_command),
     }
