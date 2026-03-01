@@ -1033,27 +1033,34 @@ impl MCUmgrClient {
     /// that this function is much slower.
     pub fn enum_iter_group_ids(&self) -> impl Iterator<Item = Result<u16, MCUmgrClientError>> {
         let mut i = 0;
-        let mut last = false;
+        let mut terminated = false;
 
         std::iter::from_fn(move || -> Option<Result<u16, MCUmgrClientError>> {
-            if (i == 0) && !last {
+            if (i == 0) && !terminated {
                 match self.enum_get_group_count() {
-                    Ok(count) => last = count == 0,
-                    Err(e) => return Some(Err(e)),
+                    Ok(count) => {
+                        if count == 0 {
+                            terminated = true;
+                        }
+                    }
+                    Err(e) => {
+                        terminated = true;
+                        return Some(Err(e));
+                    }
                 }
             }
 
-            if last {
+            if terminated {
                 None
             } else {
                 Some(match self.enum_get_group_id(i) {
                     Ok((group_id, is_last)) => {
                         i += 1;
-                        last = is_last;
+                        terminated = is_last;
                         Ok(group_id)
                     }
                     Err(e) => {
-                        last = true;
+                        terminated = true;
                         Err(e)
                     }
                 })

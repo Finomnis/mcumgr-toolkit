@@ -310,7 +310,17 @@ impl SlotInfoImage {
 pub(crate) struct GroupIdIter {
     pub(crate) client: Py<crate::MCUmgrClient>,
     pub(crate) next_index: u16,
-    pub(crate) last: bool,
+    pub(crate) terminated: bool,
+}
+
+impl GroupIdIter {
+    pub(crate) fn new(client: Py<crate::MCUmgrClient>) -> Self {
+        Self {
+            client,
+            next_index: 0,
+            terminated: false,
+        }
+    }
 }
 
 #[pymethods]
@@ -319,25 +329,40 @@ impl GroupIdIter {
         slf
     }
     fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<u16>> {
-        if (slf.next_index == 0) && !slf.last {
-            slf.last = slf.client.bind(slf.py()).get().enum_get_group_count()? == 0;
+        if (slf.next_index == 0) && !slf.terminated {
+            match slf.client.bind(slf.py()).get().enum_get_group_count() {
+                Ok(count) => {
+                    if count == 0 {
+                        slf.terminated = true;
+                    }
+                }
+                Err(e) => {
+                    slf.terminated = true;
+                    return Err(e);
+                }
+            }
         }
 
-        if slf.last {
+        if slf.terminated {
             return Ok(None);
         }
 
-        let (id, last) = slf
+        match slf
             .client
             .bind(slf.py())
             .get()
-            .enum_get_group_id(slf.next_index)?;
-
-        slf.next_index += 1;
-
-        slf.last = last;
-
-        Ok(Some(id))
+            .enum_get_group_id(slf.next_index)
+        {
+            Ok((group_id, is_last)) => {
+                slf.next_index += 1;
+                slf.terminated = is_last;
+                Ok(Some(group_id))
+            }
+            Err(e) => {
+                slf.terminated = true;
+                Err(e)
+            }
+        }
     }
 }
 

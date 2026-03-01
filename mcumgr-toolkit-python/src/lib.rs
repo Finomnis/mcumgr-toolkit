@@ -713,11 +713,7 @@ impl MCUmgrClient {
     /// require large message sizes if the number of groups is large. The tradeoff is
     /// that this function is much slower.
     pub fn enum_iter_group_ids(slf: PyRef<'_, Self>) -> GroupIdIter {
-        GroupIdIter {
-            client: slf.into(),
-            next_index: 0,
-            last: false,
-        }
+        GroupIdIter::new(slf.into())
     }
 
     /// Erase the `storage_partition` flash partition.
