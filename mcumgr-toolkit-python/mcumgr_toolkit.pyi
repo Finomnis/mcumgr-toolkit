@@ -431,6 +431,51 @@ class MCUmgrClient:
         
         The command output
         """
+    def enum_get_group_count(self) -> builtins.int:
+        r"""
+        Query how many MCUmgr groups are supported by the device.
+        
+        ### Return
+        
+        The number of MCUmgr groups the device supports.
+        """
+    def enum_get_group_ids(self) -> builtins.list[builtins.int]:
+        r"""
+        Query all available group IDs in a single command.
+        
+        Note that this might fail if the amount of groups is too large for the
+        SMP frame.
+        But given that the Zephyr implementation contains less than 10 groups,
+        this is currently highly unlikely.
+        
+        If it does fail, use `enum_iter_group_ids` to iterate
+        through the available group IDs one by one.
+        
+        ### Return
+        
+        A list of all MCUmgr group IDs the device supports.
+        """
+    def enum_get_group_id(self, index: builtins.int) -> builtins.int:
+        r"""
+        Query a single group ID from the device.
+        
+        ### Arguments
+        
+        * `index` - The index in the list of group IDs.
+          Must be smaller than `enum_get_group_count`.
+        
+        ### Return
+        
+        The group ID of the group with the given index
+        """
+    def enum_iter_group_ids(self) -> collections.abc.Iterator[builtins.int]:
+        r"""
+        Iterate through all supported MCUmgr Groups.
+        
+        Same as `enum_get_group_ids`, but does not
+        require large message sizes if the number of groups is large. The tradeoff is
+        that this function is much slower.
+        """
     def zephyr_erase_storage(self) -> None:
         r"""
         Erase the `storage_partition` flash partition.

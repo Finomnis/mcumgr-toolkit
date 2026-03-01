@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use pyo3::{PyClass, prelude::*, types::PyBytes};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum};
 
@@ -298,5 +300,82 @@ impl SlotInfoImage {
                 .collect::<PyResult<_>>()?,
             max_image_size: value.max_image_size,
         })
+    }
+}
+
+/// An iterator over enum group IDs.
+///
+/// Returned from `MCUmgrClient::enum_iter_group_ids`.
+#[pyclass]
+pub(crate) struct GroupIdIter {
+    client: Py<crate::MCUmgrClient>,
+    next_index: u16,
+    num_elements: Option<u16>,
+}
+
+impl GroupIdIter {
+    pub(crate) fn new(client: Py<crate::MCUmgrClient>) -> Self {
+        Self {
+            client,
+            next_index: 0,
+            num_elements: None,
+        }
+    }
+
+    fn get_num_elements(slf: &mut PyRefMut<'_, Self>) -> PyResult<u16> {
+        match slf.num_elements {
+            Some(num_elements) => Ok(num_elements),
+            None => {
+                let res = slf.client.bind(slf.py()).get().enum_get_group_count();
+
+                slf.num_elements = Some(*res.as_ref().unwrap_or(&0));
+
+                res
+            }
+        }
+    }
+}
+
+#[pymethods]
+impl GroupIdIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<u16>> {
+        let num_elements = GroupIdIter::get_num_elements(&mut slf)?;
+
+        if slf.next_index >= num_elements {
+            return Ok(None);
+        }
+
+        match slf
+            .client
+            .bind(slf.py())
+            .get()
+            .enum_get_group_id(slf.next_index)
+        {
+            Ok(group_id) => {
+                slf.next_index += 1;
+                Ok(Some(group_id))
+            }
+            Err(e) => {
+                slf.next_index = num_elements;
+                Err(e)
+            }
+        }
+    }
+}
+
+impl pyo3_stub_gen::PyStubType for GroupIdIter {
+    fn type_output() -> pyo3_stub_gen::TypeInfo {
+        pyo3_stub_gen::TypeInfo {
+            name: "collections.abc.Iterator[builtins.int]".to_string(),
+            source_module: None,
+            import: HashSet::from([
+                pyo3_stub_gen::ImportRef::Module(pyo3_stub_gen::ModuleRef::from("collections.abc")),
+                pyo3_stub_gen::ImportRef::Module(pyo3_stub_gen::ModuleRef::from("builtins")),
+            ]),
+            type_refs: HashMap::new(),
+        }
     }
 }

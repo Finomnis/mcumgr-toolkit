@@ -1,3 +1,5 @@
+/// [Enumeration management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_10.html) group commands
+pub mod r#enum;
 /// [File management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_8.html) group commands
 pub mod fs;
 /// [Application/software image management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html) group commands
@@ -114,6 +116,10 @@ impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 3): fs::SupportedFileChecksumType
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 4): fs::FileClose => fs::FileCloseResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SHELL, 0): shell::ShellCommandLineExecute<'_> => shell::ShellCommandLineExecuteResponse);
+
+impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 0): r#enum::GroupCount => r#enum::GroupCountResponse);
+impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 1): r#enum::ListGroups => r#enum::ListGroupsResponse);
+impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 2): r#enum::GroupId => r#enum::GroupIdResponse);
 
 impl_mcumgr_command!((write, ZEPHYR_MGMT_GRP_BASIC, 0): zephyr::EraseStorage => zephyr::EraseStorageResponse);
 
