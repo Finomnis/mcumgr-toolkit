@@ -28,3 +28,5 @@ Issues = "https://github.com/Finomnis/mcumgr-toolkit/issues"
 
 [tool.maturin]
 module-name = "mcumgr_toolkit"
+locked = true
+compatibility = "pypi"
