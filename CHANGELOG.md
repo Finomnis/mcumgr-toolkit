@@ -314,6 +314,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 ## [0.2.1] - 2025-11-14
 
 ### Changes
+
 - Complete the `fs` command group
   - Add Python/Rust library commands:
     - `fs_file_status`
@@ -334,9 +335,11 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 ## [0.2.0] - 2025-11-13
 
 ### Breaking Changes
+
 - Python: `shell_execute` now returns a `str` and raises an error on negative shell exit code (#38)
 
 ### Changes
+
 - Fix error for `raw` command when response contains a bytes array (#39)
 - Improve CBOR encoding/decoding error messages (#39)
 
@@ -344,6 +347,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 ## [0.1.1] - 2025-11-12
 
 ### Changes
+
 - Add `Errno` enum and use it to decode shell command errors in CLI (#37)
 - Add link to implementation progress in README (#35)
 
@@ -351,6 +355,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 ## [0.1.0] - 2025-11-11
 
 ### Changes
+
 - Add Python commands:
   - `fs_file_download`
   - `fs_file_upload`
@@ -366,6 +371,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 ## [0.0.2] - 2025-11-10
 
 ### Changes
+
 - Rename `with_frame_size` to `set_frame_size` and make it non-consuming (#20)
 - Add MCUmgrClient commands: (#20)
   - `set_frame_size`
