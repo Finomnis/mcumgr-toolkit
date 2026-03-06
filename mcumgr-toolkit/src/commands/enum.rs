@@ -139,7 +139,7 @@ mod tests {
                 {
                     "group" => 42,
                     "name" => "answer",
-                    "handlers" => 9001,
+                    "handlers" => 133,
                 },
             ]
     }),
@@ -153,7 +153,7 @@ mod tests {
                 GroupDetailsEntry{
                     group: 42,
                     name: Some("answer".into()),
-                    handlers: Some(9001),
+                    handlers: Some(133),
                 },
             ]
         },
