@@ -120,6 +120,7 @@ impl_mcumgr_command!((write, MGMT_GROUP_ID_SHELL, 0): shell::ShellCommandLineExe
 impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 0): r#enum::GroupCount => r#enum::GroupCountResponse);
 impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 1): r#enum::ListGroups => r#enum::ListGroupsResponse);
 impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 2): r#enum::GroupId => r#enum::GroupIdResponse);
+impl_mcumgr_command!((read, MGMT_GROUP_ID_ENUM, 3): r#enum::GroupDetails => r#enum::GroupDetailsResponse);
 
 impl_mcumgr_command!((write, ZEPHYR_MGMT_GRP_BASIC, 0): zephyr::EraseStorage => zephyr::EraseStorageResponse);
 
