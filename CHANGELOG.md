@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [0.11.5] - xxxx-xx-xx
 
 ### Changes
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add CLI commands:
         - `enum`
             - `list-groups`
+- Optimize release build
+
 
 ## [0.11.4] - 2026-03-01
 
@@ -25,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename CLI crate so its name matches the name of its binary
     - CLI crate: `mcumgr-toolkit-cli` -> `mcumgrctl`
+
 
 ## [0.11.3] - 2026-02-28
 
@@ -39,11 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
             - `get`
             - `list-groups`
 
+
 ## [0.11.2] - 2026-02-16
 
 ### Changes
 
 - Add `Eq`, `PartialEq`, `Ord` and `PartialOrd` to `FirmwareUpdateStep`
+
 
 ## [0.11.1] - 2026-02-15
 
@@ -52,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Print help message when first image transfer chunk times out
     - This is a strong indicator that the device should use
       [progressive erase](https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_IMG_ERASE_PROGRESSIVELY) while receiving the firmware image
+
 
 ## [0.11.0] - 2026-02-15
 
@@ -72,12 +79,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Decrease default timeout to `500 ms`
 - Improve error message formatting
 
+
 ## [0.10.0] - 2026-02-09
 
 ### Breaking Changes
 
 - Combine `FileUploadError`, `FileDownloadError`, `ImageUploadError` and `ExecuteError` to `MCUmgrClientError`
 - Change error type of `set_timeout` to `Box<dyn Error>`
+
 
 ## [0.9.0] - 2026-02-06
 
@@ -90,11 +99,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add missing `Clone` to all command structs
 
+
 ## [0.8.1] - 2026-02-03
 
 ### Changes
 
 - List available serial ports on `mcumgrctl --serial` without argument
+
 
 ## [0.8.0] - 2026-02-03
 
@@ -129,6 +140,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 
 - Firmware upload to MCUboot recovery mode failed with `MGMT_ERR_EOK`
 
+
 ## [0.7.0] - 2026-01-24
 
 ### Breaking Changes
@@ -150,6 +162,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 
 - Log messages collide with progress bar
 
+
 ## [0.6.2] - 2026-01-13
 
 ### Changes
@@ -161,6 +174,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
     - `erase`
 - Increase default timeout to `2000 ms`.
 
+
 ## [0.6.1] - 2026-01-13
 
 ### Changes
@@ -171,6 +185,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
   - `image`
     - `slot_info`
 - Add CLI colors for `true`/`false`
+
 
 ## [0.6.0] - 2025-12-08
 
@@ -185,6 +200,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
   - Python: `mcuboot_get_image_info`
   - CLI: `mcuboot get-image-info`
 
+
 ## [0.5.1] - 2025-12-07
 
 ### Changes
@@ -196,6 +212,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - Add `MCUmgrClient::check_connection` that checks if the device is connected and responding
   - CLI: run connection test if no group specified
 
+
 ## [0.5.0] - 2025-12-06
 
 ### Breaking Changes
@@ -206,6 +223,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 ### Changes
 
 - Add support for SMP v1 error's `rsn` field
+
 
 ## [0.4.2] - 2025-12-06
 
@@ -220,6 +238,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
   - `image`
     - `get_state`
 
+
 ## [0.4.1] - 2025-12-02
 
 ### Changes
@@ -227,6 +246,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - CLI:
   - Replace `--progress` with `--quiet` and enable progress bars by default (#57)
   - File copy operations: Add filename to output if output is a directory (#58)
+
 
 ## [0.4.0] - 2025-11-24
 
@@ -251,6 +271,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - Python: Enable log forwarding
 - Python: Implement context manager functionality for `MCUmgrClient`
 
+
 ## [0.3.1] - 2025-11-22
 
 ### Changes
@@ -271,6 +292,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
   - Add API documentation
   - Improve tags and links on PyPI website
 
+
 ## [0.3.0] - 2025-11-18
 
 ### Breaking changes
@@ -287,6 +309,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 
 - Make all command structs `Eq, PartialEq`
 - Fix CBOR serialization/deserialization of empty structs
+
 
 ## [0.2.1] - 2025-11-14
 
@@ -317,11 +340,13 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - Fix error for `raw` command when response contains a bytes array (#39)
 - Improve CBOR encoding/decoding error messages (#39)
 
+
 ## [0.1.1] - 2025-11-12
 
 ### Changes
 - Add `Errno` enum and use it to decode shell command errors in CLI (#37)
 - Add link to implementation progress in README (#35)
+
 
 ## [0.1.0] - 2025-11-11
 
@@ -336,6 +361,7 @@ For that reason, the project was renamed to `mcumgr-toolkit`:
 - Add progress callbacks for upload/download
 - Refactor error enums
 - Rework python error messages
+
 
 ## [0.0.2] - 2025-11-10
 
