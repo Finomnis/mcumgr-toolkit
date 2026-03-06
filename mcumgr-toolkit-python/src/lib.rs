@@ -714,6 +714,24 @@ impl MCUmgrClient {
         GroupIdIter::new(slf.into())
     }
 
+    /// Query details from all available groups.
+    ///
+    /// ### Return
+    ///
+    /// A list of details about all MCUmgr group IDs the device supports.
+    ///
+    pub fn enum_get_group_details(&self) -> PyResult<Vec<GroupDetails>> {
+        self.get_client()?
+            .enum_get_group_details()
+            .map(|groups| {
+                groups
+                    .into_iter()
+                    .map(GroupDetails::from_response)
+                    .collect()
+            })
+            .map_err(err_to_pyerr)
+    }
+
     /// Erase the `storage_partition` flash partition.
     pub fn zephyr_erase_storage(&self) -> PyResult<()> {
         self.get_client()?
@@ -802,6 +820,8 @@ mod mcumgr_toolkit {
     use super::return_types::FileChecksumProperties;
     #[pymodule_export]
     use super::return_types::FileStatus;
+    #[pymodule_export]
+    use super::return_types::GroupDetails;
     #[pymodule_export]
     use super::return_types::ImageState;
     #[pymodule_export]

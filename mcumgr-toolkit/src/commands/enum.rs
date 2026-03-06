@@ -53,11 +53,11 @@ impl_serialize_as_empty_map!(GroupDetails);
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct GroupDetailsEntry {
     /// the group ID of the MCUmgr command group
-    group: u16,
+    pub group: u16,
     /// the name of the MCUmgr command group
-    name: Option<String>,
+    pub name: Option<String>,
     /// the number of handlers that the MCUmgr command group supports
-    handlers: Option<u32>,
+    pub handlers: Option<u8>,
 }
 
 /// Response for [`GroupDetails`] command

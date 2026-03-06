@@ -11,6 +11,7 @@ __all__ = [
     "FileChecksumDataFormat",
     "FileChecksumProperties",
     "FileStatus",
+    "GroupDetails",
     "ImageState",
     "MCUmgrClient",
     "MCUmgrParameters",
@@ -72,6 +73,27 @@ class FileStatus:
     def length(self) -> builtins.int:
         r"""
         length of file (in bytes)
+        """
+
+@typing.final
+class GroupDetails:
+    r"""
+    Details about an MCUmgr group
+    """
+    @property
+    def group(self) -> builtins.int:
+        r"""
+        the group ID of the MCUmgr command group
+        """
+    @property
+    def name(self) -> typing.Optional[builtins.str]:
+        r"""
+        the name of the MCUmgr command group
+        """
+    @property
+    def handlers(self) -> typing.Optional[builtins.int]:
+        r"""
+        the number of handlers that the MCUmgr command group supports
         """
 
 @typing.final
@@ -475,6 +497,14 @@ class MCUmgrClient:
         Same as `enum_get_group_ids`, but does not
         require large message sizes if the number of groups is large. The tradeoff is
         that this function is much slower.
+        """
+    def enum_get_group_details(self) -> builtins.list[GroupDetails]:
+        r"""
+        Query details from all available groups.
+        
+        ### Return
+        
+        A list of details about all MCUmgr group IDs the device supports.
         """
     def zephyr_erase_storage(self) -> None:
         r"""

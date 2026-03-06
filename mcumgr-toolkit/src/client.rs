@@ -1064,6 +1064,21 @@ impl MCUmgrClient {
         })
     }
 
+    /// Query details from all available groups.
+    ///
+    /// # Return
+    ///
+    /// A list of details about all MCUmgr group IDs the device supports.
+    ///
+    pub fn enum_get_group_details(
+        &self,
+    ) -> Result<Vec<commands::r#enum::GroupDetailsEntry>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::r#enum::GroupDetails)
+            .map(|ret| ret.groups)
+            .map_err(Into::into)
+    }
+
     /// Erase the `storage_partition` flash partition.
     pub fn zephyr_erase_storage(&self) -> Result<(), MCUmgrClientError> {
         self.connection
