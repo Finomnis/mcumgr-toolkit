@@ -16,17 +16,17 @@ use ::mcumgr_toolkit::bootloader::BootloaderType;
 use ::mcumgr_toolkit::client::{FirmwareUpdateParams, FirmwareUpdateStep};
 
 use crate::errors::McubootPythonError;
+use crate::hash_type::{HashId, Sha256};
 use crate::raw_py_any_command::RawPyAnyCommand;
-use crate::sha256_type::Sha256;
 
 mod return_types;
 pub use return_types::*;
 
 mod errors;
+mod hash_type;
 mod mcuboot;
 mod raw_py_any_command;
 mod repr_macro;
-mod sha256_type;
 
 /// A high-level client for Zephyr's MCUmgr SMP functionality
 #[gen_stub_pyclass]
@@ -343,7 +343,7 @@ impl MCUmgrClient {
     ///
     /// ### Arguments
     ///
-    /// * `hash` - the SHA256 id of the image.
+    /// * `hash` - the hash id of the image.
     /// * `confirm` - mark the given image as 'confirmed'
     ///
     /// If `confirm` is `false`, perform a test boot with the given image and revert upon hard reset.
@@ -359,12 +359,12 @@ impl MCUmgrClient {
     pub fn image_set_state<'py>(
         &self,
         py: Python<'py>,
-        hash: Option<Sha256>,
+        hash: Option<HashId>,
         confirm: bool,
     ) -> PyResult<Vec<ImageState>> {
         let images = self
             .get_client()?
-            .image_set_state(hash.map(|val| val.0), confirm)
+            .image_set_state(hash.map(|val| val.0).as_deref(), confirm)
             .map_err(err_to_pyerr)?;
 
         Ok(images

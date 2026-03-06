@@ -25,7 +25,7 @@ pub struct ImageState {
     pub slot: u32,
     /// string representing image version, as set with `imgtool`
     pub version: String,
-    /// SHA256 hash of the image header and body
+    /// Hash of the image header and body
     ///
     /// Note that this will not be the same as the SHA256 of the whole file, it is the field in the
     /// MCUboot TLV section that contains a hash of the data which is used for signature
@@ -66,7 +66,7 @@ pub struct ImageStateResponse {
 /// [Set Image State](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_1.html#set-state-of-image-request) command
 #[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct SetImageState<'a> {
-    /// SHA256 hash of the image header and body
+    /// Hash of the image header and body
     ///
     /// If `confirm` is `true` this can be omitted, which will select the currently running image.
     ///
