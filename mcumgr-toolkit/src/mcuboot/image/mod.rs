@@ -22,6 +22,44 @@ impl std::fmt::Display for ImageVersion {
     }
 }
 
+/// The hash of a firmware image
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum ImageHash {
+    Sha256([u8; SHA256_LEN]),
+    Sha384([u8; SHA384_LEN]),
+    Sha512([u8; SHA512_LEN]),
+}
+
+impl From<ImageHash> for Vec<u8> {
+    fn from(hash: ImageHash) -> Self {
+        match hash {
+            ImageHash::Sha256(val) => val.into(),
+            ImageHash::Sha384(val) => val.into(),
+            ImageHash::Sha512(val) => val.into(),
+        }
+    }
+}
+
+impl From<ImageHash> for Box<[u8]> {
+    fn from(hash: ImageHash) -> Self {
+        match hash {
+            ImageHash::Sha256(val) => val.into(),
+            ImageHash::Sha384(val) => val.into(),
+            ImageHash::Sha512(val) => val.into(),
+        }
+    }
+}
+
+impl AsRef<[u8]> for ImageHash {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            ImageHash::Sha256(val) => val,
+            ImageHash::Sha384(val) => val,
+            ImageHash::Sha512(val) => val,
+        }
+    }
+}
+
 /// Information about an MCUboot firmware image
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct ImageInfo {
@@ -32,7 +70,7 @@ pub struct ImageInfo {
     /// Note that this will not be the same as the SHA256 of the whole file, it is the field in the
     /// MCUboot TLV section that contains a hash of the data which is used for signature
     /// verification purposes.
-    pub hash: [u8; SHA256_LEN],
+    pub hash: ImageHash,
 }
 
 /// Possible error values of [`get_image_info`].
@@ -78,7 +116,11 @@ fn read_u8(data: &mut dyn std::io::Read) -> Result<u8, std::io::Error> {
 const IMAGE_MAGIC: u32 = 0x96f3b83d;
 const IMAGE_TLV_INFO_MAGIC: u16 = 0x6907;
 const IMAGE_TLV_SHA256: u8 = 0x10;
+const IMAGE_TLV_SHA384: u8 = 0x11;
+const IMAGE_TLV_SHA512: u8 = 0x12;
 const SHA256_LEN: usize = 32;
+const SHA384_LEN: usize = 48;
+const SHA512_LEN: usize = 64;
 const TLV_INFO_HEADER_SIZE: u32 = 4;
 const TLV_ELEMENT_HEADER_SIZE: u32 = 4;
 
@@ -142,7 +184,15 @@ pub fn get_image_info(
             if it_type == IMAGE_TLV_SHA256 && usize::from(it_len) == SHA256_LEN {
                 let mut sha256_hash = [0u8; SHA256_LEN];
                 image_data.read_exact(&mut sha256_hash)?;
-                id_hash = Some(sha256_hash);
+                id_hash = Some(ImageHash::Sha256(sha256_hash));
+            } else if it_type == IMAGE_TLV_SHA384 && usize::from(it_len) == SHA384_LEN {
+                let mut sha384_hash = [0u8; SHA384_LEN];
+                image_data.read_exact(&mut sha384_hash)?;
+                id_hash = Some(ImageHash::Sha384(sha384_hash));
+            } else if it_type == IMAGE_TLV_SHA512 && usize::from(it_len) == SHA512_LEN {
+                let mut sha512_hash = [0u8; SHA512_LEN];
+                image_data.read_exact(&mut sha512_hash)?;
+                id_hash = Some(ImageHash::Sha512(sha512_hash));
             } else {
                 image_data.seek_relative(it_len.into())?;
             }

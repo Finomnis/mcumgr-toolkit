@@ -2,8 +2,13 @@ use indicatif::MultiProgress;
 use mcumgr_toolkit::commands::image::ImageState;
 
 use crate::{
-    args::CommonArgs, client::Client, errors::CliError, file_read_write::read_input_file,
-    formatting::structured_print, groups::parse_sha256, progress::with_progress_bar,
+    args::CommonArgs,
+    client::Client,
+    errors::CliError,
+    file_read_write::read_input_file,
+    formatting::structured_print,
+    groups::{parse_hash_id, parse_sha256},
+    progress::with_progress_bar,
 };
 
 #[derive(Debug, clap::Subcommand)]
@@ -13,8 +18,8 @@ pub enum ImageCommand {
     /// Change the image state
     SetState {
         /// Boot to the image with the given hash ID
-        #[arg(long, value_parser=parse_sha256, required_unless_present = "confirm")]
-        hash: Option<[u8; 32]>,
+        #[arg(long, value_parser=parse_hash_id, required_unless_present = "confirm")]
+        hash: Option<Vec<u8>>,
         /// Mark the given image as confirmed
         ///
         /// If no hash is specified, confirm the currently running image
@@ -53,7 +58,7 @@ fn print_current_image_state(images: &[ImageState], args: CommonArgs) -> Result<
             for image in images {
                 s.sublist(format!("Image {}, Slot {}", image.image, image.slot), |s| {
                     s.key_value("version", image.version.as_str());
-                    s.key_value_maybe("hash", image.hash.map(hex::encode));
+                    s.key_value_maybe("hash", image.hash.as_ref().map(hex::encode));
                     s.key_value("bootable", image.bootable);
                     s.key_value("pending", image.pending);
                     s.key_value("confirmed", image.confirmed);
@@ -80,7 +85,7 @@ pub fn run(
             print_current_image_state(&images, args)?;
         }
         ImageCommand::SetState { hash, confirm } => {
-            let images = client.image_set_state(hash, confirm)?;
+            let images = client.image_set_state(hash.as_deref(), confirm)?;
 
             if !(args.quiet || args.json) {
                 println!();

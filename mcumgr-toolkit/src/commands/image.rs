@@ -31,7 +31,7 @@ pub struct ImageState {
     /// MCUboot TLV section that contains a hash of the data which is used for signature
     /// verification purposes.
     #[serde(serialize_with = "serialize_option_hex")] // For JSON (cli)
-    pub hash: Option<[u8; 32]>,
+    pub hash: Option<Vec<u8>>,
     /// true if image has bootable flag set
     #[serde(default)]
     pub bootable: bool,
@@ -75,7 +75,7 @@ pub struct SetImageState<'a> {
     /// verification purposes.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "serde_bytes")]
-    pub hash: Option<&'a [u8; 32]>,
+    pub hash: Option<&'a [u8]>,
     /// If true, mark the given image as 'confirmed'.
     ///
     /// If false, perform a test boot with the given image
@@ -279,7 +279,7 @@ mod tests {
                     image: 3,
                     slot: 5,
                     version: "v1.2.3".to_string(),
-                    hash: Some([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]),
+                    hash: Some(vec![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]),
                     bootable: true,
                     pending: true,
                     confirmed: true,
