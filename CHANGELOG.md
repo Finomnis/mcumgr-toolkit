@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Add support for MCUmgr image hash ID types `SHA384` and `SHA512`
-    - Required API changes to support variable-length hashes
+    - API changes to support variable-length hashes
 
 ### Changes
 
@@ -421,3 +421,4 @@ Primarily to test release workflow.
 [0.1.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.2...0.1.0
 [0.0.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.1...0.0.2
 [0.0.1]: https://github.com/Finomnis/mcumgr-toolkit/releases/tag/0.0.1
+
