@@ -16,10 +16,11 @@ pub enum ImageCommand {
     /// Obtain a list of images with their current state
     GetState,
     /// Change the image state
-    ///
-    /// See `firmware get_image_info`
     SetState {
         /// Boot to the image with the given hash ID
+        ///
+        /// See `firmware get-image-info` for how to retrieve the hash
+        /// from an image file.
         #[arg(long, value_parser=parse_hash_id, required_unless_present = "confirm")]
         hash: Option<Vec<u8>>,
         /// Mark the given image as confirmed

@@ -23,6 +23,8 @@ impl From<BootloaderType> for mcumgr_toolkit::bootloader::BootloaderType {
 #[derive(Debug, clap::Subcommand)]
 pub enum FirmwareCommand {
     /// Show information about an MCUboot image file
+    ///
+    /// Note the `--json` flag for better scripting compatibility.
     GetImageInfo {
         /// The image type
         r#type: BootloaderType,

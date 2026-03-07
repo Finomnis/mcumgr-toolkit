@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - `enum`
             - `list-groups`
 - Optimize release build
+- CLI: make `--json`, `--verbose` and `--quiet` global flags
 
 
 ## [0.11.4] - 2026-03-01
@@ -421,4 +422,3 @@ Primarily to test release workflow.
 [0.1.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.2...0.1.0
 [0.0.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.0.1...0.0.2
 [0.0.1]: https://github.com/Finomnis/mcumgr-toolkit/releases/tag/0.0.1
-

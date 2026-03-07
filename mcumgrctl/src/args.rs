@@ -5,15 +5,15 @@ use crate::groups::Group;
 #[derive(Debug, Args)]
 pub struct CommonArgs {
     /// Hide progress bar for data transfer commands
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     pub quiet: bool,
 
     /// Increase the verbosity of some commands
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     pub verbose: bool,
 
     /// Print command results as JSON, if possible
-    #[arg(long)]
+    #[arg(long, global = true)]
     pub json: bool,
 }
 
