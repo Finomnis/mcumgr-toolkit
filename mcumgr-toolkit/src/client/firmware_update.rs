@@ -114,7 +114,11 @@ impl Display for FirmwareUpdateStep {
                     f.write_str(version_str)?;
 
                     if let Some(version_hash) = version_hash {
-                        write!(f, "-{}", hex::encode(&version_hash[..SHOWN_HASH_DIGITS]))?;
+                        write!(
+                            f,
+                            "-{}",
+                            hex::encode(&version_hash[..SHOWN_HASH_DIGITS.min(version_hash.len())])
+                        )?;
                     }
                 } else {
                     f.write_str("Empty")?;
@@ -124,7 +128,7 @@ impl Display for FirmwareUpdateStep {
                     f,
                     " -> {}-{}",
                     new_version.0,
-                    hex::encode(&new_version.1[..SHOWN_HASH_DIGITS])
+                    hex::encode(&new_version.1[..SHOWN_HASH_DIGITS.min(new_version.1.len())])
                 )
             }
             Self::UploadingFirmware => f.write_str("Uploading new firmware ..."),
