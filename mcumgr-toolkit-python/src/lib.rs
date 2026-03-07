@@ -343,7 +343,7 @@ impl MCUmgrClient {
     ///
     /// ### Arguments
     ///
-    /// * `hash` - the hash id of the image.
+    /// * `hash` - the hash id of the image. See `mcuboot_get_image_info`.
     /// * `confirm` - mark the given image as 'confirmed'
     ///
     /// If `confirm` is `false`, perform a test boot with the given image and revert upon hard reset.

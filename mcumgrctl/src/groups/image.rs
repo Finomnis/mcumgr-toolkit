@@ -16,6 +16,8 @@ pub enum ImageCommand {
     /// Obtain a list of images with their current state
     GetState,
     /// Change the image state
+    ///
+    /// See `firmware get_image_info`
     SetState {
         /// Boot to the image with the given hash ID
         #[arg(long, value_parser=parse_hash_id, required_unless_present = "confirm")]
