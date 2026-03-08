@@ -65,6 +65,45 @@ jobs:
       - name: Build
         run: cargo build --examples --all-features --release
 
+  build-cli:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows
+          - linux
+        include:
+          - os: windows
+            image: windows-latest
+            target: x86-64-pc-windows-msvc
+          - os: linux
+            image: ubuntu-latest
+            target: x86-64-unknown-linux-musl
+    runs-on: ${{ matrix.image }}
+
+    env:
+      RUSTFLAGS: "-C target-feature=+crt-static"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }}
+
+      - name: Collect binary
+        run: mkdir cli && cp target/${{ matrix.target }}/release/mcumgrctl cli/mcumgrctl-${{ matrix.os }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcumgrctl-${{ matrix.os }}
+          path: cli
+          retention-days: 7
+
   msrv:
     name: Minimum Supported Rust Version
     runs-on: ubuntu-latest
