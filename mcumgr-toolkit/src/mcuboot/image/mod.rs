@@ -555,6 +555,27 @@ mod tests {
     }
 
     #[test]
+    fn rejects_image_with_wrong_tlv_info_magic() {
+        let version = ImageVersion {
+            major: 1,
+            minor: 2,
+            revision: 3,
+            build_num: 4,
+        };
+        let image = build_image(
+            IMAGE_MAGIC,
+            IMAGE_HEADER_SIZE as u16,
+            version,
+            b"x",
+            None,
+            Some(tlv_area(0xFFFF, &[tlv(IMAGE_TLV_SHA256, &[0x11; 32])])),
+        );
+
+        let err = get_image_info(Cursor::new(image)).unwrap_err();
+        assert!(matches!(err, ImageParseError::TlvMissing));
+    }
+
+    #[test]
     fn rejects_image_with_tlv_area_but_without_any_supported_hash_tlv() {
         let version = ImageVersion {
             major: 8,
