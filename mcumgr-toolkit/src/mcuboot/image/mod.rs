@@ -95,10 +95,10 @@ pub enum ImageParseError {
     #[error("Image does not contain TLV entries")]
     #[diagnostic(code(mcumgr_toolkit::mcuboot::image::tlv_missing))]
     TlvMissing,
-    /// The given image file does not contain an SHA id hash.
-    #[error("Image does not contain an SHA id hash")]
-    #[diagnostic(code(mcumgr_toolkit::mcuboot::image::id_hash_missing))]
-    IdHashMissing,
+    /// The given image file does not contain a SHA hash id.
+    #[error("Image does not contain a SHA hash id")]
+    #[diagnostic(code(mcumgr_toolkit::mcuboot::image::hash_id_missing))]
+    HashIdMissing,
     /// Failed to read from the image
     #[error("Image read failed")]
     #[diagnostic(code(mcumgr_toolkit::mcuboot::image::read))]
@@ -226,7 +226,7 @@ pub fn get_image_info(
             hash: id_hash,
         })
     } else {
-        Err(ImageParseError::IdHashMissing)
+        Err(ImageParseError::HashIdMissing)
     }
 }
 
@@ -580,6 +580,32 @@ mod tests {
             Some(regular_tlv_area),
         );
 
+        let err = get_image_info(Cursor::new(image)).unwrap_err();
+        assert!(matches!(err, ImageParseError::HashIdMissing));
+    }
+
+    #[test]
+    fn rejects_sha256_tlv_with_wrong_payload_length() {
+        // Type 0x10 with 16 bytes instead of the required 32 must be skipped,
+        // not parsed as a valid hash → HashIdMissing.
+        let version = ImageVersion {
+            major: 1,
+            minor: 0,
+            revision: 0,
+            build_num: 0,
+        };
+        let regular_tlv_area = tlv_area(
+            IMAGE_TLV_INFO_MAGIC,
+            &[tlv(IMAGE_TLV_SHA256, &[0x42u8; 16])], // wrong length
+        );
+        let image = build_image(
+            IMAGE_MAGIC,
+            IMAGE_HEADER_SIZE as u16,
+            version,
+            b"payload",
+            None,
+            Some(regular_tlv_area),
+        );
         let err = get_image_info(Cursor::new(image)).unwrap_err();
         assert!(matches!(err, ImageParseError::IdHashMissing));
     }
