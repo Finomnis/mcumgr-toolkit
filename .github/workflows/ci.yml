@@ -17,15 +17,15 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - x86_64-pc-windows-gnu
+          - x86_64-pc-windows-msvc
           - x86_64-unknown-linux-gnu
           - aarch64-apple-darwin
         rust:
           - stable
           - nightly
         include:
-          - target: x86_64-pc-windows-gnu
-            image: ubuntu-latest
+          - target: x86_64-pc-windows-msvc
+            image: windows-latest
           - target: x86_64-unknown-linux-gnu
             image: ubuntu-latest
           - target: aarch64-apple-darwin
@@ -36,12 +36,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Rust
-        run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }}
-
-      - name: Install cross toolchain
-        uses: taiki-e/setup-cross-toolchain-action@v1
-        with:
-          target: ${{ matrix.target }}
+        run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }} && rustup target add ${{ matrix.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }} --workspace --exclude mcumgr-toolkit-python
@@ -64,6 +59,61 @@ jobs:
 
       - name: Build
         run: cargo build --examples --all-features --release
+
+  build-cli:
+    name: Build CLI
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows
+          - linux
+          - macos
+        include:
+          - os: windows
+            image: windows-latest
+            target: x86_64-pc-windows-msvc
+            extension: ".exe"
+          - os: linux
+            image: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            extension: ""
+          - os: macos
+            image: macos-latest
+            target: aarch64-apple-darwin
+            extension: ""
+    runs-on: ${{ matrix.image }}
+
+    env:
+      RUSTFLAGS: "-C target-feature=+crt-static"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }}
+
+      - name: Collect binary
+        run: cp target/${{ matrix.target }}/release/mcumgrctl${{ matrix.extension }} mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcumgrctl-${{ matrix.os }}
+          path: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
+          retention-days: 7
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'release'
+        with:
+          files: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
 
   msrv:
     name: Minimum Supported Rust Version
@@ -221,6 +271,7 @@ jobs:
     needs: [
         test,
         build-examples,
+        build-cli,
         msrv,
         lints,
         docs,
