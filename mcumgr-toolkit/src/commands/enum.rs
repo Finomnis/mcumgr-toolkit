@@ -45,9 +45,14 @@ pub struct GroupIdResponse {
 }
 
 /// [Details on supported groups](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_10.html#details-on-supported-groups-command) command
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct GroupDetails;
-impl_serialize_as_empty_map!(GroupDetails);
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+pub struct GroupDetails<'a> {
+    /// list of the MCUmgr group IDs to fetch details on.
+    ///
+    /// fetch all groups if `None`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub groups: Option<&'a [u16]>,
+}
 
 /// Details about a group
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -129,7 +134,9 @@ mod tests {
     command_encode_decode_test! {
         get_group_details,
         (0, 10, 3),
-        GroupDetails,
+        GroupDetails{
+            groups: None,
+        },
         cbor!({}),
         cbor!({
             "groups" => [
@@ -156,6 +163,23 @@ mod tests {
                     handlers: Some(133),
                 },
             ]
+        },
+    }
+
+    command_encode_decode_test! {
+        get_group_details_2,
+        (0, 10, 3),
+        GroupDetails{
+            groups: Some(&[42, 69]),
+        },
+        cbor!({
+            "groups" => [42, 69],
+        }),
+        cbor!({
+            "groups" => []
+    }),
+        GroupDetailsResponse{
+            groups: vec![]
         },
     }
 }

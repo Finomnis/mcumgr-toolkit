@@ -498,9 +498,13 @@ class MCUmgrClient:
         require large message sizes if the number of groups is large. The tradeoff is
         that this function is much slower.
         """
-    def enum_get_group_details(self) -> builtins.list[GroupDetails]:
+    def enum_get_group_details(self, groups: typing.Optional[typing.Sequence[builtins.int]] = None) -> builtins.list[GroupDetails]:
         r"""
         Query details from all available groups.
+        
+        ### Arguments
+        
+        * `groups` - The group IDs to fetch details for. If omitted, fetch all groups.
         
         ### Return
         

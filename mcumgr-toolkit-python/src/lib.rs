@@ -716,13 +716,18 @@ impl MCUmgrClient {
 
     /// Query details from all available groups.
     ///
+    /// ### Arguments
+    ///
+    /// * `groups` - The group IDs to fetch details for. If omitted, fetch all groups.
+    ///
     /// ### Return
     ///
     /// A list of details about all MCUmgr group IDs the device supports.
     ///
-    pub fn enum_get_group_details(&self) -> PyResult<Vec<GroupDetails>> {
+    #[pyo3(signature = (groups=None))]
+    pub fn enum_get_group_details(&self, groups: Option<Vec<u16>>) -> PyResult<Vec<GroupDetails>> {
         self.get_client()?
-            .enum_get_group_details()
+            .enum_get_group_details(groups.as_deref())
             .map(|groups| {
                 groups
                     .into_iter()
