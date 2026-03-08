@@ -97,7 +97,7 @@ Device alive and responsive.
 Perform a firmware update:
 
 ```none
-$ mcumgrctl -u 2fe3:0004 firmware update zephyr.signed.encrypted.bin
+$ mcumgrctl -u . firmware update zephyr.signed.encrypted.bin
 Detecting bootloader ...
 Found bootloader: MCUboot
 Parsing firmware image ...
@@ -113,7 +113,7 @@ Device should reboot with new firmware.
 Or show device information:
 
 ```none
-$ mcumgrctl -u 2fe3:0004 os application-info
+$ mcumgrctl -u . os application-info
 
 OS/Application Info:
     Kernel name:       Zephyr
