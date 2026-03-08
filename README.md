@@ -84,7 +84,7 @@ $ mcumgrctl --serial COM42
 Device alive and responsive.
 ```
 
-You can even use a regular expression if you want:
+You can also use a regular expression if you want:
 
 ```none
 $ mcumgrctl --usb-serial "2fe3:.*"
