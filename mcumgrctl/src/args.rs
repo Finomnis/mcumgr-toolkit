@@ -62,7 +62,7 @@ pub struct App {
 mod tests {
     use super::*;
     #[test]
-    fn man() {
+    fn generates_valid_man_page() {
         use clap::CommandFactory;
 
         let man = clap_mangen::Man::new(App::command());
