@@ -16,8 +16,7 @@ pub enum EnumCommand {
         /// The group IDs to load details for
         ///
         /// If omitted, load details for all groups
-        #[clap(trailing_var_arg = true)]
-        groups: Vec<u16>,
+        groups: Option<Vec<u16>>,
     },
 }
 
@@ -52,11 +51,7 @@ pub fn run(
             }
         }
         EnumCommand::ShowGroupDetails { groups } => {
-            let mut details = client.enum_get_group_details(if groups.is_empty() {
-                None
-            } else {
-                Some(&groups)
-            })?;
+            let mut details = client.enum_get_group_details(groups.as_deref())?;
 
             details.sort_by_key(|val| val.group);
 
