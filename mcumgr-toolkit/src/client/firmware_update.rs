@@ -83,9 +83,9 @@ pub enum FirmwareUpdateStep {
     /// A summary of what update exactly we will perform now
     UpdateInfo {
         /// The current version with the current ID hash, if available
-        current_version: Option<(String, Option<[u8; 32]>)>,
+        current_version: Option<(String, Option<Vec<u8>>)>,
         /// The new version with the new ID hash
-        new_version: (String, [u8; 32]),
+        new_version: (String, Vec<u8>),
     },
     /// Uploading the new firmware to the device
     UploadingFirmware,
@@ -114,7 +114,11 @@ impl Display for FirmwareUpdateStep {
                     f.write_str(version_str)?;
 
                     if let Some(version_hash) = version_hash {
-                        write!(f, "-{}", hex::encode(&version_hash[..SHOWN_HASH_DIGITS]))?;
+                        write!(
+                            f,
+                            "-{}",
+                            hex::encode(&version_hash[..SHOWN_HASH_DIGITS.min(version_hash.len())])
+                        )?;
                     }
                 } else {
                     f.write_str("Empty")?;
@@ -124,7 +128,7 @@ impl Display for FirmwareUpdateStep {
                     f,
                     " -> {}-{}",
                     new_version.0,
-                    hex::encode(&new_version.1[..SHOWN_HASH_DIGITS])
+                    hex::encode(&new_version.1[..SHOWN_HASH_DIGITS.min(new_version.1.len())])
                 )
             }
             Self::UploadingFirmware => f.write_str("Uploading new firmware ..."),
@@ -203,7 +207,7 @@ pub(crate) fn firmware_update(
     let (image_version, image_id_hash) = match bootloader_type {
         BootloaderType::MCUboot => {
             let info = mcuboot::get_image_info(std::io::Cursor::new(firmware))?;
-            (info.version, info.hash)
+            (info.version, Vec::<u8>::from(info.hash))
         }
     };
 
@@ -223,13 +227,13 @@ pub(crate) fn firmware_update(
 
     progress(
         FirmwareUpdateStep::UpdateInfo {
-            current_version: active_image.map(|img| (img.version.clone(), img.hash)),
-            new_version: (image_version.to_string(), image_id_hash),
+            current_version: active_image.map(|img| (img.version.clone(), img.hash.clone())),
+            new_version: (image_version.to_string(), image_id_hash.clone()),
         },
         None,
     )?;
 
-    if active_image.and_then(|img| img.hash) == Some(image_id_hash) {
+    if active_image.and_then(|img| img.hash.as_ref()) == Some(&image_id_hash) {
         return Err(FirmwareUpdateError::AlreadyInstalled);
     }
 
@@ -260,7 +264,7 @@ pub(crate) fn firmware_update(
         })?;
 
     progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
-    let set_state_result = client.image_set_state(Some(image_id_hash), params.force_confirm);
+    let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
     if let Err(set_state_error) = set_state_result {
         let mut image_already_active = false;
 
@@ -275,7 +279,9 @@ pub(crate) fn firmware_update(
                 .image_get_state()
                 .map_err(FirmwareUpdateError::GetStateFailed)?;
             if image_state.iter().any(|img| {
-                img.image == actual_target_image && img.slot == 0 && img.hash == Some(image_id_hash)
+                img.image == actual_target_image
+                    && img.slot == 0
+                    && img.hash.as_ref() == Some(&image_id_hash)
             }) {
                 image_already_active = true;
             }

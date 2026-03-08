@@ -563,7 +563,7 @@ impl MCUmgrClient {
     ///
     /// # Arguments
     ///
-    /// * `hash` - the SHA256 id of the image.
+    /// * `hash` - the hash id of the image. See [`mcuboot::get_image_info`](crate::mcuboot::get_image_info).
     /// * `confirm` - mark the given image as 'confirmed'
     ///
     /// If `confirm` is `false`, perform a test boot with the given image and revert upon hard reset.
@@ -576,14 +576,11 @@ impl MCUmgrClient {
     /// which is used for signature verification purposes.
     pub fn image_set_state(
         &self,
-        hash: Option<[u8; 32]>,
+        hash: Option<&[u8]>,
         confirm: bool,
     ) -> Result<Vec<commands::image::ImageState>, MCUmgrClientError> {
         self.connection
-            .execute_command(&commands::image::SetImageState {
-                hash: hash.as_ref(),
-                confirm,
-            })
+            .execute_command(&commands::image::SetImageState { hash, confirm })
             .map(|val| val.images)
             .map_err(Into::into)
     }

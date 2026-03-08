@@ -48,3 +48,40 @@ impl pyo3_stub_gen::PyStubType for Sha256 {
         panic!("Sha256 is only an input type")
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HashId(pub Vec<u8>);
+
+impl FromPyObject<'_, '_> for HashId {
+    type Error = PyErr;
+
+    fn extract(obj: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
+        // raw bytes checksum
+        if let Ok(b) = obj.cast::<PyBytes>() {
+            return Ok(HashId(b.as_bytes().into()));
+        }
+
+        // hex encoded string checksum
+        if let Ok(s) = obj.cast::<PyString>() {
+            let txt = s.to_str()?;
+            let out = hex::decode(txt)
+                .map_err(|e| PyValueError::new_err(format!("invalid hash id hex string: {e}")))?;
+
+            return Ok(HashId(out));
+        }
+
+        Err(PyValueError::new_err(
+            "hash id must be a hex string or a bytes object",
+        ))
+    }
+}
+
+impl pyo3_stub_gen::PyStubType for HashId {
+    fn type_input() -> pyo3_stub_gen::TypeInfo {
+        pyo3_stub_gen::TypeInfo::builtin("str") | pyo3_stub_gen::TypeInfo::builtin("bytes")
+    }
+
+    fn type_output() -> pyo3_stub_gen::TypeInfo {
+        panic!("HashId is only an input type")
+    }
+}

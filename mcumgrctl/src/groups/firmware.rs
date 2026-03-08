@@ -23,6 +23,8 @@ impl From<BootloaderType> for mcumgr_toolkit::bootloader::BootloaderType {
 #[derive(Debug, clap::Subcommand)]
 pub enum FirmwareCommand {
     /// Show information about an MCUboot image file
+    ///
+    /// Note the `--json` flag for better scripting compatibility.
     GetImageInfo {
         /// The image type
         r#type: BootloaderType,
@@ -123,6 +125,7 @@ pub fn run(
                     structured_print(Some(file), args.json, |s| {
                         s.key_value("version", image_info.version.to_string());
                         s.key_value("hash", hex::encode(image_info.hash));
+                        s.key_value("hash-type", image_info.hash.get_hash_type());
                     })?;
                 }
             }
