@@ -185,7 +185,7 @@ pub struct ImageState {
     /// string representing image version, as set with `imgtool`
     #[pyo3(get)]
     pub version: String,
-    /// SHA256 hash of the image header and body
+    /// Hash of the image header and body
     ///
     /// Note that this will not be the same as the SHA256 of the whole file, it is the field in the
     /// MCUboot TLV section that contains a hash of the data which is used for signature

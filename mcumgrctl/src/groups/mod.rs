@@ -83,3 +83,7 @@ fn parse_sha256(s: &str) -> Result<[u8; 32], hex::FromHexError> {
     hex::decode_to_slice(s, &mut data)?;
     Ok(data)
 }
+
+fn parse_hash_id(s: &str) -> Result<Vec<u8>, hex::FromHexError> {
+    hex::decode(s)
+}

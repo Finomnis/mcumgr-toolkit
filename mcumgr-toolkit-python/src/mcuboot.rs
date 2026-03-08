@@ -36,6 +36,6 @@ pub fn mcuboot_get_image_info<'py>(
 
     Ok(McubootImageInfo {
         version: image_info.version.to_string(),
-        hash: PyBytes::new(py, &image_info.hash).unbind(),
+        hash: PyBytes::new(py, image_info.hash.as_ref()).unbind(),
     })
 }

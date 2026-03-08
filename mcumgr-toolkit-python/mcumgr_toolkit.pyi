@@ -119,7 +119,7 @@ class ImageState:
     @property
     def hash(self) -> typing.Optional[bytes]:
         r"""
-        SHA256 hash of the image header and body
+        Hash of the image header and body
         
         Note that this will not be the same as the SHA256 of the whole file, it is the field in the
         MCUboot TLV section that contains a hash of the data which is used for signature
@@ -313,7 +313,7 @@ class MCUmgrClient:
         
         ### Arguments
         
-        * `hash` - the SHA256 id of the image.
+        * `hash` - the hash id of the image. See `mcuboot_get_image_info`.
         * `confirm` - mark the given image as 'confirmed'
         
         If `confirm` is `false`, perform a test boot with the given image and revert upon hard reset.
