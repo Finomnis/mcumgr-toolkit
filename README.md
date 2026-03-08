@@ -77,24 +77,27 @@ $ mcumgrctl --usb-serial 2fe3:0004
 Device alive and responsive.
 ```
 
-You can even use a regular expression if you want:
-
-```none
-$ mcumgrctl --usb-serial "2fe3:.*"
-Device alive and responsive.
-```
-
-Or a normal serial port descriptor:
+You can also use a normal serial port descriptor:
 
 ```none
 $ mcumgrctl --serial COM42
 Device alive and responsive.
 ```
 
+Or even a regular expression if you want:
+
+```none
+$ mcumgrctl --usb-serial "2fe3:.*"
+Device alive and responsive.
+```
+
+> [!TIP]
+> Use `mcumgrctl -u .` if you only have a single USB serial device connected.
+
 Perform a firmware update:
 
 ```none
-$ mcumgrctl -u 2fe3:0004 firmware update zephyr.signed.encrypted.bin
+$ mcumgrctl -u . firmware update zephyr.signed.encrypted.bin
 Detecting bootloader ...
 Found bootloader: MCUboot
 Parsing firmware image ...
@@ -110,7 +113,7 @@ Device should reboot with new firmware.
 Or show device information:
 
 ```none
-$ mcumgrctl -u 2fe3:0004 os application-info
+$ mcumgrctl -u . os application-info
 
 OS/Application Info:
     Kernel name:       Zephyr

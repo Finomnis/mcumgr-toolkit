@@ -44,6 +44,34 @@ pub struct GroupIdResponse {
     pub end: bool,
 }
 
+/// [Details on supported groups](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_10.html#details-on-supported-groups-command) command
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+pub struct GroupDetails<'a> {
+    /// list of the MCUmgr group IDs to fetch details on.
+    ///
+    /// fetch all groups if `None`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub groups: Option<&'a [u16]>,
+}
+
+/// Details about a group
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct GroupDetailsEntry {
+    /// the group ID of the MCUmgr command group
+    pub group: u16,
+    /// the name of the MCUmgr command group
+    pub name: Option<String>,
+    /// the number of handlers that the MCUmgr command group supports
+    pub handlers: Option<u8>,
+}
+
+/// Response for [`GroupDetails`] command
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct GroupDetailsResponse {
+    /// list of group details
+    pub groups: Vec<GroupDetailsEntry>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::macros::command_encode_decode_test;
@@ -100,6 +128,58 @@ mod tests {
         GroupIdResponse{
             group: u16::MAX,
             end: true,
+        },
+    }
+
+    command_encode_decode_test! {
+        get_group_details,
+        (0, 10, 3),
+        GroupDetails{
+            groups: None,
+        },
+        cbor!({}),
+        cbor!({
+            "groups" => [
+                {
+                    "group" => 69,
+                },
+                {
+                    "group" => 42,
+                    "name" => "answer",
+                    "handlers" => 133,
+                },
+            ]
+    }),
+        GroupDetailsResponse{
+            groups: vec![
+                GroupDetailsEntry{
+                    group: 69,
+                    name: None,
+                    handlers: None,
+                },
+                GroupDetailsEntry{
+                    group: 42,
+                    name: Some("answer".into()),
+                    handlers: Some(133),
+                },
+            ]
+        },
+    }
+
+    command_encode_decode_test! {
+        get_group_details_2,
+        (0, 10, 3),
+        GroupDetails{
+            groups: Some(&[42, 69]),
+        },
+        cbor!({
+            "groups" => [42, 69],
+        }),
+        cbor!({
+            "groups" => []
+    }),
+        GroupDetailsResponse{
+            groups: vec![]
         },
     }
 }

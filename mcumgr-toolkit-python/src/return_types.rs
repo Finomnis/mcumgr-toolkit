@@ -227,6 +227,33 @@ impl ImageState {
     }
 }
 
+/// Details about an MCUmgr group
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Serialize)]
+pub struct GroupDetails {
+    /// the group ID of the MCUmgr command group
+    #[pyo3(get)]
+    pub group: u16,
+    /// the name of the MCUmgr command group
+    #[pyo3(get)]
+    pub name: Option<String>,
+    /// the number of handlers that the MCUmgr command group supports
+    #[pyo3(get)]
+    pub handlers: Option<u8>,
+}
+generate_repr_from_serialize!(GroupDetails);
+
+impl GroupDetails {
+    pub(crate) fn from_response(value: commands::r#enum::GroupDetailsEntry) -> Self {
+        Self {
+            group: value.group,
+            name: value.name,
+            handlers: value.handlers,
+        }
+    }
+}
+
 fn serialize_pyvec<S, T>(slots: &[Py<T>], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
