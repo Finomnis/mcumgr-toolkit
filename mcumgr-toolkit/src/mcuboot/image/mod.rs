@@ -95,8 +95,8 @@ pub enum ImageParseError {
     #[error("Image does not contain TLV entries")]
     #[diagnostic(code(mcumgr_toolkit::mcuboot::image::tlv_missing))]
     TlvMissing,
-    /// The given image file does not contain a SHA hash id.
-    #[error("Image does not contain a SHA hash id")]
+    /// The given image file does not contain an SHA hash id.
+    #[error("Image does not contain an SHA hash id")]
     #[diagnostic(code(mcumgr_toolkit::mcuboot::image::hash_id_missing))]
     HashIdMissing,
     /// Failed to read from the image
