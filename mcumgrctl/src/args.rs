@@ -9,7 +9,7 @@ pub struct CommonArgs {
     pub quiet: bool,
 
     /// Increase the verbosity of some commands
-    #[arg(short, long, global = true)]
+    #[arg(long, global = true)]
     pub verbose: bool,
 
     /// Print command results as JSON, if possible
@@ -56,4 +56,18 @@ pub struct App {
     /// If missing, run a connection test
     #[command(subcommand)]
     pub group: Option<Group>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn man() {
+        use clap::CommandFactory;
+
+        let man = clap_mangen::Man::new(App::command());
+
+        let mut buffer = vec![];
+        man.render(&mut buffer).unwrap();
+    }
 }
