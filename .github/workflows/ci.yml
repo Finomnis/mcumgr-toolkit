@@ -62,6 +62,8 @@ jobs:
 
   build-cli:
     name: Build CLI
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
