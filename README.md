@@ -77,6 +77,13 @@ $ mcumgrctl --usb-serial 2fe3:0004
 Device alive and responsive.
 ```
 
+Or a normal serial port descriptor:
+
+```none
+$ mcumgrctl --serial COM42
+Device alive and responsive.
+```
+
 You can even use a regular expression if you want:
 
 ```none
@@ -84,12 +91,8 @@ $ mcumgrctl --usb-serial "2fe3:.*"
 Device alive and responsive.
 ```
 
-Or a normal serial port descriptor:
-
-```none
-$ mcumgrctl --serial COM42
-Device alive and responsive.
-```
+> [!TIP]
+> Use `mcumgrctl -u .` if you only have one USB serial device connected.
 
 Perform a firmware update:
 
