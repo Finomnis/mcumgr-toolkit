@@ -67,10 +67,13 @@ pub fn run(
                             format!(
                                 "{} - {}",
                                 entry.group,
-                                MCUmgrGroup::group_id_to_string(entry.group)
+                                entry
+                                    .name
+                                    .unwrap_or_else(|| MCUmgrGroup::group_id_to_string(
+                                        entry.group
+                                    ))
                             ),
                             |s| {
-                                s.key_value("name", entry.name);
                                 s.key_value("handlers", entry.handlers);
                             },
                         );
