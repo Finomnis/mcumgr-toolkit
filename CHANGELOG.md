@@ -21,9 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - `enum_get_group_ids`
         - `enum_get_group_id`
         - `enum_iter_group_ids`
+        - `enum_get_group_details`
     - Add CLI commands:
         - `enum`
             - `list-groups`
+            - `show-group-details`
 - Optimize release build
 - CLI: make `--json`, `--verbose` and `--quiet` global flags
 
