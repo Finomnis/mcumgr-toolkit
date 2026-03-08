@@ -22,51 +22,51 @@ impl std::fmt::Display for ImageVersion {
     }
 }
 
-/// The hash of a firmware image
+/// The hash id of a firmware image
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum ImageHash {
+pub enum ImageHashId {
     Sha256([u8; SHA256_LEN]),
     Sha384([u8; SHA384_LEN]),
     Sha512([u8; SHA512_LEN]),
 }
 
-impl ImageHash {
-    /// The has type, as a human readable string
+impl ImageHashId {
+    /// The hash type, as a human readable string
     pub fn get_hash_type(&self) -> &'static str {
         match self {
-            ImageHash::Sha256(_) => "SHA256",
-            ImageHash::Sha384(_) => "SHA384",
-            ImageHash::Sha512(_) => "SHA512",
+            ImageHashId::Sha256(_) => "SHA256",
+            ImageHashId::Sha384(_) => "SHA384",
+            ImageHashId::Sha512(_) => "SHA512",
         }
     }
 }
 
-impl From<ImageHash> for Vec<u8> {
-    fn from(hash: ImageHash) -> Self {
+impl From<ImageHashId> for Vec<u8> {
+    fn from(hash: ImageHashId) -> Self {
         match hash {
-            ImageHash::Sha256(val) => val.into(),
-            ImageHash::Sha384(val) => val.into(),
-            ImageHash::Sha512(val) => val.into(),
+            ImageHashId::Sha256(val) => val.into(),
+            ImageHashId::Sha384(val) => val.into(),
+            ImageHashId::Sha512(val) => val.into(),
         }
     }
 }
 
-impl From<ImageHash> for Box<[u8]> {
-    fn from(hash: ImageHash) -> Self {
+impl From<ImageHashId> for Box<[u8]> {
+    fn from(hash: ImageHashId) -> Self {
         match hash {
-            ImageHash::Sha256(val) => val.into(),
-            ImageHash::Sha384(val) => val.into(),
-            ImageHash::Sha512(val) => val.into(),
+            ImageHashId::Sha256(val) => val.into(),
+            ImageHashId::Sha384(val) => val.into(),
+            ImageHashId::Sha512(val) => val.into(),
         }
     }
 }
 
-impl AsRef<[u8]> for ImageHash {
+impl AsRef<[u8]> for ImageHashId {
     fn as_ref(&self) -> &[u8] {
         match self {
-            ImageHash::Sha256(val) => val,
-            ImageHash::Sha384(val) => val,
-            ImageHash::Sha512(val) => val,
+            ImageHashId::Sha256(val) => val,
+            ImageHashId::Sha384(val) => val,
+            ImageHashId::Sha512(val) => val,
         }
     }
 }
@@ -81,7 +81,7 @@ pub struct ImageInfo {
     /// Note that this will not be the same as the SHA256 of the whole file, it is the field in the
     /// MCUboot TLV section that contains a hash of the data which is used for signature
     /// verification purposes.
-    pub hash: ImageHash,
+    pub hash: ImageHashId,
 }
 
 /// Possible error values of [`get_image_info`].
@@ -195,15 +195,15 @@ pub fn get_image_info(
             if it_type == IMAGE_TLV_SHA256 && usize::from(it_len) == SHA256_LEN {
                 let mut sha256_hash = [0u8; SHA256_LEN];
                 image_data.read_exact(&mut sha256_hash)?;
-                id_hash = Some(ImageHash::Sha256(sha256_hash));
+                id_hash = Some(ImageHashId::Sha256(sha256_hash));
             } else if it_type == IMAGE_TLV_SHA384 && usize::from(it_len) == SHA384_LEN {
                 let mut sha384_hash = [0u8; SHA384_LEN];
                 image_data.read_exact(&mut sha384_hash)?;
-                id_hash = Some(ImageHash::Sha384(sha384_hash));
+                id_hash = Some(ImageHashId::Sha384(sha384_hash));
             } else if it_type == IMAGE_TLV_SHA512 && usize::from(it_len) == SHA512_LEN {
                 let mut sha512_hash = [0u8; SHA512_LEN];
                 image_data.read_exact(&mut sha512_hash)?;
-                id_hash = Some(ImageHash::Sha512(sha512_hash));
+                id_hash = Some(ImageHashId::Sha512(sha512_hash));
             } else {
                 image_data.seek_relative(it_len.into())?;
             }
