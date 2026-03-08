@@ -77,9 +77,11 @@ jobs:
           - os: windows
             image: windows-latest
             target: x86_64-pc-windows-msvc
+            extension: ".exe"
           - os: linux
             image: ubuntu-latest
             target: x86_64-unknown-linux-musl
+            extension: ""
     runs-on: ${{ matrix.image }}
 
     env:
@@ -96,13 +98,13 @@ jobs:
         run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }}
 
       - name: Collect binary
-        run: mkdir cli && cp target/${{ matrix.target }}/release/mcumgrctl cli/mcumgrctl-${{ matrix.os }}
+        run: cp target/${{ matrix.target }}/release/mcumgrctl${{ matrix.extension }} mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
 
       - name: Upload binary
         uses: actions/upload-artifact@v7
         with:
           name: mcumgrctl-${{ matrix.os }}
-          path: cli
+          path: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
           retention-days: 7
 
   msrv:
