@@ -77,14 +77,14 @@ $ mcumgrctl --usb-serial 2fe3:0004
 Device alive and responsive.
 ```
 
-Or a normal serial port descriptor:
+You can also use a normal serial port descriptor:
 
 ```none
 $ mcumgrctl --serial COM42
 Device alive and responsive.
 ```
 
-You can also use a regular expression if you want:
+Or even a regular expression if you want:
 
 ```none
 $ mcumgrctl --usb-serial "2fe3:.*"
