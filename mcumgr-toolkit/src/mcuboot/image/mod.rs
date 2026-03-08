@@ -30,6 +30,17 @@ pub enum ImageHash {
     Sha512([u8; SHA512_LEN]),
 }
 
+impl ImageHash {
+    /// The has type, as a human readable string
+    pub fn get_hash_type(&self) -> &'static str {
+        match self {
+            ImageHash::Sha256(_) => "SHA256",
+            ImageHash::Sha384(_) => "SHA384",
+            ImageHash::Sha512(_) => "SHA512",
+        }
+    }
+}
+
 impl From<ImageHash> for Vec<u8> {
     fn from(hash: ImageHash) -> Self {
         match hash {

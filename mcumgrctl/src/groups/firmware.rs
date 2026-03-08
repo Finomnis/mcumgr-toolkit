@@ -125,6 +125,7 @@ pub fn run(
                     structured_print(Some(file), args.json, |s| {
                         s.key_value("version", image_info.version.to_string());
                         s.key_value("hash", hex::encode(image_info.hash));
+                        s.key_value("hash-type", image_info.hash.get_hash_type());
                     })?;
                 }
             }
