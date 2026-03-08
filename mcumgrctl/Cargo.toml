@@ -32,3 +32,6 @@ ciborium.workspace = true
 chrono.workspace = true
 hex.workspace = true
 console.workspace = true
+
+[dev-dependencies]
+clap_mangen.workspace = true

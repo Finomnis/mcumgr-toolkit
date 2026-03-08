@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for MCUmgr image hash ID types `SHA384` and `SHA512`
     - API changes to support variable-length hashes
+- CLI: make `--json`, `--verbose` and `--quiet` global flags
+    - Remove `-v` as it collided with the `-v` of `os application-info`
 
 ### Changes
 
@@ -25,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - `enum`
             - `list-groups`
 - Optimize release build
-- CLI: make `--json`, `--verbose` and `--quiet` global flags
 
 
 ## [0.11.4] - 2026-03-01
