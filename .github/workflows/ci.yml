@@ -107,6 +107,12 @@ jobs:
           path: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
           retention-days: 7
 
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'release'
+        with:
+          files: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
+
   msrv:
     name: Minimum Supported Rust Version
     runs-on: ubuntu-latest
