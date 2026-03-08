@@ -92,7 +92,7 @@ Device alive and responsive.
 ```
 
 > [!TIP]
-> Use `mcumgrctl -u .` if you only have one USB serial device connected.
+> Use `mcumgrctl -u .` if you only have a single USB serial device connected.
 
 Perform a firmware update:
 
