@@ -607,7 +607,7 @@ mod tests {
             Some(regular_tlv_area),
         );
         let err = get_image_info(Cursor::new(image)).unwrap_err();
-        assert!(matches!(err, ImageParseError::IdHashMissing));
+        assert!(matches!(err, ImageParseError::HashIdMissing));
     }
 
     struct FailingReader;
