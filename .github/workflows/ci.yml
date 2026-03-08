@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Rust
-        run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }}
+        run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }} && rustup target add ${{ matrix.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }} --workspace --exclude mcumgr-toolkit-python
@@ -269,6 +269,7 @@ jobs:
     needs: [
         test,
         build-examples,
+        build-cli,
         msrv,
         lints,
         docs,
