@@ -22,7 +22,7 @@ pub enum ImageCommand {
         /// See `firmware get-image-info` for how to retrieve the hash
         /// from an image file.
         #[arg(long, value_parser=parse_hash_id, required_unless_present = "confirm")]
-        hash: Option<Vec<u8>>,
+        hash: Option<Box<[u8]>>,
         /// Mark the given image as confirmed
         ///
         /// If no hash is specified, confirm the currently running image

@@ -84,6 +84,6 @@ fn parse_sha256(s: &str) -> Result<[u8; 32], hex::FromHexError> {
     Ok(data)
 }
 
-fn parse_hash_id(s: &str) -> Result<Vec<u8>, hex::FromHexError> {
-    hex::decode(s)
+fn parse_hash_id(s: &str) -> Result<Box<[u8]>, hex::FromHexError> {
+    hex::decode(s).map(|val| val.into_boxed_slice())
 }
