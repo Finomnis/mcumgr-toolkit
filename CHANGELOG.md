@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.1] - 2026-03-11
 
-### Changes
+### Fixes
 
 - Fix broken `--hash` argument for `image set-state`
 
