@@ -17,7 +17,7 @@ exclude = ["/.gitignore", "/.github/"]
 
 [workspace.dependencies]
 mcumgr-toolkit = { version = "0.12.1", path = "./mcumgr-toolkit" }
-serialport = { version = "4.7.3", default-features = false }
+serialport = { version = "4.9.0", default-features = false }
 thiserror = "2.0.17"
 miette = "7.6.0"
 rand = "0.10.0"
