@@ -44,7 +44,7 @@ pyo3-log = "0.13.3"
 serde-pyobject = "0.8.0"
 hex = "0.4.3"
 regex = "1.12.2"
-console = "0.16.2"
+console = "0.16.3"
 polonius-the-crab = "0.5.0"
 
 [profile.release]
