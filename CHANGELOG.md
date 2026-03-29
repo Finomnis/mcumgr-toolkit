@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Update dependency versions
+- Increase default timeout to `1s`
 
 
 ## [0.12.1] - 2026-03-11
