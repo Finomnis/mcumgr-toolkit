@@ -77,7 +77,7 @@ impl<'a> FirmwareUpgradeProgressHandler<'a> {
 
         if let Some((current, total)) = progress {
             let progressbar = self.progressbar.get_or_insert_with(||{
-                let progressbar = self.multiprogress.add(ProgressBar::new(total)).with_finish(ProgressFinish::AndClear);
+                let progressbar = self.multiprogress.add(ProgressBar::new(total)).with_finish(ProgressFinish::Abandon);
                 progressbar.set_style(
                 ProgressStyle::with_template(
                     "{wide_bar} {decimal_bytes:>9} / {decimal_total_bytes:9} ({decimal_bytes_per_sec:9})",
@@ -89,8 +89,8 @@ impl<'a> FirmwareUpgradeProgressHandler<'a> {
             progressbar.set_length(total);
             progressbar.set_position(current);
         } else if let Some(progressbar) = self.progressbar.take() {
-            progressbar.finish_and_clear();
-            self.multiprogress.remove(&progressbar);
+            progressbar.abandon();
+            //self.multiprogress.remove(&progressbar);
         }
 
         true
@@ -100,8 +100,8 @@ impl<'a> FirmwareUpgradeProgressHandler<'a> {
 impl Drop for FirmwareUpgradeProgressHandler<'_> {
     fn drop(&mut self) {
         if let Some(progressbar) = self.progressbar.take() {
-            progressbar.finish_and_clear();
-            self.multiprogress.remove(&progressbar);
+            progressbar.abandon();
+            //self.multiprogress.remove(&progressbar);
         }
     }
 }

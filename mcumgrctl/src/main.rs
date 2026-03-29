@@ -125,9 +125,5 @@ fn main() -> miette::Result<()> {
         multiprogress
     };
 
-    let result = cli_main(&multiprogress).map_err(Into::into);
-
-    multiprogress.clear().ok();
-
-    result
+    cli_main(&multiprogress).map_err(Into::into)
 }

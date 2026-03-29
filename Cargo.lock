@@ -888,6 +888,7 @@ dependencies = [
  "serde_json",
  "serialport",
  "thiserror",
+ "unit-prefix",
 ]
 
 [[package]]
