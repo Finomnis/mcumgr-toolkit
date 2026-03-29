@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.12.2] - xxxx-xx-xx
+## [0.13.0] - xxxx-xx-xx
+
+### Breaking Changes
+
+- CLI: Make `--timeout` and `--retries` global flags
+    - Remove `-r` as it collided with the `-r` of `os application-info`
 
 ### Changes
 
-- CLI: Make `--timeout` and `--retries` global flags
 - Update dependency versions
 
 
@@ -413,7 +417,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
-[0.12.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.12.1...0.12.2
+[0.13.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.12.1...0.13.0
 [0.12.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.12.0...0.12.1
 [0.12.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.4...0.12.0
 [0.11.4]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.11.3...0.11.4
