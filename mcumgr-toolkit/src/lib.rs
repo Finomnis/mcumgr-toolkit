@@ -67,7 +67,7 @@ impl MCUmgrGroup {
 }
 
 /// The default timeout used by this crate
-pub const DEFAULT_TIMEOUT_MS: u64 = 500;
+pub const DEFAULT_TIMEOUT_MS: u64 = 1000;
 
 /// The default retry count used by this crate
 pub const DEFAULT_RETRIES: u8 = 5;

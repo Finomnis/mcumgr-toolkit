@@ -21,7 +21,7 @@ pub struct CommonArgs {
     pub timeout: u64,
 
     /// Retry count
-    #[arg(short, long, global=true, default_value_t = mcumgr_toolkit::DEFAULT_RETRIES)]
+    #[arg(long, global=true, default_value_t = mcumgr_toolkit::DEFAULT_RETRIES)]
     pub retries: u8,
 }
 
