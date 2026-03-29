@@ -157,7 +157,7 @@ class MCUmgrClient:
     A high-level client for Zephyr's MCUmgr SMP functionality
     """
     @staticmethod
-    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> MCUmgrClient:
+    def serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
         r"""
         Creates a new serial port based Zephyr MCUmgr SMP client.
         
@@ -168,7 +168,7 @@ class MCUmgrClient:
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod
-    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 500) -> MCUmgrClient:
+    def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
         r"""
         Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
         
