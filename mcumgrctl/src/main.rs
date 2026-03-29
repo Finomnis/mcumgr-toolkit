@@ -51,7 +51,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
         }
 
         let serial = serialport::new(serial_name, args.baud)
-            .timeout(Duration::from_millis(args.timeout))
+            .timeout(Duration::from_millis(args.common.timeout))
             .open()
             .map_err(CliError::OpenSerialFailed)?;
         Client::new(MCUmgrClient::new_from_serial(serial))
@@ -59,7 +59,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
         let result = MCUmgrClient::new_from_usb_serial(
             identifier,
             args.baud,
-            Duration::from_millis(args.timeout),
+            Duration::from_millis(args.common.timeout),
         );
 
         if let Err(UsbSerialError::IdentifierEmpty { ports }) = &result {
@@ -87,7 +87,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     };
 
     if let Ok(client) = client.get() {
-        client.set_retries(args.retries);
+        client.set_retries(args.common.retries);
 
         if let Err(e) = client.use_auto_frame_size() {
             let mut lowest_err: &dyn std::error::Error = &e;

@@ -15,6 +15,14 @@ pub struct CommonArgs {
     /// Print command results as JSON, if possible
     #[arg(long, global = true)]
     pub json: bool,
+
+    /// Communication timeout (in ms)
+    #[arg(short, long, global=true, default_value_t = mcumgr_toolkit::DEFAULT_TIMEOUT_MS)]
+    pub timeout: u64,
+
+    /// Retry count
+    #[arg(short, long, global=true, default_value_t = mcumgr_toolkit::DEFAULT_RETRIES)]
+    pub retries: u8,
 }
 
 /// Command line client for Zephyr's MCUmgr SMP protocol
@@ -38,14 +46,6 @@ pub struct App {
     /// Serial port baud rate
     #[arg(short, long, default_value_t = 115200)]
     pub baud: u32,
-
-    /// Communication timeout (in ms)
-    #[arg(short, long, default_value_t = mcumgr_toolkit::DEFAULT_TIMEOUT_MS)]
-    pub timeout: u64,
-
-    /// Retry count
-    #[arg(short, long, default_value_t = mcumgr_toolkit::DEFAULT_RETRIES)]
-    pub retries: u8,
 
     /// Settings that customize runtime behaviour
     #[command(flatten)]
