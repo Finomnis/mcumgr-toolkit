@@ -32,4 +32,4 @@ regex.workspace = true
 polonius-the-crab.workspace = true
 
 [dev-dependencies]
-proptest = "1.9.0"
+proptest = "1.11.0"
