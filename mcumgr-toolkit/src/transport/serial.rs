@@ -48,7 +48,7 @@ where
     /// * `serial` - A serial port object, like [`serialport::SerialPort`].
     ///
     pub fn new(serial: T) -> Self {
-        let mtu = SERIAL_TRANSPORT_ZEPHYR_MTU;
+        let mtu = SERIAL_TRANSPORT_ZEPHYR_MTU + 100;
         Self {
             serial,
             transfer_buffer: vec![0u8; mtu].into_boxed_slice(),
@@ -156,6 +156,7 @@ where
                     }
                 }
             };
+            log::debug!(" - {data}");
 
             if data == 0x0a {
                 base64_data = Some(&self.transfer_buffer[..pos]);
@@ -168,8 +169,15 @@ where
         if let Some(0x0a) = self.read_buffer.try_peek() {
             base64_data = Some(&self.transfer_buffer);
         }
-
         if let Some(base64_data) = base64_data {
+            if log::log_enabled!(log::Level::Debug) {
+                if let Ok(base64_str) = str::from_utf8(base64_data) {
+                    log::debug!("Received Base64: {base64_str}");
+                } else {
+                    log::debug!("Received Base64 Raw: {base64_data:?}");
+                }
+            }
+
             let len = BASE64_STANDARD.decode_slice(base64_data, &mut self.body_buffer)?;
 
             log::debug!(
