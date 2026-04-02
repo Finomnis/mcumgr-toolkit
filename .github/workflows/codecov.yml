@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   coverage:
+    environment: ci
     name: Codecov.io
     continue-on-error: true
     runs-on: ubuntu-latest
