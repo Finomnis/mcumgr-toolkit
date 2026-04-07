@@ -45,7 +45,7 @@ impl pyo3_stub_gen::PyStubType for Sha256 {
     }
 
     fn type_output() -> pyo3_stub_gen::TypeInfo {
-        pyo3_stub_gen::TypeInfo::builtin("bytes")
+        pyo3_stub_gen::TypeInfo::builtin("str") | pyo3_stub_gen::TypeInfo::builtin("bytes")
     }
 }
 
