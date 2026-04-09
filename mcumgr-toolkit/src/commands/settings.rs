@@ -27,6 +27,21 @@ pub struct ReadSettingResponse {
     pub max_size: Option<u64>,
 }
 
+/// [Write Setting](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#write-setting-request) command
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+pub struct WriteSetting<'a, 'b> {
+    /// string of the setting to update/set
+    pub name: &'a str,
+    /// value to set the setting to
+    #[serde(with = "serde_bytes")]
+    pub val: &'b [u8],
+}
+
+/// Response for [`WriteSetting`] command
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
+pub struct WriteSettingResponse;
+impl_deserialize_from_empty_map_and_into_unit!(WriteSettingResponse);
+
 /// [Commit settings](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#commit-settings-command) command
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommitSettings;
@@ -80,6 +95,21 @@ mod tests {
             val: vec![1,2,3,4,5],
             max_size: Some(36),
         },
+    }
+
+    command_encode_decode_test! {
+        write_setting,
+        (2, 3, 0),
+        WriteSetting {
+            name: "foo",
+            val: &[1,2,3,4,5],
+        },
+        cbor!({
+            "name" => "foo",
+            "val" => ciborium::Value::Bytes(vec![1,2,3,4,5]),
+        }),
+        cbor!({}),
+        WriteSettingResponse,
     }
 
     command_encode_decode_test! {

@@ -111,6 +111,7 @@ impl_mcumgr_command!((read, MGMT_GROUP_ID_STAT, 0): stats::GroupData<'_> => stat
 impl_mcumgr_command!((read, MGMT_GROUP_ID_STAT, 1): stats::ListGroups => stats::ListGroupsResponse);
 
 impl_mcumgr_command!((read, MGMT_GROUP_ID_SETTINGS, 0): settings::ReadSetting<'_> => settings::ReadSettingResponse);
+impl_mcumgr_command!((write, MGMT_GROUP_ID_SETTINGS, 0): settings::WriteSetting<'_, '_> => settings::WriteSettingResponse);
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SETTINGS, 2): settings::CommitSettings => settings::CommitSettingsResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 0): fs::FileUpload<'_, '_> => fs::FileUploadResponse);
