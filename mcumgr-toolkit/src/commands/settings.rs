@@ -11,20 +11,20 @@ pub struct ReadSetting<'a> {
     pub name: &'a str,
     /// optional maximum size of data to return
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_size: Option<u64>,
+    pub max_size: Option<u32>,
 }
 
 /// Response for [`ReadSetting`] command
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ReadSettingResponse {
-    /// the returned data
+    /// The returned data.
     ///
-    /// note that the underlying data type cannot be specified through this and must be known by the client
+    /// Note that the underlying data type cannot be specified through this and must be known by the client.
     pub val: Vec<u8>,
-    /// will be set if the maximum supported data size is smaller than the
+    /// Will be set if the maximum supported data size is smaller than the
     /// maximum requested data size, and contains the maximum data size
     /// which the device supports
-    pub max_size: Option<u64>,
+    pub max_size: Option<u32>,
 }
 
 /// [Write Setting](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#write-setting-request) command

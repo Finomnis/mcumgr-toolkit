@@ -747,6 +747,45 @@ impl MCUmgrClient {
             .map_err(Into::into)
     }
 
+    /// Read a setting from the device.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    /// * `max_size` - Optional maximum size of data to return.
+    ///
+    pub fn settings_read(
+        &self,
+        name: impl AsRef<str>,
+        max_size: Option<u32>,
+    ) -> Result<commands::settings::ReadSettingResponse, MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.connection
+            .execute_command(&commands::settings::ReadSetting { name, max_size })
+            .map_err(Into::into)
+    }
+
+    /// Write a setting to the device.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    /// * `value` - The value of the setting.
+    ///
+    pub fn settings_write(
+        &self,
+        name: impl AsRef<str>,
+        value: &[u8],
+    ) -> Result<(), MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.connection
+            .execute_command(&commands::settings::WriteSetting { name, val: value })
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
     /// Load a file from the device.
     ///
     /// # Arguments

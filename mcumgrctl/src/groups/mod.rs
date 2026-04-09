@@ -8,6 +8,7 @@ mod fs;
 mod image;
 mod os;
 mod raw;
+mod settings;
 mod shell;
 mod stats;
 mod zephyr;
@@ -28,6 +29,11 @@ pub enum Group {
     Stats {
         #[command(subcommand)]
         command: stats::StatsCommand,
+    },
+    /// Settings Management
+    Settings {
+        #[command(subcommand)]
+        command: settings::SettingsCommand,
     },
     /// High-level firmware update utilities
     Firmware {
@@ -69,6 +75,7 @@ pub fn run(
         Group::Os { command } => os::run(client, multiprogress, args, command),
         Group::Image { command } => image::run(client, multiprogress, args, command),
         Group::Stats { command } => stats::run(client, multiprogress, args, command),
+        Group::Settings { command } => settings::run(client, multiprogress, args, command),
         Group::Firmware { command } => firmware::run(client, multiprogress, args, command),
         Group::Fs { command } => fs::run(client, multiprogress, args, command),
         Group::Shell { argv } => shell::run(client, multiprogress, args, argv),
@@ -84,6 +91,6 @@ fn parse_sha256(s: &str) -> Result<[u8; 32], hex::FromHexError> {
     Ok(data)
 }
 
-fn parse_hash_id(s: &str) -> Result<Box<[u8]>, hex::FromHexError> {
+fn parse_hex_str(s: &str) -> Result<Box<[u8]>, hex::FromHexError> {
     hex::decode(s).map(|val| val.into_boxed_slice())
 }
