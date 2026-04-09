@@ -1,4 +1,5 @@
 use indicatif::MultiProgress;
+use pretty_hex::{HexConfig, PrettyHex};
 
 use crate::{args::CommonArgs, client::Client, errors::CliError, groups::parse_hex_str};
 
@@ -37,8 +38,15 @@ pub fn run(
                     "{}",
                     serde_json::to_string_pretty(&value).map_err(CliError::JsonEncodeError)?
                 );
-            } else {
+            } else if args.quiet {
                 println!("{}", hex::encode(value));
+            } else {
+                let cfg = HexConfig {
+                    width: 8,
+                    ..HexConfig::default()
+                };
+
+                println!("{:?}", value.hex_conf(cfg));
             }
         }
         SettingsCommand::Write { name, value } => {
