@@ -42,6 +42,18 @@ pub struct WriteSetting<'a, 'b> {
 pub struct WriteSettingResponse;
 impl_deserialize_from_empty_map_and_into_unit!(WriteSettingResponse);
 
+/// [Delete Setting](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#delete-setting-command) command
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+pub struct DeleteSetting<'a> {
+    /// string of the setting to delete
+    pub name: &'a str,
+}
+
+/// Response for [`DeleteSetting`] command
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
+pub struct DeleteSettingResponse;
+impl_deserialize_from_empty_map_and_into_unit!(DeleteSettingResponse);
+
 /// [Commit settings](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#commit-settings-command) command
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommitSettings;
@@ -110,6 +122,19 @@ mod tests {
         }),
         cbor!({}),
         WriteSettingResponse,
+    }
+
+    command_encode_decode_test! {
+        delete_setting,
+        (2, 3, 1),
+        DeleteSetting {
+            name: "bar",
+        },
+        cbor!({
+            "name" => "bar",
+        }),
+        cbor!({}),
+        DeleteSettingResponse,
     }
 
     command_encode_decode_test! {
