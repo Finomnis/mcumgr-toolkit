@@ -15,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- Implement 'settings' group:
+    - Add Python/Rust library commands:
+        - `settings_read`
+        - `settings_write`
+        - `settings_delete`
+        - `settings_commit`
+        - `settings_load`
+        - `settings_save`
+    - Add CLI commands:
+        - `settings`
+            - `read`
+            - `write`
+            - `delete`
+            - `commit`
+            - `load`
+            - `save`
 - Update dependency versions
 - Increase default timeout to `1s`
 
