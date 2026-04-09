@@ -64,6 +64,29 @@ impl_serialize_as_empty_map!(CommitSettings);
 pub struct CommitSettingsResponse;
 impl_deserialize_from_empty_map_and_into_unit!(CommitSettingsResponse);
 
+/// [Load settings](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#load-settings-request) command
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LoadSettings;
+impl_serialize_as_empty_map!(LoadSettings);
+
+/// Response for [`LoadSettings`] command
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
+pub struct LoadSettingsResponse;
+impl_deserialize_from_empty_map_and_into_unit!(LoadSettingsResponse);
+
+/// [Save Settings](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#save-settings-response) command
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+pub struct SaveSettings<'a> {
+    /// if provided, contains the settings subtree name to save, if not then will save all settings.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<&'a str>,
+}
+
+/// Response for [`SaveSettings`] command
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
+pub struct SaveSettingsResponse;
+impl_deserialize_from_empty_map_and_into_unit!(SaveSettingsResponse);
+
 #[cfg(test)]
 mod tests {
     use super::super::macros::command_encode_decode_test;
@@ -144,5 +167,38 @@ mod tests {
         cbor!({}),
         cbor!({}),
         CommitSettingsResponse,
+    }
+
+    command_encode_decode_test! {
+        load_settings,
+        (0, 3, 3),
+        LoadSettings,
+        cbor!({}),
+        cbor!({}),
+        LoadSettingsResponse,
+    }
+
+    command_encode_decode_test! {
+        save_settings,
+        (2, 3, 3),
+        SaveSettings{
+            name: None,
+        },
+        cbor!({}),
+        cbor!({}),
+        SaveSettingsResponse,
+    }
+
+    command_encode_decode_test! {
+        save_settings_with_name,
+        (2, 3, 3),
+        SaveSettings{
+            name: Some("foo"),
+        },
+        cbor!({
+            "name" => "foo",
+        }),
+        cbor!({}),
+        SaveSettingsResponse,
     }
 }

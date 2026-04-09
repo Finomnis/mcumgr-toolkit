@@ -114,6 +114,8 @@ impl_mcumgr_command!((read, MGMT_GROUP_ID_SETTINGS, 0): settings::ReadSetting<'_
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SETTINGS, 0): settings::WriteSetting<'_, '_> => settings::WriteSettingResponse);
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SETTINGS, 1): settings::DeleteSetting<'_> => settings::DeleteSettingResponse);
 impl_mcumgr_command!((write, MGMT_GROUP_ID_SETTINGS, 2): settings::CommitSettings => settings::CommitSettingsResponse);
+impl_mcumgr_command!((read, MGMT_GROUP_ID_SETTINGS, 3): settings::LoadSettings => settings::LoadSettingsResponse);
+impl_mcumgr_command!((write, MGMT_GROUP_ID_SETTINGS, 3): settings::SaveSettings<'_> => settings::SaveSettingsResponse);
 
 impl_mcumgr_command!((write, MGMT_GROUP_ID_FS, 0): fs::FileUpload<'_, '_> => fs::FileUploadResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_FS, 0): fs::FileDownload<'_> => fs::FileDownloadResponse);
