@@ -20,6 +20,21 @@ pub enum SettingsCommand {
         #[arg(value_parser=parse_hex_str)]
         value: Box<[u8]>,
     },
+    /// Delete a setting from the device
+    Delete {
+        /// Name of the setting
+        name: String,
+    },
+    /// Commit modified settings on the device
+    Commit,
+    /// Load settings from persistent storage
+    Load,
+    /// Save settings to persistent storage
+    Save {
+        /// Only store the subtree with the given name
+        #[arg(long)]
+        name: Option<String>,
+    },
 }
 
 pub fn run(
@@ -51,6 +66,18 @@ pub fn run(
         }
         SettingsCommand::Write { name, value } => {
             client.settings_write(name, &value)?;
+        }
+        SettingsCommand::Delete { name } => {
+            client.settings_delete(name)?;
+        }
+        SettingsCommand::Commit => {
+            client.settings_commit()?;
+        }
+        SettingsCommand::Load => {
+            client.settings_load()?;
+        }
+        SettingsCommand::Save { name } => {
+            client.settings_save(name)?;
         }
     }
 
