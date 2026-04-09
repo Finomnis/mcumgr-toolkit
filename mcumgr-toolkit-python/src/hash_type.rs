@@ -45,7 +45,7 @@ impl pyo3_stub_gen::PyStubType for Sha256 {
     }
 
     fn type_output() -> pyo3_stub_gen::TypeInfo {
-        panic!("Sha256 is only an input type")
+        pyo3_stub_gen::TypeInfo::builtin("str") | pyo3_stub_gen::TypeInfo::builtin("bytes")
     }
 }
 
@@ -82,6 +82,6 @@ impl pyo3_stub_gen::PyStubType for HashId {
     }
 
     fn type_output() -> pyo3_stub_gen::TypeInfo {
-        panic!("HashId is only an input type")
+        pyo3_stub_gen::TypeInfo::builtin("str") | pyo3_stub_gen::TypeInfo::builtin("bytes")
     }
 }
