@@ -16,6 +16,7 @@ __all__ = [
     "MCUmgrClient",
     "MCUmgrParameters",
     "McubootImageInfo",
+    "SettingData",
     "SlotInfoImage",
     "SlotInfoImageSlot",
     "TaskStatistics",
@@ -376,6 +377,48 @@ class MCUmgrClient:
         r"""
         Query the list of available stats groups
         """
+    def settings_read(self, name: builtins.str, max_size: typing.Optional[builtins.int] = None) -> SettingData:
+        r"""
+        Read a setting from the device.
+        
+        ### Arguments
+        
+        * `name` - The name of the setting.
+        * `max_size` - Optional maximum size of data to return.
+        """
+    def settings_write(self, name: builtins.str, value: bytes) -> None:
+        r"""
+        Write a setting to the device.
+        
+        ### Arguments
+        
+        * `name` - The name of the setting.
+        * `value` - The value of the setting.
+        """
+    def settings_delete(self, name: builtins.str) -> None:
+        r"""
+        Delete a setting from the device.
+        
+        ### Arguments
+        
+        * `name` - The name of the setting.
+        """
+    def settings_commit(self) -> None:
+        r"""
+        Commit all modified settings on the device.
+        """
+    def settings_load(self) -> None:
+        r"""
+        Load settings from persistent storage.
+        """
+    def settings_save(self, name: typing.Optional[builtins.str]) -> None:
+        r"""
+        Save settings to persistent storage.
+        
+        ### Arguments
+        
+        * `name` - Only persist the subtree with the given name.
+        """
     def fs_file_download(self, name: builtins.str, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> bytes:
         r"""
         Load a file from the device.
@@ -579,6 +622,27 @@ class McubootImageInfo:
         Note that this will not be the same as the SHA256 of the whole file, it is the field in the
         MCUboot TLV section that contains a hash of the data which is used for signature
         verification purposes.
+        """
+
+@typing.final
+class SettingData:
+    r"""
+    Return value of `MCUmgrClient.settings_read`.
+    """
+    @property
+    def value(self) -> bytes:
+        r"""
+        The returned data.
+        
+        Note that the underlying data type cannot be specified through this and
+        must be known and parsed by the client.
+        """
+    @property
+    def max_size(self) -> typing.Optional[builtins.int]:
+        r"""
+        Will be set if the maximum supported data size is smaller than the
+        maximum requested data size, and contains the maximum data size
+        which the device supports
         """
 
 @typing.final

@@ -474,6 +474,77 @@ impl MCUmgrClient {
         self.get_client()?.stats_list_groups().map_err(err_to_pyerr)
     }
 
+    /// Read a setting from the device.
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - The name of the setting.
+    /// * `max_size` - Optional maximum size of data to return.
+    ///
+    #[pyo3(signature = (name, max_size=None))]
+    pub fn settings_read<'py>(
+        &self,
+        py: Python<'py>,
+        name: &str,
+        max_size: Option<u32>,
+    ) -> PyResult<SettingData> {
+        let response = self
+            .get_client()?
+            .settings_read(name, max_size)
+            .map_err(err_to_pyerr)?;
+
+        Ok(SettingData::from_response(py, response))
+    }
+
+    /// Write a setting to the device.
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - The name of the setting.
+    /// * `value` - The value of the setting.
+    ///
+    pub fn settings_write<'py>(&self, name: &str, value: &Bound<'py, PyBytes>) -> PyResult<()> {
+        let bytes: &[u8] = value.extract()?;
+
+        self.get_client()?
+            .settings_write(name, bytes)
+            .map_err(err_to_pyerr)
+    }
+
+    /// Delete a setting from the device.
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - The name of the setting.
+    ///
+    pub fn settings_delete(&self, name: &str) -> PyResult<()> {
+        self.get_client()?
+            .settings_delete(name)
+            .map_err(err_to_pyerr)
+    }
+
+    /// Commit all modified settings on the device.
+    ///
+    pub fn settings_commit(&self) -> PyResult<()> {
+        self.get_client()?.settings_commit().map_err(err_to_pyerr)
+    }
+
+    /// Load settings from persistent storage.
+    ///
+    pub fn settings_load(&self) -> PyResult<()> {
+        self.get_client()?.settings_load().map_err(err_to_pyerr)
+    }
+
+    /// Save settings to persistent storage.
+    ///
+    /// ### Arguments
+    ///
+    /// * `name` - Only persist the subtree with the given name.
+    ///
+    pub fn settings_save(&self, name: Option<&str>) -> PyResult<()> {
+        self.get_client()?.settings_save(name).map_err(err_to_pyerr)
+    }
+
     /// Load a file from the device.
     ///
     /// ### Arguments
@@ -831,6 +902,8 @@ mod mcumgr_toolkit {
     use super::return_types::ImageState;
     #[pymodule_export]
     use super::return_types::MCUmgrParameters;
+    #[pymodule_export]
+    use super::return_types::SettingData;
     #[pymodule_export]
     use super::return_types::SlotInfoImage;
     #[pymodule_export]
