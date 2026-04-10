@@ -46,7 +46,7 @@ pub fn run(
     let client = client.get()?;
     match command {
         SettingsCommand::Read { name } => {
-            let value = client.settings_read(name, None)?.val;
+            let value = client.settings_read(name)?;
 
             if args.json {
                 println!(

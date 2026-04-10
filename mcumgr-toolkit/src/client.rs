@@ -752,9 +752,29 @@ impl MCUmgrClient {
     /// # Arguments
     ///
     /// * `name` - The name of the setting.
+    ///
+    /// # Return
+    ///
+    /// The value of the setting, as raw bytes.
+    ///
+    /// Note that the underlying data type cannot be specified through this and must be known by the client.
+    ///
+    pub fn settings_read(&self, name: impl AsRef<str>) -> Result<Vec<u8>, MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.settings_read_ext(name, None).map(|val| val.val)
+    }
+
+    /// Read a setting from the device.
+    ///
+    /// Extended version.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
     /// * `max_size` - Optional maximum size of data to return.
     ///
-    pub fn settings_read(
+    pub fn settings_read_ext(
         &self,
         name: impl AsRef<str>,
         max_size: Option<u32>,

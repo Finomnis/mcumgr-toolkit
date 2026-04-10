@@ -476,13 +476,36 @@ impl MCUmgrClient {
 
     /// Read a setting from the device.
     ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    ///
+    /// # Return
+    ///
+    /// The value of the setting, as raw bytes.
+    ///
+    /// Note that the underlying data type cannot be specified through this and must be known by the client.
+    ///
+    pub fn settings_read<'py>(&self, py: Python<'py>, name: &str) -> PyResult<Py<PyBytes>> {
+        let response = self
+            .get_client()?
+            .settings_read(name)
+            .map_err(err_to_pyerr)?;
+
+        Ok(PyBytes::new(py, &response).unbind())
+    }
+
+    /// Read a setting from the device.
+    ///
+    /// Extended version.
+    ///
     /// ### Arguments
     ///
     /// * `name` - The name of the setting.
     /// * `max_size` - Optional maximum size of data to return.
     ///
     #[pyo3(signature = (name, max_size=None))]
-    pub fn settings_read<'py>(
+    pub fn settings_read_ext<'py>(
         &self,
         py: Python<'py>,
         name: &str,
@@ -490,7 +513,7 @@ impl MCUmgrClient {
     ) -> PyResult<SettingData> {
         let response = self
             .get_client()?
-            .settings_read(name, max_size)
+            .settings_read_ext(name, max_size)
             .map_err(err_to_pyerr)?;
 
         Ok(SettingData::from_response(py, response))

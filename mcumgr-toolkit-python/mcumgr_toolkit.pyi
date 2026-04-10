@@ -377,9 +377,25 @@ class MCUmgrClient:
         r"""
         Query the list of available stats groups
         """
-    def settings_read(self, name: builtins.str, max_size: typing.Optional[builtins.int] = None) -> SettingData:
+    def settings_read(self, name: builtins.str) -> bytes:
         r"""
         Read a setting from the device.
+        
+        # Arguments
+        
+        * `name` - The name of the setting.
+        
+        # Return
+        
+        The value of the setting, as raw bytes.
+        
+        Note that the underlying data type cannot be specified through this and must be known by the client.
+        """
+    def settings_read_ext(self, name: builtins.str, max_size: typing.Optional[builtins.int] = None) -> SettingData:
+        r"""
+        Read a setting from the device.
+        
+        Extended version.
         
         ### Arguments
         
