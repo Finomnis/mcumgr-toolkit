@@ -541,6 +541,7 @@ impl MCUmgrClient {
     ///
     /// * `name` - Only persist the subtree with the given name.
     ///
+    #[pyo3(signature = (name=None))]
     pub fn settings_save(&self, name: Option<&str>) -> PyResult<()> {
         self.get_client()?.settings_save(name).map_err(err_to_pyerr)
     }

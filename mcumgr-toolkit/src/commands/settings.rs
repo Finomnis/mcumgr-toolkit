@@ -74,7 +74,7 @@ impl_serialize_as_empty_map!(LoadSettings);
 pub struct LoadSettingsResponse;
 impl_deserialize_from_empty_map_and_into_unit!(LoadSettingsResponse);
 
-/// [Save Settings](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#save-settings-response) command
+/// [Save Settings](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html#save-settings-request) command
 #[derive(Clone, Debug, Serialize, Eq, PartialEq)]
 pub struct SaveSettings<'a> {
     /// if provided, contains the settings subtree name to save, if not then will save all settings.
