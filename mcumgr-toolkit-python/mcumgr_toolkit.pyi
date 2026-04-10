@@ -411,7 +411,7 @@ class MCUmgrClient:
         r"""
         Load settings from persistent storage.
         """
-    def settings_save(self, name: typing.Optional[builtins.str]) -> None:
+    def settings_save(self, name: typing.Optional[builtins.str] = None) -> None:
         r"""
         Save settings to persistent storage.
         
