@@ -87,6 +87,38 @@ impl FileChecksum {
     }
 }
 
+/// Return value of `MCUmgrClient.settings_read_ext`.
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Serialize)]
+pub struct SettingData {
+    /// The returned data.
+    ///
+    /// Note that the underlying data type cannot be specified through this and
+    /// must be known and parsed by the client.
+    #[pyo3(get)]
+    #[serde(serialize_with = "crate::repr_macro::serialize_pybytes_as_hex")]
+    pub value: Py<PyBytes>,
+    /// Will be set if the maximum supported data size is smaller than the
+    /// maximum requested data size, and contains the maximum data size
+    /// which the device supports
+    #[pyo3(get)]
+    pub max_size: Option<u32>,
+}
+generate_repr_from_serialize!(SettingData);
+
+impl SettingData {
+    pub(crate) fn from_response<'py>(
+        py: Python<'py>,
+        response: commands::settings::ReadSettingResponse,
+    ) -> Self {
+        Self {
+            value: PyBytes::new(py, &response.val).unbind(),
+            max_size: response.max_size,
+        }
+    }
+}
+
 /// Data format of the hash/checksum type
 #[gen_stub_pyclass_enum]
 #[pyclass(frozen, eq, eq_int, hash, skip_from_py_object)]

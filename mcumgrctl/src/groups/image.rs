@@ -7,7 +7,7 @@ use crate::{
     errors::CliError,
     file_read_write::read_input_file,
     formatting::structured_print,
-    groups::{parse_hash_id, parse_sha256},
+    groups::{parse_hex_str, parse_sha256},
     progress::with_progress_bar,
 };
 
@@ -21,7 +21,7 @@ pub enum ImageCommand {
         ///
         /// See `firmware get-image-info` for how to retrieve the hash
         /// from an image file.
-        #[arg(long, value_parser=parse_hash_id, required_unless_present = "confirm")]
+        #[arg(long, value_parser=parse_hex_str, required_unless_present = "confirm")]
         hash: Option<Box<[u8]>>,
         /// Mark the given image as confirmed
         ///

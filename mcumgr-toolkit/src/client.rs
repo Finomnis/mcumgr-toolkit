@@ -747,6 +747,113 @@ impl MCUmgrClient {
             .map_err(Into::into)
     }
 
+    /// Read a setting from the device.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    ///
+    /// # Return
+    ///
+    /// The value of the setting, as raw bytes.
+    ///
+    /// Note that the underlying data type cannot be specified through this and must be known by the client.
+    ///
+    pub fn settings_read(&self, name: impl AsRef<str>) -> Result<Vec<u8>, MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.settings_read_ext(name, None).map(|val| val.val)
+    }
+
+    /// Read a setting from the device.
+    ///
+    /// Extended version.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    /// * `max_size` - Optional maximum size of data to return.
+    ///
+    pub fn settings_read_ext(
+        &self,
+        name: impl AsRef<str>,
+        max_size: Option<u32>,
+    ) -> Result<commands::settings::ReadSettingResponse, MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.connection
+            .execute_command(&commands::settings::ReadSetting { name, max_size })
+            .map_err(Into::into)
+    }
+
+    /// Write a setting to the device.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    /// * `value` - The value of the setting.
+    ///
+    pub fn settings_write(
+        &self,
+        name: impl AsRef<str>,
+        value: &[u8],
+    ) -> Result<(), MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.connection
+            .execute_command(&commands::settings::WriteSetting { name, val: value })
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    /// Delete a setting from the device.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the setting.
+    ///
+    pub fn settings_delete(&self, name: impl AsRef<str>) -> Result<(), MCUmgrClientError> {
+        let name = name.as_ref();
+
+        self.connection
+            .execute_command(&commands::settings::DeleteSetting { name })
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    /// Commit all modified settings on the device.
+    ///
+    pub fn settings_commit(&self) -> Result<(), MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::settings::CommitSettings)
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    /// Load settings from persistent storage.
+    ///
+    pub fn settings_load(&self) -> Result<(), MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::settings::LoadSettings)
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    /// Save settings to persistent storage.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Only persist the subtree with the given name.
+    ///
+    pub fn settings_save(&self, name: Option<impl AsRef<str>>) -> Result<(), MCUmgrClientError> {
+        let name = name.as_ref().map(|val| val.as_ref());
+
+        self.connection
+            .execute_command(&commands::settings::SaveSettings { name })
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
     /// Load a file from the device.
     ///
     /// # Arguments

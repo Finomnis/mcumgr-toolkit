@@ -550,9 +550,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.16.1"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
+checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 
 [[package]]
 name = "heck"
@@ -621,12 +621,12 @@ checksum = "3d3067d79b975e8844ca9eb072e16b31c3c1c36928edf9c6789548c524d0d954"
 
 [[package]]
 name = "indexmap"
-version = "2.13.1"
+version = "2.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45a8a2b9cb3e0b0c1803dbb0758ffac5de2f425b23c28f518faabd9d805342ff"
+checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
 dependencies = [
  "equivalent",
- "hashbrown 0.16.1",
+ "hashbrown 0.17.0",
  "serde",
  "serde_core",
 ]
@@ -828,7 +828,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "base64",
  "chrono",
@@ -853,7 +853,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit-python"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "ciborium",
  "hex",
@@ -871,7 +871,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgrctl"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "chrono",
  "ciborium",
@@ -885,6 +885,7 @@ dependencies = [
  "log",
  "mcumgr-toolkit",
  "miette",
+ "pretty-hex",
  "serde_json",
  "serialport",
  "thiserror",
@@ -1147,6 +1148,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pretty-hex"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a65843dfefbafd3c879c683306959a6de478443ffe9c9adf02f5976432402d7"
+
+[[package]]
 name = "prettyplease"
 version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1256,9 +1263,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-stub-gen"
-version = "0.21.1"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f46fb981b1d37061425c4c9cc31b2fc59f1067535e5a1201b4bd7ae6c49c6c48"
+checksum = "de78bf1239d5284bf9be8efc69636bb3639d1270f074bf090c6cc735fd85d4bc"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1282,9 +1289,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-stub-gen-derive"
-version = "0.21.1"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ddd2931e6369c5033cbb7b80619cde1a6d3d6fdd22e549f5c3abd221c41383"
+checksum = "2d68f5105d8a74529654f008135e8312b318e3c13558318416f261a65d79ec01"
 dependencies = [
  "heck",
  "indexmap",
