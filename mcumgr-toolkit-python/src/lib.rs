@@ -476,11 +476,11 @@ impl MCUmgrClient {
 
     /// Read a setting from the device.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `name` - The name of the setting.
     ///
-    /// # Return
+    /// ### Return
     ///
     /// The value of the setting, as raw bytes.
     ///
