@@ -87,7 +87,7 @@ impl FileChecksum {
     }
 }
 
-/// Return value of `MCUmgrClient.settings_read`.
+/// Return value of `MCUmgrClient.settings_read_ext`.
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
 #[derive(Serialize)]

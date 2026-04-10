@@ -643,7 +643,7 @@ class McubootImageInfo:
 @typing.final
 class SettingData:
     r"""
-    Return value of `MCUmgrClient.settings_read`.
+    Return value of `MCUmgrClient.settings_read_ext`.
     """
     @property
     def value(self) -> bytes:
