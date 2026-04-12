@@ -26,6 +26,7 @@ use crate::{
     connection::{Connection, ExecuteError},
     transport::{
         ReceiveError,
+        ble::BleRuntimeError,
         serial::{ConfigurableTimeout, SerialTransport},
     },
 };
@@ -216,6 +217,15 @@ pub enum UsbSerialError {
     RegexError(#[from] regex::Error),
 }
 
+/// Possible error values of [`MCUmgrClient::new_from_ble`].
+#[derive(Error, Debug, Diagnostic)]
+pub enum BleError {
+    /// BLE Runtime error
+    #[error("BLE Runtime layer returned an error")]
+    #[diagnostic(code(mcumgr_toolkit::ble::runtime))]
+    BleRuntime(#[from] BleRuntimeError),
+}
+
 impl MCUmgrClient {
     /// Creates a Zephyr MCUmgr SMP client based on a configured and opened serial port.
     ///
@@ -334,6 +344,26 @@ impl MCUmgrClient {
             .open()?;
 
         Ok(Self::new_from_serial(serial))
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client based on a BLE connection.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The primary identifier name of the BLE device
+    /// * `mac` - The mac address of the device.
+    ///
+    /// Be aware that MAC addresses of BLE devices might be randomized
+    /// and are usually not well suited as a permanent identifier.
+    ///
+    pub fn new_from_ble(
+        name: impl AsRef<str>,
+        mac: Option<impl AsRef<str>>,
+        timeout: Duration,
+    ) -> Result<Self, BleError> {
+        let runtime = crate::transport::ble::BleRuntime::new()?;
+
+        Ok(todo!())
     }
 
     /// Configures the maximum SMP frame size that we can send to the device.

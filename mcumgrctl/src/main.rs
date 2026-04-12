@@ -82,6 +82,14 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
         }
 
         Client::new(result?)
+    } else if let Some(ble_name) = args.ble {
+        let result = MCUmgrClient::new_from_ble(
+            ble_name,
+            args.ble_mac.as_ref(),
+            Duration::from_millis(args.common.timeout),
+        );
+
+        Client::new(result?)
     } else {
         Client::default()
     };

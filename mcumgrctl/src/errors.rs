@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use mcumgr_toolkit::{
     Errno,
-    client::{FirmwareUpdateError, MCUmgrClientError, UsbSerialError},
+    client::{BleError, FirmwareUpdateError, MCUmgrClientError, UsbSerialError},
     mcuboot::ImageParseError,
 };
 
@@ -46,6 +46,9 @@ pub enum CliError {
     #[error("Failed to open USB serial port")]
     #[diagnostic(code(mcumgrctl::usb_serial))]
     UsbSerialOpenFailed(#[from] UsbSerialError),
+    #[error("Failed to connect to BLE device")]
+    #[diagnostic(code(mcumgrctl::ble))]
+    BleOpenFailed(#[from] BleError),
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(mcumgrctl::image_parse))]
     ImageParseFailed(#[from] ImageParseError),

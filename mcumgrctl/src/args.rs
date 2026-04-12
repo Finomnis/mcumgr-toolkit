@@ -47,6 +47,17 @@ pub struct App {
     #[arg(short, long, default_value_t = 115200)]
     pub baud: u32,
 
+    /// Use the given BLE device as backend
+    ///
+    /// Must contain a regex that matches the device name.
+    /// If no argument provided, list all available devices and exit.
+    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    pub ble: Option<String>,
+
+    /// Filter BLE devices by MAC address
+    #[arg(long, verbatim_doc_comment)]
+    pub ble_mac: Option<String>,
+
     /// Settings that customize runtime behaviour
     #[command(flatten)]
     pub common: CommonArgs,

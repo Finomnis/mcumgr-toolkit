@@ -30,6 +30,9 @@ chrono = { workspace = true, features = ["serde"] }
 hex = { workspace = true, features = ["serde"] }
 regex.workspace = true
 polonius-the-crab.workspace = true
+btleplug.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+scopeguard.workspace = true
 
 [dev-dependencies]
 proptest = "1.11.0"
