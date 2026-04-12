@@ -20,7 +20,7 @@ mcumgr-toolkit = { version = "0.13.0", path = "./mcumgr-toolkit" }
 serialport = { version = "4.9.0", default-features = false }
 thiserror = "2.0.17"
 miette = "7.6.0"
-rand = "0.10.0"
+rand = "0.10.1"
 base64 = "0.22.1"
 crc = "3.4.0"
 sha2 = "0.11.0"
