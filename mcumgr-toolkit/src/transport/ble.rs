@@ -1,6 +1,7 @@
-use std::sync::Arc;
+use std::pin::Pin;
 
-use btleplug::api::Manager;
+use btleplug::api::{Central, CentralEvent, Manager, ScanFilter};
+use uuid::{Uuid, uuid};
 
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
@@ -8,9 +9,11 @@ pub type BleRuntimeError = btleplug::Error;
 /// A runtime manager that encapsulates all the
 /// async BLE boilerplate code.
 pub struct BleRuntime {
-    runtime: Arc<tokio::runtime::Runtime>,
+    runtime: Box<tokio::runtime::Runtime>,
     adapter: btleplug::platform::Adapter,
 }
+
+const SMP_UUID: Uuid = uuid!("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
 
 impl BleRuntime {
     /// Create a new [`BleRuntime`].
@@ -20,7 +23,7 @@ impl BleRuntime {
     /// * `serial` - A serial port object, like [`serialport::SerialPort`].
     ///
     pub fn new() -> Result<Self, BleRuntimeError> {
-        let runtime = Arc::new(
+        let runtime = Box::new(
             tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
                 .enable_all()
@@ -42,5 +45,27 @@ impl BleRuntime {
         })?;
 
         Ok(Self { runtime, adapter })
+    }
+
+    /// Execute the given function while scanning for devices
+    pub fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
+    where
+        F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>) -> R,
+    {
+        self.runtime.block_on(async {
+            let events = self.adapter.events().await?;
+
+            self.adapter
+                .start_scan(ScanFilter {
+                    services: vec![SMP_UUID],
+                })
+                .await?;
+
+            let result = f(events).await;
+
+            self.adapter.stop_scan().await?;
+
+            Ok(result)
+        })
     }
 }

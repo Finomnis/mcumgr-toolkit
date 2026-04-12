@@ -32,7 +32,8 @@ regex.workspace = true
 polonius-the-crab.workspace = true
 btleplug.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread"] }
-scopeguard.workspace = true
+futures.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 proptest = "1.11.0"

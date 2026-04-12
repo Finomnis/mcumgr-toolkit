@@ -4,6 +4,7 @@ mod firmware_update;
 pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
+use futures::StreamExt;
 
 use std::{
     collections::HashMap,
@@ -361,7 +362,13 @@ impl MCUmgrClient {
         mac: Option<impl AsRef<str>>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
-        let runtime = crate::transport::ble::BleRuntime::new()?;
+        let mut runtime = crate::transport::ble::BleRuntime::new()?;
+
+        runtime.scan(async |mut events| {
+            while let Some(event) = events.next().await {
+                println!("{:?}", event);
+            }
+        })?;
 
         Ok(todo!())
     }

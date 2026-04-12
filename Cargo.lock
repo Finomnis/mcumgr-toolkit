@@ -1125,6 +1125,7 @@ dependencies = [
  "chrono",
  "ciborium",
  "crc",
+ "futures",
  "hex",
  "log",
  "miette",
@@ -1133,7 +1134,6 @@ dependencies = [
  "rand 0.10.1",
  "regex",
  "ringbuf",
- "scopeguard",
  "serde",
  "serde_bytes",
  "serde_repr",
@@ -1142,6 +1142,7 @@ dependencies = [
  "strum",
  "thiserror 2.0.18",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
