@@ -1,10 +1,12 @@
 /// High-level firmware update routine
 mod firmware_update;
 
+use btleplug::platform::PeripheralId;
 pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
 use futures::StreamExt;
+use tokio::time::error::Elapsed;
 
 use std::{
     collections::HashMap,
@@ -222,9 +224,16 @@ pub enum UsbSerialError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum BleError {
     /// BLE Runtime error
-    #[error("BLE Runtime layer returned an error")]
+    #[error("BLE runtime layer returned an error")]
     #[diagnostic(code(mcumgr_toolkit::ble::runtime))]
     BleRuntime(#[from] BleRuntimeError),
+    /// BLE Scanning stopped unexpectedly
+    #[error("BLE scanning unexpectedly stopped")]
+    #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
+    ScanStopped,
+    /// Scanning timed out
+    #[error("Timed out while scanning for device")]
+    ScanTimedOut, //(Vec<Device>)
 }
 
 impl MCUmgrClient {
@@ -364,11 +373,51 @@ impl MCUmgrClient {
     ) -> Result<Self, BleError> {
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
-        runtime.scan(async |mut events| {
-            while let Some(event) = events.next().await {
-                println!("{:?}", event);
-            }
-        })?;
+        const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
+
+        struct PotentialDevice {
+            smp_service_found: bool,
+        }
+
+        let mut potential_devices = HashMap::new();
+
+        runtime.scan(async |mut events| -> Result<(), BleError> {
+            tokio::time::timeout(SCAN_TIMEOUT, async {
+                loop {
+                    match events.next().await.ok_or(BleError::ScanStopped)? {
+                        btleplug::api::CentralEvent::DeviceDiscovered(id) => {
+                            potential_devices.entry(id).or_insert(PotentialDevice {
+                                smp_service_found: false,
+                            });
+                        }
+                        btleplug::api::CentralEvent::ServiceDataAdvertisement {
+                            id,
+                            service_data,
+                        } => {
+                            let device = potential_devices.entry(id).or_insert(PotentialDevice {
+                                smp_service_found: false,
+                            });
+
+                            if service_data.contains_key(&crate::transport::ble::SMP_UUID) {
+                                device.smp_service_found = true;
+                            }
+                        }
+                        btleplug::api::CentralEvent::ServicesAdvertisement { id, services } => {
+                            let device = potential_devices.entry(id).or_insert(PotentialDevice {
+                                smp_service_found: false,
+                            });
+
+                            if services.contains(&crate::transport::ble::SMP_UUID) {
+                                device.smp_service_found = true;
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+            })
+            .await
+            .map_err(|_: Elapsed| BleError::ScanTimedOut)?
+        })??;
 
         Ok(todo!())
     }

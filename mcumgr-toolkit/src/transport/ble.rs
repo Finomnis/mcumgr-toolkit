@@ -1,4 +1,4 @@
-use std::pin::Pin;
+use std::{pin::Pin, time::Duration};
 
 use btleplug::api::{Central, CentralEvent, Manager, ScanFilter};
 use uuid::{Uuid, uuid};
@@ -13,7 +13,8 @@ pub struct BleRuntime {
     adapter: btleplug::platform::Adapter,
 }
 
-const SMP_UUID: Uuid = uuid!("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
+/// The BLE service UUID that signals SMP capability
+pub const SMP_UUID: Uuid = uuid!("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
 
 impl BleRuntime {
     /// Create a new [`BleRuntime`].
@@ -52,7 +53,7 @@ impl BleRuntime {
     where
         F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>) -> R,
     {
-        self.runtime.block_on(async {
+        let future = async {
             let events = self.adapter.events().await?;
 
             self.adapter
@@ -66,6 +67,8 @@ impl BleRuntime {
             self.adapter.stop_scan().await?;
 
             Ok(result)
-        })
+        };
+
+        self.runtime.block_on(future)
     }
 }
