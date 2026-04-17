@@ -14,7 +14,7 @@ use indicatif_log_bridge::LogWrapper;
 
 use std::time::Duration;
 
-use clap::Parser;
+use clap::{CommandFactory as _, Parser};
 use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 
 use crate::errors::CliError;
@@ -111,6 +111,8 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
 }
 
 fn main() -> miette::Result<()> {
+    clap_complete::env::CompleteEnv::with_factory(args::App::command).complete();
+
     let multiprogress = {
         let logger =
             env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
