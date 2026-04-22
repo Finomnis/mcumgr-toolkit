@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use mcumgr_toolkit::{
     Errno,
-    client::{FirmwareUpdateError, MCUmgrClientError, UsbSerialError},
+    client::{FirmwareUpdateError, MCUmgrClientError, UdpError, UsbSerialError},
     mcuboot::ImageParseError,
 };
 
@@ -46,6 +46,12 @@ pub enum CliError {
     #[error("Failed to open USB serial port")]
     #[diagnostic(code(mcumgrctl::usb_serial))]
     UsbSerialOpenFailed(#[from] UsbSerialError),
+    #[error("Failed to parse UDP address")]
+    #[diagnostic(code(mcumgrctl::udp_addr_parse))]
+    ParseUdpAddrFailed(#[source] std::net::AddrParseError),
+    #[error("Failed to open UDP socket")]
+    #[diagnostic(code(mcumgrctl::udp_open))]
+    OpenUdpFailed(#[from] UdpError),
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(mcumgrctl::image_parse))]
     ImageParseFailed(#[from] ImageParseError),

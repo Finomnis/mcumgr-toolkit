@@ -76,6 +76,26 @@ impl MCUmgrClient {
         })
     }
 
+    /// Creates a new UDP-based Zephyr MCUmgr SMP client.
+    ///
+    /// ### Arguments
+    ///
+    /// * `addr` - The UDP endpoint in `host:port` format (e.g. `"192.168.1.1:1337"`).
+    /// * `timeout_ms` - The communication timeout, in ms.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (addr, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn udp(addr: &str, timeout_ms: u64) -> PyResult<Self> {
+        let addr: std::net::SocketAddr = addr.parse().into_diagnostic().map_err(err_to_pyerr)?;
+        let client =
+            ::mcumgr_toolkit::MCUmgrClient::new_from_udp(addr, Duration::from_millis(timeout_ms))
+                .into_diagnostic()
+                .map_err(err_to_pyerr)?;
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
     /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
     ///
     /// Useful for programming many devices in rapid succession, as Windows usually

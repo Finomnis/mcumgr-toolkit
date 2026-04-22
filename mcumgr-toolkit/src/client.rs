@@ -8,6 +8,7 @@ pub use firmware_update::{
 use std::{
     collections::HashMap,
     io::{self, Read, Write},
+    net::SocketAddr,
     sync::atomic::AtomicUsize,
     time::Duration,
 };
@@ -27,6 +28,7 @@ use crate::{
     transport::{
         ReceiveError,
         serial::{ConfigurableTimeout, SerialTransport},
+        udp::UdpTransport,
     },
 };
 
@@ -175,6 +177,15 @@ impl std::fmt::Debug for UsbSerialPorts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.0, f)
     }
+}
+
+/// Possible error values of [`MCUmgrClient::new_from_udp`].
+#[derive(Error, Debug, Diagnostic)]
+pub enum UdpError {
+    /// An I/O error occurred while opening the UDP socket
+    #[error("Failed to open UDP socket")]
+    #[diagnostic(code(mcumgr_toolkit::udp::io_error))]
+    Io(#[from] io::Error),
 }
 
 /// Possible error values of [`MCUmgrClient::new_from_usb_serial`].
@@ -334,6 +345,30 @@ impl MCUmgrClient {
             .open()?;
 
         Ok(Self::new_from_serial(serial))
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client based on a UDP socket.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - The remote UDP endpoint.
+    /// * `timeout` - The communication timeout.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use mcumgr_toolkit::MCUmgrClient;
+    /// # use std::time::Duration;
+    /// # fn main() {
+    /// let addr = "192.168.1.1:1337".parse().unwrap();
+    /// let mut client = MCUmgrClient::new_from_udp(addr, Duration::from_millis(1000)).unwrap();
+    /// # }
+    /// ```
+    pub fn new_from_udp(addr: SocketAddr, timeout: Duration) -> Result<Self, UdpError> {
+        Ok(Self {
+            connection: Connection::new(UdpTransport::new(addr, timeout)?),
+            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
+        })
     }
 
     /// Configures the maximum SMP frame size that we can send to the device.

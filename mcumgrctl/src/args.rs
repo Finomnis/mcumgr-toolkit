@@ -43,6 +43,12 @@ pub struct App {
     #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
     pub usb_serial: Option<String>,
 
+    /// Use the given UDP endpoint as backend (host:port, e.g. 192.168.1.1:1337)
+    ///
+    /// If no argument provided, prints a usage hint and exits.
+    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    pub udp: Option<String>,
+
     /// Serial port baud rate
     #[arg(short, long, default_value_t = 115200)]
     pub baud: u32,

@@ -6,6 +6,9 @@ use thiserror::Error;
 /// Serial port based transport
 pub mod serial;
 
+/// UDP based transport
+pub mod udp;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct SmpHeader {
     ver: u8,
