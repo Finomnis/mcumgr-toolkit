@@ -33,20 +33,23 @@ pub struct App {
     /// Use the given serial port as backend
     ///
     /// If no argument provided, list all available ports and exit.
-    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "",
+      conflicts_with_all = ["usb_serial", "udp"])]
     pub serial: Option<String>,
 
     /// Use the given usb serial port as backend
     ///
     /// Must contain a regex that matches `vid:pid` or `vid:pid:iface`.
     /// If no argument provided, list all available ports and exit.
-    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "",
+      conflicts_with_all = ["serial", "udp"])]
     pub usb_serial: Option<String>,
 
     /// Use the given UDP endpoint as backend (host:port, e.g. 192.168.1.1:1337)
     ///
     /// If no argument provided, prints a usage hint and exits.
-    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "",
+      conflicts_with_all = ["serial", "usb_serial"])]
     pub udp: Option<String>,
 
     /// Serial port baud rate
