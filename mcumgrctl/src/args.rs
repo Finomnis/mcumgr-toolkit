@@ -1,6 +1,24 @@
+use std::net::ToSocketAddrs;
+
 use clap::{Args, Parser};
+use miette::IntoDiagnostic;
 
 use crate::groups::Group;
+
+const DEFAULT_SMP_UDP_PORT: u16 = 1337;
+
+fn parse_udp_addr(s: &str) -> miette::Result<std::net::SocketAddr> {
+    let addr = match s.to_socket_addrs() {
+        Ok(mut iter) => iter.next(),
+        Err(err) if err.kind() == std::io::ErrorKind::InvalidInput => (s, DEFAULT_SMP_UDP_PORT)
+            .to_socket_addrs()
+            .into_diagnostic()?
+            .next(),
+        Err(err) => return Err(err).into_diagnostic(),
+    };
+
+    addr.ok_or_else(|| miette::miette!("Failed to resolve address"))
+}
 
 #[derive(Debug, Args)]
 pub struct CommonArgs {
@@ -49,8 +67,9 @@ pub struct App {
     ///
     /// Accepts a hostname or IP address with an optional port.
     /// Port defaults to 1337 if omitted (e.g. "mydevice.local" or "192.168.1.1:1337").
-    #[arg(long, verbatim_doc_comment, conflicts_with_all = ["serial", "usb_serial"])]
-    pub udp: Option<String>,
+    #[arg(long, verbatim_doc_comment, conflicts_with_all = ["serial", "usb_serial"],
+      value_parser=parse_udp_addr, value_name="ADDR")]
+    pub udp: Option<std::net::SocketAddr>,
 
     /// Serial port baud rate
     #[arg(short, long, default_value_t = 115200)]
