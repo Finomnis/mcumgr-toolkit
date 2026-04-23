@@ -35,12 +35,19 @@ pub struct CommonArgs {
     pub json: bool,
 
     /// Communication timeout (in ms)
-    #[arg(short, long, global=true, default_value_t = mcumgr_toolkit::DEFAULT_TIMEOUT_MS)]
+    #[arg(short, long, global = true, default_value_t = mcumgr_toolkit::DEFAULT_TIMEOUT_MS)]
     pub timeout: u64,
 
     /// Retry count
-    #[arg(long, global=true, default_value_t = mcumgr_toolkit::DEFAULT_RETRIES)]
+    #[arg(long, global = true, default_value_t = mcumgr_toolkit::DEFAULT_RETRIES)]
     pub retries: u8,
+
+    /// SMP frame size limit (in bytes)
+    ///
+    /// If unset, try to fetch frame size from device.
+    /// If that also fails, use default frame size.
+    #[arg(long, global = true, verbatim_doc_comment)]
+    pub smp_frame_size: Option<usize>,
 }
 
 /// Command line client for Zephyr's MCUmgr SMP protocol

@@ -81,7 +81,7 @@ impl Transport for UdpTransport {
     }
 
     /// UDP datagrams larger than the network MTU are silently dropped by most
-    /// embedded IP stacks.  Cap at 1024 bytes — a conservative limit that fits
+    /// embedded IP stacks. Cap at 1024 bytes - a conservative limit that fits
     /// inside a single Ethernet frame even after VPN/tunnel overhead.
     /// Users who know their network supports larger unfragmented datagrams can
     /// raise this with [`MCUmgrClient::set_frame_size`](crate::MCUmgrClient::set_frame_size).
