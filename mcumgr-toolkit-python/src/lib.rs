@@ -87,7 +87,7 @@ impl MCUmgrClient {
     #[staticmethod]
     #[pyo3(signature = (ip, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
     fn udp(
-        #[gen_stub(override_type(type_repr="typing.Union[ipaddress.IPv4Address, ipaddress.IPv6Address]", imports=("ipaddress", "typing")))]
+        #[gen_stub(override_type(type_repr="ipaddress.IPv4Address | ipaddress.IPv6Address", imports=("ipaddress")))]
         ip: std::net::IpAddr,
         port: u16,
         timeout_ms: u64,

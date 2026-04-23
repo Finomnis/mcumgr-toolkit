@@ -5,6 +5,7 @@ import builtins
 import collections.abc
 import datetime
 import enum
+import ipaddress
 import typing
 __all__ = [
     "FileChecksum",
@@ -166,6 +167,17 @@ class MCUmgrClient:
         
         * `serial` - The identifier of the serial device. (Windows: `COMxx`, Linux: `/dev/ttyXX`)
         * `baud_rate` - The baud rate of the serial port.
+        * `timeout_ms` - The communication timeout, in ms.
+        """
+    @staticmethod
+    def udp(ip: ipaddress.IPv4Address | ipaddress.IPv6Address, port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+        r"""
+        Creates a new UDP-based Zephyr MCUmgr SMP client.
+
+        ### Arguments
+
+        * `ip` - The UDP endpoint IP address.
+        * `port` - The UDP endpoint port number.
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod

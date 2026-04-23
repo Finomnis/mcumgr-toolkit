@@ -221,8 +221,8 @@ pub trait Transport {
     /// Returns the maximum SMP frame size this transport can carry in one shot.
     ///
     /// Used by [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size)
-    /// to cap the device-reported buffer size at what the transport can actually deliver
-    /// without fragmentation or reassembly.
+    /// to cap the device-reported buffer size at what the transport can still
+    /// deliver reliably.
     ///
     /// The default (`usize::MAX`) means no transport-level cap — suitable for
     /// stream-based transports like serial that handle large frames via chunking.

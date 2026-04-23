@@ -142,8 +142,8 @@ impl Connection {
         }
     }
 
-    /// Returns the maximum SMP frame size the underlying transport can deliver
-    /// without fragmentation.
+    /// Returns the maximum SMP frame size the underlying transport can
+    /// deliver reliably.
     pub fn max_transport_frame_size(&self) -> usize {
         self.inner
             .lock()
