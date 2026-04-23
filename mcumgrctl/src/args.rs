@@ -45,9 +45,12 @@ pub struct App {
       conflicts_with_all = ["serial", "udp"])]
     pub usb_serial: Option<String>,
 
-    /// Use the given UDP endpoint as backend (host:port, e.g. 192.168.1.1:1337)
-    #[arg(long, conflicts_with_all = ["serial", "usb_serial"])]
-    pub udp: Option<std::net::SocketAddr>,
+    /// Use the given UDP endpoint as backend
+    ///
+    /// Accepts a hostname or IP address with an optional port.
+    /// Port defaults to 1337 if omitted (e.g. "mydevice.local" or "192.168.1.1:1337").
+    #[arg(long, verbatim_doc_comment, conflicts_with_all = ["serial", "usb_serial"])]
+    pub udp: Option<String>,
 
     /// Serial port baud rate
     #[arg(short, long, default_value_t = 115200)]

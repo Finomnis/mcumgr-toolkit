@@ -17,6 +17,38 @@ use std::time::Duration;
 use clap::Parser;
 use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 
+const DEFAULT_UDP_PORT: u16 = 1337;
+
+/// Append the default SMP UDP port when the user did not specify one.
+///
+/// Detects a port by looking for a valid u16 after the last colon,
+/// or a closing bracket (bracketed IPv6 form `[::1]:port`).
+/// Bare IPv6 addresses without brackets (e.g. `::1`) should be written
+/// as `[::1]` or `[::1]:port`.
+fn with_default_udp_port(host: &str) -> String {
+    let colon_count = host.matches(':').count();
+    let has_port = if host.starts_with('[') {
+        host.contains("]:")
+    } else {
+        // Only treat the last segment as a port for hostname:port or ipv4:port
+        // (exactly one colon).  Bare IPv6 addresses have more than one colon and
+        // must not be mistaken for having a port.
+        colon_count == 1
+            && host
+                .rfind(':')
+                .map_or(false, |i| host[i + 1..].parse::<u16>().is_ok())
+    };
+
+    if has_port {
+        host.to_owned()
+    } else if !host.starts_with('[') && colon_count > 1 {
+        // Bare IPv6 address — wrap in brackets before appending the default port.
+        format!("[{host}]:{DEFAULT_UDP_PORT}")
+    } else {
+        format!("{host}:{DEFAULT_UDP_PORT}")
+    }
+}
+
 use crate::errors::CliError;
 
 fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
@@ -82,10 +114,13 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
         }
 
         Client::new(result?)
-    } else if let Some(addr) = args.udp {
+    } else if let Some(host) = args.udp {
         Client::new(
-            MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
-                .map_err(CliError::OpenUdpFailed)?,
+            MCUmgrClient::new_from_udp(
+                with_default_udp_port(&host).as_str(),
+                Duration::from_millis(args.common.timeout),
+            )
+            .map_err(CliError::OpenUdpFailed)?,
         )
     } else {
         Client::default()

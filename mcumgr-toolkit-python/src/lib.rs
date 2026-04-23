@@ -80,15 +80,15 @@ impl MCUmgrClient {
     ///
     /// ### Arguments
     ///
-    /// * `ip` - The UDP endpoint IP address.
-    /// * `port` - The UDP endpoint port number.
+    /// * `host` - The hostname or IP address of the device.
+    /// * `port` - The UDP port number. Defaults to `1337`.
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
-    #[pyo3(signature = (ip, port, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
-    fn udp(ip: std::net::IpAddr, port: u16, timeout_ms: u64) -> PyResult<Self> {
+    #[pyo3(signature = (host, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn udp(host: &str, port: u16, timeout_ms: u64) -> PyResult<Self> {
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
-            (ip, port),
+            (host, port),
             Duration::from_millis(timeout_ms),
         )
         .into_diagnostic()

@@ -1,5 +1,5 @@
 use std::{
-    net::{SocketAddr, UdpSocket},
+    net::{SocketAddr, ToSocketAddrs, UdpSocket},
     time::Duration,
 };
 
@@ -14,12 +14,16 @@ pub struct UdpTransport {
 impl UdpTransport {
     /// Create a new [`UdpTransport`] connected to the given remote address.
     ///
-    /// # Arguments
+    /// `addr` accepts anything that implements [`ToSocketAddrs`], including
+    /// `"host:port"` strings — DNS resolution happens here.
     ///
-    /// * `addr` - The remote UDP endpoint (e.g. `"192.168.1.1:1337".parse().unwrap()`).
-    /// * `timeout` - The initial communication timeout.
-    ///
-    pub fn new(addr: SocketAddr, timeout: Duration) -> std::io::Result<Self> {
+    pub fn new(addr: impl ToSocketAddrs, timeout: Duration) -> std::io::Result<Self> {
+        let addr = addr.to_socket_addrs()?.next().ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::AddrNotAvailable,
+                "no addresses resolved",
+            )
+        })?;
         let bind_addr: SocketAddr = if addr.is_ipv4() {
             "0.0.0.0:0".parse().unwrap()
         } else {
