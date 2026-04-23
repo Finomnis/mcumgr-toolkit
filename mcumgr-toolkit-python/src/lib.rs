@@ -96,7 +96,6 @@ impl MCUmgrClient {
             (ip, port),
             Duration::from_millis(timeout_ms),
         )
-        .into_diagnostic()
         .map_err(err_to_pyerr)?;
         Ok(MCUmgrClient {
             client: Mutex::new(Some(Arc::new(client))),
