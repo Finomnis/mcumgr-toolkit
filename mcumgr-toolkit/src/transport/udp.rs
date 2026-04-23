@@ -1,5 +1,5 @@
 use std::{
-    net::{SocketAddr, UdpSocket},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket},
     time::Duration,
 };
 
@@ -21,9 +21,9 @@ impl UdpTransport {
     ///
     pub fn new(addr: SocketAddr, timeout: Duration) -> std::io::Result<Self> {
         let bind_addr: SocketAddr = if addr.is_ipv4() {
-            "0.0.0.0:0".parse().unwrap()
+            (Ipv4Addr::UNSPECIFIED, 0).into()
         } else {
-            "[::]:0".parse().unwrap()
+            (Ipv6Addr::UNSPECIFIED, 0).into()
         };
         let socket = UdpSocket::bind(bind_addr)?;
         socket.connect(addr)?;
