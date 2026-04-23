@@ -387,12 +387,13 @@ impl MCUmgrClient {
             .connection
             .execute_command(&commands::os::MCUmgrParameters)?;
 
-        log::debug!("Using frame size {}.", mcumgr_params.buf_size);
+        let frame_size =
+            (mcumgr_params.buf_size as usize).min(self.connection.max_transport_frame_size());
 
-        self.smp_frame_size.store(
-            mcumgr_params.buf_size as usize,
-            std::sync::atomic::Ordering::SeqCst,
-        );
+        log::debug!("Using frame size {}.", frame_size);
+
+        self.smp_frame_size
+            .store(frame_size, std::sync::atomic::Ordering::SeqCst);
 
         Ok(())
     }

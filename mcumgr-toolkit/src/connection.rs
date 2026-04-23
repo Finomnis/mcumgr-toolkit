@@ -142,6 +142,17 @@ impl Connection {
         }
     }
 
+    /// Returns the maximum SMP frame size the underlying transport can deliver
+    /// without fragmentation.
+    pub fn max_transport_frame_size(&self) -> usize {
+        self.inner
+            .lock()
+            .unwrap()
+            .transceiver
+            .transport
+            .max_smp_frame_size()
+    }
+
     /// Changes the communication timeout.
     ///
     /// When the device does not respond to packets within the set

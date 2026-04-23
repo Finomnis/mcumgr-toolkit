@@ -57,7 +57,17 @@ impl Transport for UdpTransport {
         &mut self,
         buffer: &'a mut [u8; SMP_TRANSFER_BUFFER_SIZE],
     ) -> Result<&'a [u8], ReceiveError> {
-        let len = self.socket.recv(buffer)?;
+        // On Unix, SO_RCVTIMEO returns EAGAIN (WouldBlock) when the deadline
+        // passes rather than ETIMEDOUT.  Normalise to TimedOut so the rest of
+        // the stack (connection retry logic, the erase-progressively hint in
+        // client.rs) behaves identically across platforms.
+        let len = self.socket.recv(buffer).map_err(|e| {
+            if e.kind() == std::io::ErrorKind::WouldBlock {
+                std::io::Error::new(std::io::ErrorKind::TimedOut, e)
+            } else {
+                e
+            }
+        })?;
         if len < SMP_HEADER_SIZE {
             return Err(ReceiveError::UnexpectedResponse);
         }
@@ -72,5 +82,14 @@ impl Transport for UdpTransport {
         self.socket
             .set_read_timeout(Some(timeout))
             .map_err(Into::into)
+    }
+
+    /// UDP datagrams larger than the network MTU are silently dropped by most
+    /// embedded IP stacks.  Cap at 1024 bytes — a conservative limit that fits
+    /// inside a single Ethernet frame even after VPN/tunnel overhead.
+    /// Users who know their network supports larger unfragmented datagrams can
+    /// raise this with [`MCUmgrClient::set_frame_size`](crate::MCUmgrClient::set_frame_size).
+    fn max_smp_frame_size(&self) -> usize {
+        1024
     }
 }
