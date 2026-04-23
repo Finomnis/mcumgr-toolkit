@@ -48,9 +48,8 @@ pub struct App {
     /// Use the given UDP endpoint as backend (host:port, e.g. 192.168.1.1:1337)
     ///
     /// If no argument provided, prints a usage hint and exits.
-    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "",
-      conflicts_with_all = ["serial", "usb_serial"])]
-    pub udp: Option<String>,
+    #[arg(long, verbatim_doc_comment, conflicts_with_all = ["serial", "usb_serial"])]
+    pub udp: Option<std::net::SocketAddr>,
 
     /// Serial port baud rate
     #[arg(short, long, default_value_t = 115200)]

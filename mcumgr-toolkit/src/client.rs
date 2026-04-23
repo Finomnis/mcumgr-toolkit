@@ -359,14 +359,15 @@ impl MCUmgrClient {
     /// ```no_run
     /// # use mcumgr_toolkit::MCUmgrClient;
     /// # use std::time::Duration;
+    /// # use std::net::SocketAddr;
     /// # fn main() {
-    /// let addr = "192.168.1.1:1337".parse().unwrap();
+    /// let addr: SocketAddr = "192.168.1.1:1337".parse().unwrap();
     /// let mut client = MCUmgrClient::new_from_udp(addr, Duration::from_millis(1000)).unwrap();
     /// # }
     /// ```
-    pub fn new_from_udp(addr: SocketAddr, timeout: Duration) -> Result<Self, UdpError> {
+    pub fn new_from_udp(addr: impl Into<SocketAddr>, timeout: Duration) -> Result<Self, UdpError> {
         Ok(Self {
-            connection: Connection::new(UdpTransport::new(addr, timeout)?),
+            connection: Connection::new(UdpTransport::new(addr.into(), timeout)?),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
         })
     }

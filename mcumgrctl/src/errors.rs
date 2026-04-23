@@ -46,11 +46,8 @@ pub enum CliError {
     #[error("Failed to open USB serial port")]
     #[diagnostic(code(mcumgrctl::usb_serial))]
     UsbSerialOpenFailed(#[from] UsbSerialError),
-    #[error("Failed to parse UDP address")]
-    #[diagnostic(code(mcumgrctl::udp_addr_parse))]
-    ParseUdpAddrFailed(#[source] std::net::AddrParseError),
     #[error("Failed to open UDP socket")]
-    #[diagnostic(code(mcumgrctl::udp_open))]
+    #[diagnostic(code(mcumgrctl::udp))]
     OpenUdpFailed(#[from] UdpError),
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(mcumgrctl::image_parse))]

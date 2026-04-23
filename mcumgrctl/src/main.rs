@@ -82,12 +82,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
         }
 
         Client::new(result?)
-    } else if let Some(addr_str) = args.udp {
-        if addr_str.is_empty() {
-            println!("Usage: --udp <host:port>  (e.g. 192.168.1.1:1337)");
-            return Ok(());
-        }
-        let addr: std::net::SocketAddr = addr_str.parse().map_err(CliError::ParseUdpAddrFailed)?;
+    } else if let Some(addr) = args.udp {
         Client::new(
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::OpenUdpFailed)?,

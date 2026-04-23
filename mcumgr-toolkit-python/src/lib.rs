@@ -80,17 +80,19 @@ impl MCUmgrClient {
     ///
     /// ### Arguments
     ///
-    /// * `addr` - The UDP endpoint in `host:port` format (e.g. `"192.168.1.1:1337"`).
+    /// * `ip` - The UDP endpoint IP address.
+    /// * `port` - The UDP endpoint port number.
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
-    #[pyo3(signature = (addr, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
-    fn udp(addr: &str, timeout_ms: u64) -> PyResult<Self> {
-        let addr: std::net::SocketAddr = addr.parse().into_diagnostic().map_err(err_to_pyerr)?;
-        let client =
-            ::mcumgr_toolkit::MCUmgrClient::new_from_udp(addr, Duration::from_millis(timeout_ms))
-                .into_diagnostic()
-                .map_err(err_to_pyerr)?;
+    #[pyo3(signature = (ip, port, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn udp(ip: std::net::IpAddr, port: u16, timeout_ms: u64) -> PyResult<Self> {
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
+            (ip, port),
+            Duration::from_millis(timeout_ms),
+        )
+        .into_diagnostic()
+        .map_err(err_to_pyerr)?;
         Ok(MCUmgrClient {
             client: Mutex::new(Some(Arc::new(client))),
         })
