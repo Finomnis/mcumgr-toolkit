@@ -9,6 +9,9 @@ pub mod serial;
 /// BLE based transport
 pub mod ble;
 
+/// UDP based transport
+pub mod udp;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct SmpHeader {
     ver: u8,
@@ -217,4 +220,16 @@ pub trait Transport {
         &mut self,
         timeout: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Returns the maximum SMP frame size this transport can carry in one shot.
+    ///
+    /// Used by [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size)
+    /// to cap the device-reported buffer size at what the transport can still
+    /// deliver reliably.
+    ///
+    /// The default (`usize::MAX`) means no transport-level cap — suitable for
+    /// stream-based transports like serial that handle large frames via chunking.
+    fn max_smp_frame_size(&self) -> usize {
+        usize::MAX
+    }
 }

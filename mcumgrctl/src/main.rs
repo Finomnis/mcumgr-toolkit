@@ -14,7 +14,7 @@ use indicatif_log_bridge::LogWrapper;
 
 use std::time::Duration;
 
-use clap::Parser;
+use clap::{CommandFactory as _, Parser};
 use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 
 use crate::errors::CliError;
@@ -97,6 +97,11 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
         multiprogress.remove(&scan_spinner);
 
         Client::new(result?)
+    } else if let Some(addr) = args.udp {
+        Client::new(
+            MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
+                .map_err(CliError::OpenUdpFailed)?,
+        )
     } else {
         Client::default()
     };
@@ -104,14 +109,18 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     if let Ok(client) = client.get() {
         client.set_retries(args.common.retries);
 
-        if let Err(e) = client.use_auto_frame_size() {
-            let mut lowest_err: &dyn std::error::Error = &e;
-            while let Some(lower_err) = lowest_err.source() {
-                lowest_err = lower_err;
+        if let Some(smp_frame_size) = args.common.smp_frame_size {
+            client.set_frame_size(smp_frame_size);
+        } else {
+            if let Err(e) = client.use_auto_frame_size() {
+                let mut lowest_err: &dyn std::error::Error = &e;
+                while let Some(lower_err) = lowest_err.source() {
+                    lowest_err = lower_err;
+                }
+                log::warn!("Failed to read SMP frame size from device, using slow default");
+                log::warn!("Reason: {lowest_err}");
+                log::warn!("Hint: Make sure that `CONFIG_MCUMGR_GRP_OS_MCUMGR_PARAMS` is enabled.");
             }
-            log::warn!("Failed to read SMP frame size from device, using slow default");
-            log::warn!("Reason: {lowest_err}");
-            log::warn!("Hint: Make sure that `CONFIG_MCUMGR_GRP_OS_MCUMGR_PARAMS` is enabled.");
         }
     }
 
@@ -126,6 +135,8 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
 }
 
 fn main() -> miette::Result<()> {
+    clap_complete::env::CompleteEnv::with_factory(args::App::command).complete();
+
     let multiprogress = {
         let logger =
             env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
