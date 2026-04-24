@@ -82,19 +82,19 @@ impl MCUmgrClient {
     ///
     /// ### Arguments
     ///
-    /// * `ip` - The UDP endpoint IP address or hostname.
+    /// * `addr` - The UDP endpoint IP address or hostname.
     /// * `port` - The UDP endpoint port number.
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
-    #[pyo3(signature = (ip, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    #[pyo3(signature = (addr, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
     fn udp(
         #[gen_stub(override_type(type_repr="builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address", imports=("builtins", "ipaddress")))]
-        ip: Either<&str, std::net::IpAddr>,
+        addr: Either<&str, std::net::IpAddr>,
         port: u16,
         timeout_ms: u64,
     ) -> PyResult<Self> {
-        let socketaddr = match ip {
+        let socketaddr = match addr {
             Either::Left(addr_str) => (addr_str, port)
                 .to_socket_addrs()
                 .into_diagnostic()
