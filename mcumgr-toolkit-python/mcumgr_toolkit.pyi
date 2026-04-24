@@ -170,13 +170,13 @@ class MCUmgrClient:
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod
-    def udp(addr: builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address, port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+    def udp(host: builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address, port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
         r"""
         Creates a new UDP-based Zephyr MCUmgr SMP client.
         
         ### Arguments
         
-        * `addr` - The UDP endpoint IP address or hostname.
+        * `host` - The UDP endpoint IP address or hostname.
         * `port` - The UDP endpoint port number.
         * `timeout_ms` - The communication timeout, in ms.
         """
