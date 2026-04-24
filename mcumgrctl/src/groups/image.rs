@@ -1,3 +1,4 @@
+use clap_complete::{ArgValueCompleter, PathCompleter};
 use indicatif::MultiProgress;
 use mcumgr_toolkit::commands::image::ImageState;
 
@@ -32,6 +33,7 @@ pub enum ImageCommand {
     /// Upload a firmware image to the device
     Upload {
         /// The firmware image file to upload. '-' for stdin.
+        #[arg(add=ArgValueCompleter::new(PathCompleter::file()))]
         image_file: String,
         /// Selects target image on the device. Default: 0
         #[arg(long)]

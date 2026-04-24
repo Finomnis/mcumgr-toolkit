@@ -1,4 +1,5 @@
 use clap::ValueEnum;
+use clap_complete::{ArgValueCompleter, PathCompleter};
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 use mcumgr_toolkit::client::{FirmwareUpdateParams, FirmwareUpdateStep};
 
@@ -29,11 +30,13 @@ pub enum FirmwareCommand {
         /// The image type
         r#type: BootloaderType,
         /// The image file to analyze. '-' for stdin.
+        #[arg(add=ArgValueCompleter::new(PathCompleter::file()))]
         file: String,
     },
     /// Perform a device firmware update
     Update {
         /// The firmware image file to update to. '-' for stdin.
+        #[arg(add=ArgValueCompleter::new(PathCompleter::file()))]
         firmware_file: String,
         /// Specify the bootloader type
         ///

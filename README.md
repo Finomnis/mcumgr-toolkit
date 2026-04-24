@@ -129,6 +129,11 @@ OS/Application Info:
 
 For more information, run `mcumgrctl --help`.
 
+### Autocomplete
+
+Shell autocomplete is provided through [`clap_complete::env`](https://docs.rs/clap_complete/latest/clap_complete/env/index.html).
+Read its documentation for more information on how to use it.
+
 ## Usage as a library
 
 To use this library in your project, enter your project directory and run:

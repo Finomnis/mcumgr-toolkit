@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use clap_complete::{ArgValueCompleter, PathCompleter};
 use indicatif::MultiProgress;
 
 use crate::{
@@ -18,11 +19,13 @@ pub enum FsCommand {
         /// The file path on the device.
         remote: String,
         /// The target path. '-' for stdout.
+        #[arg(add=ArgValueCompleter::new(PathCompleter::file()))]
         local: String,
     },
     /// Upload a file to the device
     Upload {
         /// The file to copy. '-' for stdin.
+        #[arg(add=ArgValueCompleter::new(PathCompleter::file()))]
         local: String,
         /// The target path on the device.
         remote: String,
