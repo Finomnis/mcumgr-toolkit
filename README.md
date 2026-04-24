@@ -132,7 +132,7 @@ For more information, run `mcumgrctl --help`.
 ### Autocomplete
 
 Shell autocomplete is provided through [`clap_complete::env`](https://docs.rs/clap_complete/latest/clap_complete/env/index.html).
-Read its documentation for more information about how to use it.
+Read its documentation for more information on how to use it.
 
 ## Usage as a library
 
