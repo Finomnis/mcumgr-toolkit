@@ -101,7 +101,7 @@ impl MCUmgrClient {
                 .map_err(err_to_pyerr)?
                 .next()
                 .ok_or_else(|| {
-                    PyRuntimeError::new_err(format!("Failed to resolve '{}'", addr_str))
+                    PyRuntimeError::new_err(format!("Failed to resolve '{addr_str}:{port}'"))
                 })?,
             Either::Right(addr) => (addr, port).into(),
         };
