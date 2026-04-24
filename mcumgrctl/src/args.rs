@@ -96,13 +96,18 @@ pub struct App {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::CommandFactory;
+
     #[test]
     fn generates_valid_man_page() {
-        use clap::CommandFactory;
-
         let man = clap_mangen::Man::new(App::command());
 
         let mut buffer = vec![];
         man.render(&mut buffer).unwrap();
+    }
+
+    #[test]
+    fn check_cli() {
+        App::command().debug_assert();
     }
 }

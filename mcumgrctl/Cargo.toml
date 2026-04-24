@@ -23,6 +23,7 @@ serialport = { workspace = true, features = ["usbportinfo-interface"] }
 miette = { workspace = true, features = ["fancy"] }
 env_logger.workspace = true
 clap = { workspace = true, features = ["derive"] }
+clap_complete = { workspace = true, features = ["unstable-dynamic"] }
 log.workspace = true
 thiserror.workspace = true
 serde_json.workspace = true
