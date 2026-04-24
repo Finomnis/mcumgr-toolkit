@@ -36,7 +36,7 @@ pyo3-ext = ["pyo3/abi3-py310", "pyo3/extension-module"]
 pyo3-embed = []
 
 [dependencies]
-pyo3 = { workspace = true, features = ["chrono"] }
+pyo3 = { workspace = true, features = ["chrono", "either"] }
 pyo3-stub-gen.workspace = true
 pyo3-log.workspace = true
 serde-pyobject.workspace = true
@@ -48,3 +48,4 @@ miette = { workspace = true, features = ["fancy"] }
 hex.workspace = true
 thiserror.workspace = true
 strum.workspace = true
+either.workspace = true

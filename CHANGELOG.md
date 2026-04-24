@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.13.1] - xxxx-xx-xx
+
+### Changes
+
+- Add UDP transport layer support (@pdgendt)
+    - Add `MCUmgrClient::new_from_udp` that connects to a UDP network device
+    - Python: `MCUmgrClient::udp`
+    - CLI: add `--udp` flag
+- CLI: Add `--smp-frame-size` option that overrides the frame size limit for outgoing traffic
+
+
 ## [0.13.0] - 2026-04-10
 
 ### Breaking Changes

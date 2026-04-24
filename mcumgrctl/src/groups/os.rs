@@ -169,8 +169,10 @@ pub fn run(
                             if let (Some(stkuse), Some(stksiz)) = (stats.stkuse, stats.stksiz) {
                                 s.key_value(
                                     "Stack Usage",
-                                    if stksiz != 0 {
-                                        let pct = stkuse * 100 / stksiz;
+                                    if let Some(pct) = stkuse
+                                        .checked_mul(100)
+                                        .and_then(|val| val.checked_div(stksiz))
+                                    {
                                         format!("{stkuse} / {stksiz} bytes ({pct} %)")
                                     } else {
                                         format!("{stkuse} / {stksiz} bytes")
