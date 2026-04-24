@@ -1,13 +1,15 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::too_many_arguments)]
 
+use either::Either;
 use miette::IntoDiagnostic;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::PyDateTime;
 use pyo3::{prelude::*, types::PyBytes};
-
-use pyo3::exceptions::PyRuntimeError;
 use pyo3_stub_gen::{derive::*, *};
+
 use std::collections::HashMap;
+use std::net::ToSocketAddrs;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -71,6 +73,44 @@ impl MCUmgrClient {
             .into_diagnostic()
             .map_err(err_to_pyerr)?;
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_serial(serial);
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
+    /// Creates a new UDP-based Zephyr MCUmgr SMP client.
+    ///
+    /// ### Arguments
+    ///
+    /// * `host` - The UDP endpoint IP address or hostname.
+    /// * `port` - The UDP endpoint port number.
+    /// * `timeout_ms` - The communication timeout, in ms.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (host, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn udp(
+        #[gen_stub(override_type(type_repr="builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address", imports=("builtins", "ipaddress")))]
+        host: Either<&str, std::net::IpAddr>,
+        port: u16,
+        timeout_ms: u64,
+    ) -> PyResult<Self> {
+        let socketaddr = match host {
+            Either::Left(addr_str) => (addr_str, port)
+                .to_socket_addrs()
+                .into_diagnostic()
+                .map_err(err_to_pyerr)?
+                .next()
+                .ok_or_else(|| {
+                    PyRuntimeError::new_err(format!("Failed to resolve '{addr_str}:{port}'"))
+                })?,
+            Either::Right(addr) => (addr, port).into(),
+        };
+
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
+            socketaddr,
+            Duration::from_millis(timeout_ms),
+        )
+        .map_err(err_to_pyerr)?;
         Ok(MCUmgrClient {
             client: Mutex::new(Some(Arc::new(client))),
         })
