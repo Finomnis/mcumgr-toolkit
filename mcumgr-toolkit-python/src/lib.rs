@@ -1,13 +1,15 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::too_many_arguments)]
 
+use either::Either;
 use miette::IntoDiagnostic;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::types::PyDateTime;
 use pyo3::{prelude::*, types::PyBytes};
-
-use pyo3::exceptions::PyRuntimeError;
 use pyo3_stub_gen::{derive::*, *};
+
 use std::collections::HashMap;
+use std::net::ToSocketAddrs;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -80,20 +82,32 @@ impl MCUmgrClient {
     ///
     /// ### Arguments
     ///
-    /// * `ip` - The UDP endpoint IP address.
+    /// * `ip` - The UDP endpoint IP address or hostname.
     /// * `port` - The UDP endpoint port number.
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
     #[staticmethod]
     #[pyo3(signature = (ip, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
     fn udp(
-        #[gen_stub(override_type(type_repr="ipaddress.IPv4Address | ipaddress.IPv6Address", imports=("ipaddress")))]
-        ip: std::net::IpAddr,
+        #[gen_stub(override_type(type_repr="builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address", imports=("builtins", "ipaddress")))]
+        ip: Either<&str, std::net::IpAddr>,
         port: u16,
         timeout_ms: u64,
     ) -> PyResult<Self> {
+        let socketaddr = match ip {
+            Either::Left(addr_str) => (addr_str, port)
+                .to_socket_addrs()
+                .into_diagnostic()
+                .map_err(err_to_pyerr)?
+                .next()
+                .ok_or_else(|| {
+                    PyRuntimeError::new_err(format!("Failed to resolve '{}'", addr_str))
+                })?,
+            Either::Right(addr) => (addr, port).into(),
+        };
+
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
-            (ip, port),
+            socketaddr,
             Duration::from_millis(timeout_ms),
         )
         .map_err(err_to_pyerr)?;

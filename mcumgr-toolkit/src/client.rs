@@ -365,9 +365,24 @@ impl MCUmgrClient {
     /// let mut client = MCUmgrClient::new_from_udp(addr, Duration::from_millis(1000)).unwrap();
     /// # }
     /// ```
+    ///
+    /// Alternatively, you can use [`to_socket_addrs`](https://doc.rust-lang.org/std/net/trait.ToSocketAddrs.html#tymethod.to_socket_addrs)
+    /// to resolve hostnames:
+    ///
+    /// ```no_run
+    /// # use mcumgr_toolkit::MCUmgrClient;
+    /// # use std::time::Duration;
+    /// # use std::net::ToSocketAddrs;
+    /// # fn main() {
+    /// let addr = "mydevice.local:1337".to_socket_addrs().unwrap().next().unwrap();
+    /// let mut client = MCUmgrClient::new_from_udp(addr, Duration::from_millis(1000)).unwrap();
+    /// # }
+    /// ```
     pub fn new_from_udp(addr: impl Into<SocketAddr>, timeout: Duration) -> Result<Self, UdpError> {
+        let addr = addr.into();
+        log::debug!("Connecting to {addr} ...");
         Ok(Self {
-            connection: Connection::new(UdpTransport::new(addr.into(), timeout)?),
+            connection: Connection::new(UdpTransport::new(addr, timeout)?),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
         })
     }

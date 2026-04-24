@@ -83,7 +83,6 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
 
         Client::new(result?)
     } else if let Some(addr) = args.udp {
-        log::debug!("Connecting to {}", addr);
         Client::new(
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::OpenUdpFailed)?,
