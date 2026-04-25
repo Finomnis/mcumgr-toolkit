@@ -74,6 +74,14 @@ impl BleRuntime {
             Ok(result)
         };
 
+        self.block_on(future)
+    }
+
+    /// Run a future to completion
+    pub fn block_on<F>(&self, future: F) -> F::Output
+    where
+        F: Future,
+    {
         self.runtime.block_on(future)
     }
 }
