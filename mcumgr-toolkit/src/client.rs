@@ -218,7 +218,7 @@ impl std::fmt::Display for BleDevices {
 
         for BleDeviceInfo { mac, name, rssi } in &self.0 {
             writeln!(f)?;
-            write!(f, " - {mac} - {name}")?;
+            write!(f, " - {mac} - {name:?}")?;
 
             if let Some(rssi) = rssi {
                 write!(f, " ({rssi} dBm)")?;
