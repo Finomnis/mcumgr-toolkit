@@ -15,7 +15,10 @@ use indicatif_log_bridge::LogWrapper;
 use std::time::Duration;
 
 use clap::{CommandFactory as _, Parser};
-use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
+use mcumgr_toolkit::{
+    MCUmgrClient,
+    client::{BleError, UsbSerialError},
+};
 
 use crate::errors::CliError;
 
@@ -89,12 +92,31 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
 
         let result = MCUmgrClient::new_from_ble(
             ble_name,
-            args.ble_mac.as_ref(),
+            args.ble_mac,
             Duration::from_millis(args.common.timeout),
         );
 
         scan_spinner.finish_and_clear();
         multiprogress.remove(&scan_spinner);
+
+        if let Err(BleError::IdentifierEmpty { devices }) = &result {
+            if args.common.json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(devices).map_err(CliError::JsonEncodeError)?
+                );
+            } else {
+                println!();
+                if devices.0.is_empty() {
+                    println!("No BLE MCUmgr devices available.");
+                } else {
+                    println!("Available BLE MCUmgr devices:");
+                    println!("{}", devices);
+                }
+                println!();
+            }
+            return Ok(());
+        }
 
         Client::new(result?)
     } else if let Some(addr) = args.udp {

@@ -1,6 +1,9 @@
-use std::{pin::Pin, time::Duration};
+use std::pin::Pin;
 
-use btleplug::api::{Central, CentralEvent, Manager, ScanFilter};
+use btleplug::{
+    api::{Central, CentralEvent, Manager, ScanFilter},
+    platform::Adapter,
+};
 use uuid::{Uuid, uuid};
 
 /// The error type of [`BleRuntime`].
@@ -51,7 +54,7 @@ impl BleRuntime {
     /// Execute the given function while scanning for devices
     pub fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
     where
-        F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>) -> R,
+        F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>, &Adapter) -> R,
     {
         let future = async {
             let events = self.adapter.events().await?;
@@ -62,7 +65,7 @@ impl BleRuntime {
                 })
                 .await?;
 
-            let result = f(events).await;
+            let result = f(events, &self.adapter).await;
 
             self.adapter.stop_scan().await?;
 

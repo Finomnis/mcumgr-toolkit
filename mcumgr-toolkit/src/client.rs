@@ -1,7 +1,7 @@
 /// High-level firmware update routine
 mod firmware_update;
 
-use btleplug::platform::PeripheralId;
+use btleplug::api::{BDAddr, Central, Peripheral};
 pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
@@ -183,6 +183,83 @@ impl std::fmt::Debug for UsbSerialPorts {
     }
 }
 
+fn bdaddr_to_str<S>(mac: &BDAddr, ser: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    ser.collect_str(mac)
+}
+
+/// Information about a BLE device
+#[derive(Debug, Serialize, Clone, Eq, PartialEq)]
+pub struct BleDeviceInfo {
+    /// The device BLE MAC address
+    #[serde(serialize_with = "bdaddr_to_str")]
+    mac: BDAddr,
+    /// The device name
+    name: String,
+    /// RSSI, in dBm
+    rssi: Option<i16>,
+}
+
+/// A list of available BLE devices
+///
+/// Used for pretty error messages.
+#[derive(Serialize, Clone, Eq, PartialEq)]
+#[serde(transparent)]
+pub struct BleDevices(pub Vec<BleDeviceInfo>);
+impl std::fmt::Display for BleDevices {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.is_empty() {
+            writeln!(f)?;
+            write!(f, " - None -")?;
+            return Ok(());
+        }
+
+        for BleDeviceInfo { mac, name, rssi } in &self.0 {
+            writeln!(f)?;
+            write!(f, " - TODO")?;
+
+            // let mut print_port_string = true;
+            // let port_string = format!("({port_name})");
+
+            // if port_info.manufacturer.is_some() || port_info.product.is_some() {
+            //     write!(f, " -")?;
+            //     if let Some(manufacturer) = &port_info.manufacturer {
+            //         let mut print_manufacturer = true;
+
+            //         if let Some(product) = &port_info.product {
+            //             if product.starts_with(manufacturer) {
+            //                 print_manufacturer = false;
+            //             }
+            //         }
+
+            //         if print_manufacturer {
+            //             write!(f, " {manufacturer}")?;
+            //         }
+            //     }
+            //     if let Some(product) = &port_info.product {
+            //         write!(f, " {product}")?;
+
+            //         if product.ends_with(&port_string) {
+            //             print_port_string = false;
+            //         }
+            //     }
+            // }
+
+            // if print_port_string {
+            //     write!(f, " {port_string}")?;
+            // }
+        }
+        Ok(())
+    }
+}
+impl std::fmt::Debug for BleDevices {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.0, f)
+    }
+}
+
 /// Possible error values of [`MCUmgrClient::new_from_udp`].
 #[derive(Error, Debug, Diagnostic)]
 pub enum UdpError {
@@ -242,10 +319,21 @@ pub enum BleError {
     #[error("BLE scanning unexpectedly stopped")]
     #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
     ScanStopped,
-    /// Scanning timed out
-    #[error("Timed out while scanning for devices")]
-    #[diagnostic(code(mcumgr_toolkit::ble::scan_timed_out))]
-    ScanTimedOut, //(Vec<Device>)
+    /// No matching BLE device was discovered
+    #[error("No matching BLE device found\nAvailable devices:\n{available}")]
+    #[diagnostic(code(mcumgr_toolkit::ble::device_not_found))]
+    DeviceNotFound {
+        /// A list of available devices
+        available: BleDevices,
+    },
+    /// Returned when the identifier was empty;
+    /// can be used to query all available devices
+    #[error("An empty identifier was provided")]
+    #[diagnostic(code(mcumgr_toolkit::ble::empty_identifier))]
+    IdentifierEmpty {
+        /// A list of available devices
+        devices: BleDevices,
+    },
 }
 
 impl MCUmgrClient {
@@ -380,61 +468,66 @@ impl MCUmgrClient {
     ///
     pub fn new_from_ble(
         name: impl AsRef<str>,
-        mac: Option<impl AsRef<str>>,
+        mac: Option<BDAddr>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
+        let name = name.as_ref();
+
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
         const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
 
-        #[derive(Debug)]
-        struct PotentialDevice {
-            smp_service_found: bool,
-        }
+        let mut devices = HashMap::new();
 
-        let mut potential_devices = HashMap::new();
+        let device_id = runtime.scan(
+            async |mut events, central| -> Result<btleplug::platform::PeripheralId, BleError> {
+                tokio::time::timeout(SCAN_TIMEOUT, async {
+                    loop {
+                        if let btleplug::api::CentralEvent::DeviceDiscovered(id) =
+                            events.next().await.ok_or(BleError::ScanStopped)?
+                        {
+                            let properties = central.peripheral(&id).await?.properties().await?;
 
-        let scan_result = runtime.scan(async |mut events| -> Result<(), BleError> {
-            tokio::time::timeout(SCAN_TIMEOUT, async {
-                loop {
-                    match events.next().await.ok_or(BleError::ScanStopped)? {
-                        btleplug::api::CentralEvent::DeviceDiscovered(id) => {
-                            potential_devices.entry(id).or_insert(PotentialDevice {
-                                smp_service_found: false,
-                            });
-                        }
-                        btleplug::api::CentralEvent::ServiceDataAdvertisement {
-                            id,
-                            service_data,
-                        } => {
-                            let device = potential_devices.entry(id).or_insert(PotentialDevice {
-                                smp_service_found: false,
-                            });
+                            if let Some(properties) = properties
+                                && properties
+                                    .services
+                                    .contains(&crate::transport::ble::SMP_UUID)
+                                && let Some(local_name) = properties.local_name
+                            {
+                                // We found a matching device name
+                                if !name.is_empty() && name == local_name {
+                                    if let Some(mac) = &mac {
+                                        // If a mac is given, check it
+                                        if mac == &properties.address {
+                                            break Ok(id);
+                                        }
+                                    } else {
+                                        // If no mac is given, accept all devices with
+                                        // the given name
+                                        break Ok(id);
+                                    }
+                                }
 
-                            if service_data.contains_key(&crate::transport::ble::SMP_UUID) {
-                                device.smp_service_found = true;
+                                devices.entry(id).insert_entry(BleDeviceInfo {
+                                    mac: properties.address,
+                                    name: local_name,
+                                    rssi: properties.rssi,
+                                });
                             }
                         }
-                        btleplug::api::CentralEvent::ServicesAdvertisement { id, services } => {
-                            let device = potential_devices.entry(id).or_insert(PotentialDevice {
-                                smp_service_found: false,
-                            });
-
-                            if services.contains(&crate::transport::ble::SMP_UUID) {
-                                device.smp_service_found = true;
-                            }
-                        }
-                        _ => (),
                     }
-                }
-            })
-            .await
-            .map_err(|_: Elapsed| BleError::ScanTimedOut)?
-        })?;
-
-        println!("{potential_devices:?}");
-
-        scan_result?;
+                })
+                .await
+                .map_err(|_: Elapsed| {
+                    let devices = BleDevices(devices.into_iter().map(|(id, val)| val).collect());
+                    if name.is_empty() {
+                        BleError::IdentifierEmpty { devices }
+                    } else {
+                        BleError::DeviceNotFound { available: devices }
+                    }
+                })?
+            },
+        )??;
 
         Ok(todo!())
     }

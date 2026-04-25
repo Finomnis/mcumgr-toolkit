@@ -34,6 +34,7 @@ chrono.workspace = true
 hex.workspace = true
 console.workspace = true
 pretty-hex.workspace = true
+btleplug.workspace = true
 
 [dev-dependencies]
 clap_mangen.workspace = true

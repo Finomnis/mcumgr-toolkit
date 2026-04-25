@@ -1189,6 +1189,7 @@ dependencies = [
 name = "mcumgrctl"
 version = "0.13.2"
 dependencies = [
+ "btleplug",
  "chrono",
  "ciborium",
  "clap",
