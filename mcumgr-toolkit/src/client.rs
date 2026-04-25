@@ -243,7 +243,8 @@ pub enum BleError {
     #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
     ScanStopped,
     /// Scanning timed out
-    #[error("Timed out while scanning for device")]
+    #[error("Timed out while scanning for devices")]
+    #[diagnostic(code(mcumgr_toolkit::ble::scan_timed_out))]
     ScanTimedOut, //(Vec<Device>)
 }
 
@@ -386,13 +387,14 @@ impl MCUmgrClient {
 
         const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
 
+        #[derive(Debug)]
         struct PotentialDevice {
             smp_service_found: bool,
         }
 
         let mut potential_devices = HashMap::new();
 
-        runtime.scan(async |mut events| -> Result<(), BleError> {
+        let scan_result = runtime.scan(async |mut events| -> Result<(), BleError> {
             tokio::time::timeout(SCAN_TIMEOUT, async {
                 loop {
                     match events.next().await.ok_or(BleError::ScanStopped)? {
@@ -428,7 +430,11 @@ impl MCUmgrClient {
             })
             .await
             .map_err(|_: Elapsed| BleError::ScanTimedOut)?
-        })??;
+        })?;
+
+        println!("{potential_devices:?}");
+
+        scan_result?;
 
         Ok(todo!())
     }
