@@ -218,38 +218,11 @@ impl std::fmt::Display for BleDevices {
 
         for BleDeviceInfo { mac, name, rssi } in &self.0 {
             writeln!(f)?;
-            write!(f, " - TODO")?;
+            write!(f, " - {mac} - {name}")?;
 
-            // let mut print_port_string = true;
-            // let port_string = format!("({port_name})");
-
-            // if port_info.manufacturer.is_some() || port_info.product.is_some() {
-            //     write!(f, " -")?;
-            //     if let Some(manufacturer) = &port_info.manufacturer {
-            //         let mut print_manufacturer = true;
-
-            //         if let Some(product) = &port_info.product {
-            //             if product.starts_with(manufacturer) {
-            //                 print_manufacturer = false;
-            //             }
-            //         }
-
-            //         if print_manufacturer {
-            //             write!(f, " {manufacturer}")?;
-            //         }
-            //     }
-            //     if let Some(product) = &port_info.product {
-            //         write!(f, " {product}")?;
-
-            //         if product.ends_with(&port_string) {
-            //             print_port_string = false;
-            //         }
-            //     }
-            // }
-
-            // if print_port_string {
-            //     write!(f, " {port_string}")?;
-            // }
+            if let Some(rssi) = rssi {
+                write!(f, " ({rssi} dBm)")?;
+            }
         }
         Ok(())
     }
@@ -320,7 +293,7 @@ pub enum BleError {
     #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
     ScanStopped,
     /// No matching BLE device was discovered
-    #[error("No matching BLE device found\nAvailable devices:\n{available}")]
+    #[error("Device not found\nAvailable devices:\n{available}")]
     #[diagnostic(code(mcumgr_toolkit::ble::device_not_found))]
     DeviceNotFound {
         /// A list of available devices
