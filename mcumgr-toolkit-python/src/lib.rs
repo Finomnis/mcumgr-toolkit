@@ -78,6 +78,37 @@ impl MCUmgrClient {
         })
     }
 
+    /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
+    ///
+    /// Useful for programming many devices in rapid succession, as Windows usually
+    /// gives each one a different COMxx identifier.
+    ///
+    /// ### Arguments
+    ///
+    /// * `identifier` - A regex that identifies the device.
+    /// * `baud_rate` - The baud rate the port should operate at.
+    /// * `timeout_ms` - The communication timeout, in ms.
+    ///
+    /// ### Identifier examples
+    ///
+    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_usb_serial(
+            identifier,
+            baud_rate,
+            Duration::from_millis(timeout_ms),
+        )
+        .map_err(err_to_pyerr)?;
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
     /// Creates a new UDP-based Zephyr MCUmgr SMP client.
     ///
     /// ### Arguments
@@ -108,37 +139,6 @@ impl MCUmgrClient {
 
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
             socketaddr,
-            Duration::from_millis(timeout_ms),
-        )
-        .map_err(err_to_pyerr)?;
-        Ok(MCUmgrClient {
-            client: Mutex::new(Some(Arc::new(client))),
-        })
-    }
-
-    /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
-    ///
-    /// Useful for programming many devices in rapid succession, as Windows usually
-    /// gives each one a different COMxx identifier.
-    ///
-    /// ### Arguments
-    ///
-    /// * `identifier` - A regex that identifies the device.
-    /// * `baud_rate` - The baud rate the port should operate at.
-    /// * `timeout_ms` - The communication timeout, in ms.
-    ///
-    /// ### Identifier examples
-    ///
-    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
-    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
-    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
-    ///
-    #[staticmethod]
-    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
-    fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
-        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_usb_serial(
-            identifier,
-            baud_rate,
             Duration::from_millis(timeout_ms),
         )
         .map_err(err_to_pyerr)?;
