@@ -170,17 +170,6 @@ class MCUmgrClient:
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod
-    def udp(host: builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address, port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
-        r"""
-        Creates a new UDP-based Zephyr MCUmgr SMP client.
-        
-        ### Arguments
-        
-        * `host` - The UDP endpoint IP address or hostname.
-        * `port` - The UDP endpoint port number.
-        * `timeout_ms` - The communication timeout, in ms.
-        """
-    @staticmethod
     def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
         r"""
         Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
@@ -199,6 +188,17 @@ class MCUmgrClient:
         - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
         - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
         - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+        """
+    @staticmethod
+    def udp(host: builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address, port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+        r"""
+        Creates a new UDP-based Zephyr MCUmgr SMP client.
+        
+        ### Arguments
+        
+        * `host` - The UDP endpoint IP address or hostname.
+        * `port` - The UDP endpoint port number.
+        * `timeout_ms` - The communication timeout, in ms.
         """
     def set_frame_size(self, smp_frame_size: builtins.int) -> None:
         r"""
