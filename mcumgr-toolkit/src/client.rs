@@ -493,7 +493,7 @@ impl MCUmgrClient {
                 })
                 .await
                 .map_err(|_: Elapsed| {
-                    let devices = BleDevices(devices.into_iter().map(|(_, val)| val).collect());
+                    let devices = BleDevices(devices.into_values().collect());
                     if name.is_empty() {
                         BleError::IdentifierEmpty { devices }
                     } else {
