@@ -452,14 +452,15 @@ impl MCUmgrClient {
 
         let mut devices = HashMap::new();
 
-        let device_id = runtime.scan(
-            async |mut events, central| -> Result<btleplug::platform::PeripheralId, BleError> {
+        let device = runtime.scan(
+            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
                 tokio::time::timeout(SCAN_TIMEOUT, async {
                     loop {
                         if let btleplug::api::CentralEvent::DeviceDiscovered(id) =
                             events.next().await.ok_or(BleError::ScanStopped)?
                         {
-                            let properties = central.peripheral(&id).await?.properties().await?;
+                            let device = central.peripheral(&id).await?;
+                            let properties = device.properties().await?;
 
                             if let Some(properties) = properties
                                 && properties
@@ -472,12 +473,12 @@ impl MCUmgrClient {
                                     if let Some(mac) = &mac {
                                         // If a mac is given, check it
                                         if mac == &properties.address {
-                                            break Ok(id);
+                                            break Ok(device);
                                         }
                                     } else {
                                         // If no mac is given, accept all devices with
                                         // the given name
-                                        break Ok(id);
+                                        break Ok(device);
                                     }
                                 }
 
@@ -492,7 +493,7 @@ impl MCUmgrClient {
                 })
                 .await
                 .map_err(|_: Elapsed| {
-                    let devices = BleDevices(devices.into_iter().map(|(id, val)| val).collect());
+                    let devices = BleDevices(devices.into_iter().map(|(_, val)| val).collect());
                     if name.is_empty() {
                         BleError::IdentifierEmpty { devices }
                     } else {
