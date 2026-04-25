@@ -56,7 +56,7 @@ pub struct CommonArgs {
 #[command(disable_help_subcommand = true)]
 #[command(group(
     ArgGroup::new("transport")
-        .args(["serial", "usb_serial", "udp"])
+        .args(["serial", "usb_serial", "udp", "ble"])
 ))]
 #[command(group(
     ArgGroup::new("serial_transport")
@@ -92,11 +92,11 @@ pub struct App {
     ///
     /// Must contain a regex that matches the device name.
     /// If no argument provided, list all available devices and exit.
-    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "", value_name = "DEVICE_NAME")]
     pub ble: Option<String>,
 
     /// Filter BLE devices by MAC address
-    #[arg(long, verbatim_doc_comment)]
+    #[arg(long, verbatim_doc_comment, requires = "ble")]
     pub ble_mac: Option<String>,
 
     /// Settings that customize runtime behaviour
