@@ -456,38 +456,44 @@ impl MCUmgrClient {
             async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
                 tokio::time::timeout(SCAN_TIMEOUT, async {
                     loop {
-                        if let btleplug::api::CentralEvent::DeviceDiscovered(id) =
-                            events.next().await.ok_or(BleError::ScanStopped)?
-                        {
-                            let device = central.peripheral(&id).await?;
-                            let properties = device.properties().await?;
+                        match events.next().await.ok_or(BleError::ScanStopped)? {
+                            btleplug::api::CentralEvent::DeviceDiscovered(id) => {
+                                let device = central.peripheral(&id).await?;
+                                let properties = device.properties().await?;
 
-                            if let Some(properties) = properties
-                                && properties
-                                    .services
-                                    .contains(&crate::transport::ble::SMP_UUID)
-                                && let Some(local_name) = properties.local_name
-                            {
-                                // We found a matching device name
-                                if !name.is_empty() && name == local_name {
-                                    if let Some(mac) = &mac {
-                                        // If a mac is given, check it
-                                        if mac == &properties.address {
+                                if let Some(properties) = properties
+                                    && properties
+                                        .services
+                                        .contains(&crate::transport::ble::SMP_UUID)
+                                    && let Some(local_name) = properties.local_name
+                                {
+                                    // We found a matching device name
+                                    if !name.is_empty() && name == local_name {
+                                        if let Some(mac) = &mac {
+                                            // If a mac is given, check it
+                                            if mac == &properties.address {
+                                                break Ok(device);
+                                            }
+                                        } else {
+                                            // If no mac is given, accept all devices with
+                                            // the given name
                                             break Ok(device);
                                         }
-                                    } else {
-                                        // If no mac is given, accept all devices with
-                                        // the given name
-                                        break Ok(device);
                                     }
-                                }
 
-                                devices.entry(id).insert_entry(BleDeviceInfo {
-                                    mac: properties.address,
-                                    name: local_name,
-                                    rssi: properties.rssi,
-                                });
+                                    devices.entry(id).insert_entry(BleDeviceInfo {
+                                        mac: properties.address,
+                                        name: local_name,
+                                        rssi: properties.rssi,
+                                    });
+                                }
                             }
+                            btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
+                                if let Some(device) = devices.get_mut(&id) {
+                                    device.rssi = Some(rssi);
+                                }
+                            }
+                            _ => (),
                         }
                     }
                 })
