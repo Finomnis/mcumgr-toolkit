@@ -358,9 +358,9 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.6.2"
+version = "4.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ff7a1dccbdd8b078c2bdebff47e404615151534d5043da397ec50286816f9cb"
+checksum = "660c0520455b1013b9bcb0393d5f643d7e4454fb69c915b8d6d2aa0e9a45acc3"
 dependencies = [
  "clap",
  "clap_lex",
@@ -1663,9 +1663,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-stub-gen"
-version = "0.22.1"
+version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8933f5816871707ba1379189c9fe3ae3511403fc9564914fb085b7686160529f"
+checksum = "b695173a33bec37b6acd288efe74f902f123f5891e5ff5ad53ff429e18833c14"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1689,9 +1689,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-stub-gen-derive"
-version = "0.22.1"
+version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d085a7cb2c2a8aa9b660abfbdbb456b2e0872090158398d0524a3a2ae38f0ab0"
+checksum = "c2f901834d55c74f36be3353994062e3c3b3d47fda25572f5535e99434612ac8"
 dependencies = [
  "heck",
  "indexmap",

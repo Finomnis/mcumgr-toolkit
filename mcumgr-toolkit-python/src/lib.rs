@@ -119,12 +119,7 @@ impl MCUmgrClient {
     ///
     #[staticmethod]
     #[pyo3(signature = (host, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
-    fn udp(
-        #[gen_stub(override_type(type_repr="builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address", imports=("builtins", "ipaddress")))]
-        host: Either<&str, std::net::IpAddr>,
-        port: u16,
-        timeout_ms: u64,
-    ) -> PyResult<Self> {
+    fn udp(host: Either<&str, std::net::IpAddr>, port: u16, timeout_ms: u64) -> PyResult<Self> {
         let socketaddr = match host {
             Either::Left(addr_str) => (addr_str, port)
                 .to_socket_addrs()
