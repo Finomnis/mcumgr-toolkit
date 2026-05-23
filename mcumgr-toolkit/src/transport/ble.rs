@@ -10,7 +10,7 @@ use btleplug::{
 use futures::StreamExt;
 use uuid::{Uuid, uuid};
 
-use crate::transport::{ReceiveError, Transport};
+use crate::transport::{ReceiveError, SmpHeader, Transport};
 
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
@@ -151,14 +151,36 @@ impl Transport for BleTransport {
         header: [u8; super::SMP_HEADER_SIZE],
         data: &[u8],
     ) -> Result<(), super::SendError> {
+        log::debug!("Sending SMP Frame ({} bytes)", data.len());
+
         self.send_buffer.clear();
         self.send_buffer.extend_from_slice(&header);
         self.send_buffer.extend_from_slice(data);
 
-        self.runtime.block_on(self.device.write(
+        async fn send_frame_parts(
+            device: &Peripheral,
+            characteristic: &Characteristic,
+            data: &[u8],
+        ) -> Result<(), super::SendError> {
+            log::debug!("Chunk size: {}", device.mtu());
+            for chunk in data.chunks(device.mtu().into()) {
+                log::debug!("Sending SMP Frame Chunk ({} bytes)", data.len());
+                device
+                    .write(
+                        characteristic,
+                        chunk,
+                        btleplug::api::WriteType::WithoutResponse,
+                    )
+                    .await?;
+            }
+
+            Ok(())
+        }
+
+        self.runtime.block_on(send_frame_parts(
+            &self.device,
             &self.characteristic,
             &self.send_buffer,
-            btleplug::api::WriteType::WithoutResponse,
         ))?;
 
         Ok(())
@@ -181,13 +203,58 @@ impl Transport for BleTransport {
             ));
         };
 
-        let result = buffer
+        let expected_len: usize = msg
+            .value
+            .first_chunk()
+            .copied()
+            .map(SmpHeader::from_bytes)
+            .ok_or(ReceiveError::UnexpectedResponse)?
+            .data_length
+            .into();
+
+        let mut len = msg.value.len();
+        buffer
             .get_mut(..msg.value.len())
-            .ok_or(ReceiveError::TransportError(
-                "Receive Buffer overflow".into(),
-            ))?;
-        result.copy_from_slice(&msg.value);
-        Ok(result)
+            .ok_or(ReceiveError::FrameTooBig)?
+            .copy_from_slice(&msg.value);
+
+        log::debug!(
+            "Received SMP frame chunk: {} (expected: {})",
+            len,
+            expected_len
+        );
+
+        while len < expected_len {
+            let msg = self
+                .runtime
+                .block_on(async { tokio::time::timeout(self.timeout, notifications.next()).await })
+                .map_err(|_| ReceiveError::Timeout)?;
+
+            let Some(msg) = msg else {
+                return Err(ReceiveError::TransportError(
+                    "Notify queue closed unexpectedly".into(),
+                ));
+            };
+
+            let new_len = len + msg.value.len();
+            buffer
+                .get_mut(len..new_len)
+                .ok_or(ReceiveError::FrameTooBig)?
+                .copy_from_slice(&msg.value);
+
+            len = new_len;
+
+            log::debug!(
+                "Received SMP continuation chunk: {} ({}/{})",
+                msg.value.len(),
+                len,
+                expected_len
+            );
+        }
+
+        log::debug!("Received SMP Frame ({} bytes)", len);
+
+        buffer.get(..len).ok_or(ReceiveError::FrameTooBig)
     }
 
     fn set_timeout(
