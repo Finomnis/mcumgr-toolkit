@@ -10,7 +10,7 @@ use btleplug::{
 use futures::StreamExt;
 use uuid::{Uuid, uuid};
 
-use crate::transport::{ReceiveError, SmpHeader, Transport};
+use crate::transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport};
 
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
@@ -162,8 +162,9 @@ impl Transport for BleTransport {
             characteristic: &Characteristic,
             data: &[u8],
         ) -> Result<(), super::SendError> {
-            log::debug!("Chunk size: {}", device.mtu());
-            for chunk in data.chunks(device.mtu().into()) {
+            let chunk_size = usize::from(device.mtu().saturating_sub(3));
+            log::debug!("Chunk size: {}", chunk_size);
+            for chunk in data.chunks(chunk_size) {
                 log::debug!("Sending SMP Frame Chunk ({} bytes)", data.len());
                 device
                     .write(
@@ -203,14 +204,14 @@ impl Transport for BleTransport {
             ));
         };
 
-        let expected_len: usize = msg
-            .value
-            .first_chunk()
-            .copied()
-            .map(SmpHeader::from_bytes)
-            .ok_or(ReceiveError::UnexpectedResponse)?
-            .data_length
-            .into();
+        let expected_len: usize = usize::from(
+            msg.value
+                .first_chunk()
+                .copied()
+                .map(SmpHeader::from_bytes)
+                .ok_or(ReceiveError::UnexpectedResponse)?
+                .data_length,
+        ) + SMP_HEADER_SIZE;
 
         let mut len = msg.value.len();
         buffer
