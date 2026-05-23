@@ -165,7 +165,7 @@ impl Transport for BleTransport {
             let chunk_size = usize::from(device.mtu().saturating_sub(3));
             log::debug!("Chunk size: {}", chunk_size);
             for chunk in data.chunks(chunk_size) {
-                log::debug!("Sending SMP Frame Chunk ({} bytes)", data.len());
+                log::debug!("Sending SMP Frame Chunk ({} bytes)", chunk.len());
                 device
                     .write(
                         characteristic,
@@ -270,7 +270,11 @@ impl Transport for BleTransport {
 impl Drop for BleTransport {
     fn drop(&mut self) {
         // Drop of notifications seems to contain a tokio::spawn
-        let _guard = self.runtime.runtime.enter();
-        self.notifications.take();
+        self.runtime.runtime.block_on(async {
+            self.notifications.take();
+
+            let _ = self.device.unsubscribe(&self.characteristic).await;
+            let _ = self.device.disconnect().await;
+        });
     }
 }
