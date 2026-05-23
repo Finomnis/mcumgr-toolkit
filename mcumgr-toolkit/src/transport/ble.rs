@@ -7,7 +7,7 @@ use btleplug::{
     },
     platform::{Adapter, Peripheral},
 };
-use futures::StreamExt;
+use futures::{FutureExt, StreamExt};
 use uuid::{Uuid, uuid};
 
 use crate::transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport};
@@ -103,9 +103,11 @@ impl BleRuntime {
             device: &Peripheral,
             timeout: Duration,
         ) -> Result<Characteristic, BleRuntimeError> {
-            if !device.is_connected().await? {
-                device.connect_with_timeout(Duration::from_secs(3)).await?;
+            if device.is_connected().await? {
+                device.disconnect().await?;
             }
+
+            device.connect_with_timeout(Duration::from_secs(5)).await?;
 
             device.discover_services_with_timeout(timeout).await?;
 
@@ -116,12 +118,23 @@ impl BleRuntime {
                 .cloned()
                 .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
 
-            device.subscribe(&characteristic).await?;
+            if let Err(e) = device.subscribe(&characteristic).await {
+                let _ = device.unsubscribe(&characteristic).await;
+                return Err(e);
+            }
 
             Ok(characteristic)
         }
 
-        let characteristic = self.block_on(async { connect(&device, timeout).await })?;
+        let characteristic = self.block_on(async {
+            match connect(&device, timeout).await {
+                Ok(ch) => Ok(ch),
+                Err(e) => {
+                    let _ = device.disconnect().await;
+                    Err(e)
+                }
+            }
+        })?;
         let notifications = self.block_on(async { device.notifications().await })?;
 
         Ok(BleTransport {
@@ -152,6 +165,10 @@ impl Transport for BleTransport {
         data: &[u8],
     ) -> Result<(), super::SendError> {
         log::debug!("Sending SMP Frame ({} bytes)", data.len());
+
+        // Clear pending notifications
+        let notifications = self.notifications.as_mut().unwrap();
+        while notifications.next().now_or_never().is_some() {}
 
         self.send_buffer.clear();
         self.send_buffer.extend_from_slice(&header);
