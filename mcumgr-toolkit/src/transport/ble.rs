@@ -103,11 +103,9 @@ impl BleRuntime {
             device: &Peripheral,
             timeout: Duration,
         ) -> Result<Characteristic, BleRuntimeError> {
-            if device.is_connected().await? {
-                device.disconnect().await?;
+            if !device.is_connected().await? {
+                device.connect_with_timeout(Duration::from_secs(5)).await?;
             }
-
-            device.connect_with_timeout(Duration::from_secs(5)).await?;
 
             device.discover_services_with_timeout(timeout).await?;
 
@@ -118,6 +116,7 @@ impl BleRuntime {
                 .cloned()
                 .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
 
+            let _ = device.unsubscribe(&characteristic).await;
             if let Err(e) = device.subscribe(&characteristic).await {
                 let _ = device.unsubscribe(&characteristic).await;
                 return Err(e);
@@ -287,11 +286,11 @@ impl Transport for BleTransport {
 impl Drop for BleTransport {
     fn drop(&mut self) {
         // Drop of notifications seems to contain a tokio::spawn
-        self.runtime.runtime.block_on(async {
+        self.runtime.block_on(async {
             self.notifications.take();
 
             let _ = self.device.unsubscribe(&self.characteristic).await;
-            let _ = self.device.disconnect().await;
+            //let _ = self.device.disconnect().await;
         });
     }
 }
