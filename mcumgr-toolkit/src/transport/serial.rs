@@ -122,10 +122,11 @@ where
                     .unwrap()?;
 
                 if num_read == 0 {
-                    return Err(ReceiveError::TransportError(std::io::Error::new(
+                    return Err(std::io::Error::new(
                         std::io::ErrorKind::UnexpectedEof,
                         "Serial port unexpectedly returned end-of-file",
-                    )));
+                    )
+                    .into());
                 }
             }
 
@@ -149,10 +150,11 @@ where
                         .unwrap()?;
 
                     if num_read == 0 {
-                        return Err(ReceiveError::TransportError(std::io::Error::new(
+                        return Err(std::io::Error::new(
                             std::io::ErrorKind::UnexpectedEof,
                             "Serial port unexpectedly returned end-of-file",
-                        )));
+                        )
+                        .into());
                     }
                 }
             };

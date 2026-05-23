@@ -1,4 +1,4 @@
-use std::{io, time::Duration};
+use std::time::Duration;
 
 use miette::Diagnostic;
 use thiserror::Error;
@@ -64,10 +64,14 @@ mod smp_op {
 /// Error while sending a command request
 #[derive(Error, Debug, Diagnostic)]
 pub enum SendError {
+    /// A timeout occurred while sending
+    #[error("A timeout occurred")]
+    #[diagnostic(code(mcumgr_toolkit::transport::send::timeout))]
+    Timeout,
     /// An error occurred in the underlying transport
     #[error("Transport error")]
     #[diagnostic(code(mcumgr_toolkit::transport::send::transport))]
-    TransportError(#[from] io::Error),
+    TransportError(#[source] Box<dyn std::error::Error + Sync + Send + 'static>),
     /// Unable to send data because it is too big
     #[error("Given data slice was too big")]
     #[diagnostic(code(mcumgr_toolkit::transport::send::too_big))]
@@ -77,10 +81,14 @@ pub enum SendError {
 /// Error while receiving a command response
 #[derive(Error, Debug, Diagnostic)]
 pub enum ReceiveError {
+    /// A timeout occurred while receiving
+    #[error("A timeout occurred")]
+    #[diagnostic(code(mcumgr_toolkit::transport::recv::timeout))]
+    Timeout,
     /// An error occurred in the underlying transport
     #[error("Transport error")]
     #[diagnostic(code(mcumgr_toolkit::transport::recv::transport))]
-    TransportError(#[from] io::Error),
+    TransportError(#[source] Box<dyn std::error::Error + Sync + Send + 'static>),
     /// We received a response that did not fit to our request
     #[error("Received unexpected response")]
     #[diagnostic(code(mcumgr_toolkit::transport::recv::unexpected))]
@@ -93,6 +101,46 @@ pub enum ReceiveError {
     #[error("Failed to decode base64 data")]
     #[diagnostic(code(mcumgr_toolkit::transport::recv::base64_decode))]
     Base64DecodeError(#[from] base64::DecodeSliceError),
+}
+
+impl From<std::io::Error> for SendError {
+    fn from(e: std::io::Error) -> Self {
+        if std::io::ErrorKind::TimedOut == e.kind() {
+            Self::Timeout
+        } else {
+            Self::TransportError(e.into())
+        }
+    }
+}
+
+impl From<std::io::Error> for ReceiveError {
+    fn from(e: std::io::Error) -> Self {
+        if std::io::ErrorKind::TimedOut == e.kind() {
+            Self::Timeout
+        } else {
+            Self::TransportError(e.into())
+        }
+    }
+}
+
+impl From<btleplug::Error> for SendError {
+    fn from(e: btleplug::Error) -> Self {
+        if let btleplug::Error::TimedOut(_) = e {
+            Self::Timeout
+        } else {
+            Self::TransportError(e.into())
+        }
+    }
+}
+
+impl From<btleplug::Error> for ReceiveError {
+    fn from(e: btleplug::Error) -> Self {
+        if let btleplug::Error::TimedOut(_) = e {
+            Self::Timeout
+        } else {
+            Self::TransportError(e.into())
+        }
+    }
 }
 
 /// Defines the API of the SMP transport layer

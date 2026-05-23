@@ -509,7 +509,11 @@ impl MCUmgrClient {
             },
         )??;
 
-        Ok(todo!())
+        let transport = runtime.into_transport(device, timeout)?;
+        Ok(Self {
+            connection: Connection::new(transport),
+            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
+        })
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a UDP socket.
@@ -863,12 +867,10 @@ impl MCUmgrClient {
                         upgrade: Some(upgrade_only),
                     });
 
-                if let Err(ExecuteError::ReceiveFailed(ReceiveError::TransportError(e))) = &result {
-                    if let io::ErrorKind::TimedOut = e.kind() {
-                        log::warn!(
-                            "Timed out during transfer of first chunk. Consider enabling CONFIG_IMG_ERASE_PROGRESSIVELY."
-                        )
-                    }
+                if let Err(ExecuteError::ReceiveFailed(ReceiveError::Timeout)) = &result {
+                    log::warn!(
+                        "Timed out during transfer of first chunk. Consider enabling CONFIG_IMG_ERASE_PROGRESSIVELY."
+                    )
                 }
 
                 result?

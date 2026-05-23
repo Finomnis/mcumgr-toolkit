@@ -1,10 +1,12 @@
-use std::pin::Pin;
+use std::{pin::Pin, time::Duration};
 
 use btleplug::{
-    api::{Central, CentralEvent, Manager, ScanFilter},
-    platform::Adapter,
+    api::{Central, CentralEvent, Characteristic, Manager, Peripheral as _, ScanFilter},
+    platform::{Adapter, Peripheral},
 };
 use uuid::{Uuid, uuid};
+
+use crate::transport::{SendError, Transport};
 
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
@@ -18,6 +20,8 @@ pub struct BleRuntime {
 
 /// The BLE service UUID that signals SMP capability
 pub const SMP_UUID: Uuid = uuid!("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
+/// The BLE characteristic UUID used to communicate SMP messages
+pub const CHARACTERISTIC_UUID: Uuid = uuid!("DA2E7828-FBCE-4E01-AE9E-261174997C48");
 
 impl BleRuntime {
     /// Create a new [`BleRuntime`].
@@ -83,5 +87,71 @@ impl BleRuntime {
         F: Future,
     {
         self.runtime.block_on(future)
+    }
+
+    /// Creates a BLE transport to a connected device
+    pub fn into_transport(
+        self,
+        device: Peripheral,
+        timeout: Duration,
+    ) -> Result<BleTransport, BleRuntimeError> {
+        let characteristic = device
+            .characteristics()
+            .iter()
+            .find(|ch| ch.service_uuid == SMP_UUID && ch.uuid == CHARACTERISTIC_UUID)
+            .cloned()
+            .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
+
+        Ok(BleTransport {
+            runtime: self,
+            device,
+            characteristic,
+            timeout,
+            send_buffer: Vec::new(),
+        })
+    }
+}
+
+/// An active connection to a BLE device
+pub struct BleTransport {
+    runtime: BleRuntime,
+    device: Peripheral,
+    characteristic: Characteristic,
+    timeout: Duration,
+    send_buffer: Vec<u8>,
+}
+
+impl Transport for BleTransport {
+    fn send_raw_frame(
+        &mut self,
+        header: [u8; super::SMP_HEADER_SIZE],
+        data: &[u8],
+    ) -> Result<(), super::SendError> {
+        self.send_buffer.clear();
+        self.send_buffer.extend_from_slice(&header);
+        self.send_buffer.extend_from_slice(data);
+
+        self.runtime.block_on(self.device.write(
+            &self.characteristic,
+            &self.send_buffer,
+            btleplug::api::WriteType::WithoutResponse,
+        ))?;
+
+        Ok(())
+    }
+
+    fn recv_raw_frame<'a>(
+        &mut self,
+        buffer: &'a mut [u8; super::SMP_TRANSFER_BUFFER_SIZE],
+    ) -> Result<&'a [u8], super::ReceiveError> {
+        todo!()
+    }
+
+    fn set_timeout(
+        &mut self,
+        timeout: std::time::Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.timeout = timeout;
+        Ok(())
     }
 }
