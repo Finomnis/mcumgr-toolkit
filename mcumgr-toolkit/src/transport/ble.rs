@@ -1,12 +1,16 @@
 use std::{pin::Pin, time::Duration};
 
 use btleplug::{
-    api::{Central, CentralEvent, Characteristic, Manager, Peripheral as _, ScanFilter},
+    api::{
+        Central, CentralEvent, Characteristic, Manager, Peripheral as _, ScanFilter,
+        ValueNotification,
+    },
     platform::{Adapter, Peripheral},
 };
+use futures::StreamExt;
 use uuid::{Uuid, uuid};
 
-use crate::transport::{SendError, Transport};
+use crate::transport::{ReceiveError, Transport};
 
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
@@ -95,17 +99,36 @@ impl BleRuntime {
         device: Peripheral,
         timeout: Duration,
     ) -> Result<BleTransport, BleRuntimeError> {
-        let characteristic = device
-            .characteristics()
-            .iter()
-            .find(|ch| ch.service_uuid == SMP_UUID && ch.uuid == CHARACTERISTIC_UUID)
-            .cloned()
-            .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
+        async fn connect(
+            device: &Peripheral,
+            timeout: Duration,
+        ) -> Result<Characteristic, BleRuntimeError> {
+            if !device.is_connected().await? {
+                device.connect_with_timeout(Duration::from_secs(3)).await?;
+            }
+
+            device.discover_services_with_timeout(timeout).await?;
+
+            let characteristic = device
+                .characteristics()
+                .iter()
+                .find(|ch| ch.service_uuid == SMP_UUID && ch.uuid == CHARACTERISTIC_UUID)
+                .cloned()
+                .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
+
+            device.subscribe(&characteristic).await?;
+
+            Ok(characteristic)
+        }
+
+        let characteristic = self.block_on(async { connect(&device, timeout).await })?;
+        let notifications = self.block_on(async { device.notifications().await })?;
 
         Ok(BleTransport {
             runtime: self,
             device,
             characteristic,
+            notifications: Some(notifications),
             timeout,
             send_buffer: Vec::new(),
         })
@@ -117,6 +140,7 @@ pub struct BleTransport {
     runtime: BleRuntime,
     device: Peripheral,
     characteristic: Characteristic,
+    notifications: Option<Pin<Box<dyn futures::Stream<Item = ValueNotification> + Send>>>,
     timeout: Duration,
     send_buffer: Vec<u8>,
 }
@@ -144,7 +168,26 @@ impl Transport for BleTransport {
         &mut self,
         buffer: &'a mut [u8; super::SMP_TRANSFER_BUFFER_SIZE],
     ) -> Result<&'a [u8], super::ReceiveError> {
-        todo!()
+        let notifications = self.notifications.as_mut().unwrap();
+
+        let msg = self
+            .runtime
+            .block_on(async { tokio::time::timeout(self.timeout, notifications.next()).await })
+            .map_err(|_| ReceiveError::Timeout)?;
+
+        let Some(msg) = msg else {
+            return Err(ReceiveError::TransportError(
+                "Notify queue closed unexpectedly".into(),
+            ));
+        };
+
+        let result = buffer
+            .get_mut(..msg.value.len())
+            .ok_or(ReceiveError::TransportError(
+                "Receive Buffer overflow".into(),
+            ))?;
+        result.copy_from_slice(&msg.value);
+        Ok(result)
     }
 
     fn set_timeout(
@@ -153,5 +196,13 @@ impl Transport for BleTransport {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.timeout = timeout;
         Ok(())
+    }
+}
+
+impl Drop for BleTransport {
+    fn drop(&mut self) {
+        // Drop of notifications seems to contain a tokio::spawn
+        let _guard = self.runtime.runtime.enter();
+        self.notifications.take();
     }
 }
