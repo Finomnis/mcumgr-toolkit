@@ -206,22 +206,21 @@ pub fn run(
             } else {
                 structured_print(Some("Memory Pools".into()), args.json, |s| {
                     for (name, stats) in pools {
-                        let total = stats
-                            .nblks
-                            .checked_mul(stats.blksiz)
-                            .map(|u| u.to_string())
-                            .unwrap_or_else(|| "??".to_string());
-                        let free = stats
-                            .nfree
-                            .checked_mul(stats.blksiz)
-                            .map(|u| u.to_string())
-                            .unwrap_or_else(|| "??".to_string());
-                        let lowest = stats
-                            .min
-                            .checked_mul(stats.blksiz)
-                            .map(|u| u.to_string())
-                            .unwrap_or_else(|| "??".to_string());
-                        s.key_value(name, format!("{free} / {total} (lowest: {lowest})"));
+                        let total = stats.nblks.saturating_mul(stats.blksiz);
+                        let free = stats.nfree.saturating_mul(stats.blksiz);
+                        let lowest = stats.min.saturating_mul(stats.blksiz);
+
+                        let occupied = total.saturating_sub(free);
+                        let highest_occupied = total.saturating_sub(lowest);
+
+                        let pct = (occupied as f32) / (total as f32);
+
+                        s.key_value(
+                            name,
+                            format!(
+                                "{occupied} / {total} ({pct:.02}%) (highest: {highest_occupied})"
+                            ),
+                        );
                     }
                 })?;
             }
