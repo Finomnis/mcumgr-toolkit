@@ -19,6 +19,8 @@ pub enum OsCommand {
     },
     /// Query live task statistics
     TaskStatistics,
+    /// Query live memory pool statistics
+    MemoryPoolStatistics,
     /// Set the device's RTC datetime
     SetDatetime {
         /// The datetime value, as RFC3339; host time if omitted
@@ -186,6 +188,28 @@ pub fn run(
                                 s.key_value("Runtime", format!("{} ticks", runtime));
                             }
                         });
+                    }
+                })?;
+            }
+        }
+        OsCommand::MemoryPoolStatistics => {
+            let pools_map = client.os_memory_pool_statistics()?;
+
+            let mut pools = pools_map.iter().collect::<Vec<_>>();
+            pools.sort();
+
+            if args.json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&pools_map).map_err(CliError::JsonEncodeError)?
+                );
+            } else {
+                structured_print(Some("Memory Pools".into()), args.json, |s| {
+                    for (name, stats) in pools {
+                        let total = stats.blksiz * stats.nblks;
+                        let free = stats.blksiz * stats.nfree;
+                        let lowest = stats.blksiz * stats.min;
+                        s.key_value(name, format!("{free} / {total} (lowest: {lowest})"));
                     }
                 })?;
             }
