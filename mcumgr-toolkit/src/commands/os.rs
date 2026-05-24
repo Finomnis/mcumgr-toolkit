@@ -118,7 +118,7 @@ pub struct MemoryPoolStatisticsEntry {
     pub nblks: u64,
     /// number of free blocks
     pub nfree: u64,
-    /// lowest number of free blocks the pool reached during run-time
+    /// lowest number of free blocks the pool reached during runtime
     pub min: u64,
 }
 
