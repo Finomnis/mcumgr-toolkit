@@ -30,6 +30,7 @@ chrono = { workspace = true, features = ["serde"] }
 hex = { workspace = true, features = ["serde"] }
 regex.workspace = true
 polonius-the-crab.workspace = true
+either = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 proptest = "1.11.0"

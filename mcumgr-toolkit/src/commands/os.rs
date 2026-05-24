@@ -99,6 +99,63 @@ pub struct TaskStatisticsResponse {
     pub tasks: HashMap<String, TaskStatisticsEntry>,
 }
 
+/// [Memory Pool statistics](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html#memory-pool-statistics) command
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MemoryPoolStatistics;
+impl_serialize_as_empty_map!(MemoryPoolStatistics);
+
+const fn default_blksiz() -> u64 {
+    1
+}
+
+/// Statistics of a MCU memory pool
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct MemoryPoolStatisticsEntry {
+    /// size of the memory block in the pool``
+    #[serde(default = "default_blksiz")]
+    pub blksiz: u64,
+    /// number of blocks in the pool
+    pub nblks: u64,
+    /// number of free blocks
+    pub nfree: u64,
+    /// lowest number of free blocks the pool reached during run-time
+    pub min: u64,
+}
+
+/// Response for [`MemoryPoolStatistics`] command
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct MemoryPoolStatisticsResponse {
+    /// Dictionary of pool names with their respective statistics
+    pub pools: HashMap<String, MemoryPoolStatisticsEntry>,
+}
+
+/// Response for [`MemoryPoolStatistics`] command,
+/// before https://github.com/zephyrproject-rtos/zephyr/pull/107251.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+struct MemoryPoolStatisticsResponseZephyr4_4_0 {
+    /// Dictionary of pool names with their respective statistics
+    pub tasks: HashMap<String, MemoryPoolStatisticsEntry>,
+}
+
+impl<'de> serde::Deserialize<'de> for MemoryPoolStatisticsResponse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let pools: either::Either<
+            HashMap<String, MemoryPoolStatisticsEntry>,
+            MemoryPoolStatisticsResponseZephyr4_4_0,
+        > = either::serde_untagged::deserialize(deserializer)?;
+
+        match pools {
+            either::Either::Left(pools) => Ok(Self { pools }),
+            either::Either::Right(response) => Ok(Self {
+                pools: response.tasks,
+            }),
+        }
+    }
+}
+
 /// Parses a [`chrono::NaiveDateTime`] object with optional timezone specifiers
 fn deserialize_datetime_and_ignore_timezone<'de, D>(
     de: D,
@@ -328,6 +385,102 @@ mod tests {
                     stksiz: Some(34),
                     cswcnt: Some(35),
                     runtime: Some(36),
+                },
+            ),
+        ]) },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_empty,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
+        cbor!({}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::new() },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_empty_old,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
+        cbor!({"tasks" => {}}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::new() },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
+        cbor!({
+            "pool_a" => {
+                "blksiz" => 8,
+                "nblks" => 20,
+                "nfree" => 10,
+                "min" => 5,
+            },
+            "pool_b" => {
+                "nblks" => 50,
+                "nfree" => 35,
+                "min" => 30,
+            },
+        }),
+        MemoryPoolStatisticsResponse{ pools: HashMap::from([
+            (
+                "pool_a".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 8,
+                    nblks: 20,
+                    nfree: 10,
+                    min: 5,
+                },
+            ), (
+                "pool_b".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 1,
+                    nblks: 50,
+                    nfree: 35,
+                    min: 30,
+                },
+            ),
+        ]) },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_old,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
+        cbor!({ "tasks" => {
+            "pool_a" => {
+                "blksiz" => 8,
+                "nblks" => 20,
+                "nfree" => 10,
+                "min" => 5,
+            },
+            "pool_b" => {
+                "nblks" => 50,
+                "nfree" => 35,
+                "min" => 30,
+            },
+        }}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::from([
+            (
+                "pool_a".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 8,
+                    nblks: 20,
+                    nfree: 10,
+                    min: 5,
+                },
+            ), (
+                "pool_b".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 1,
+                    nblks: 50,
+                    nfree: 35,
+                    min: 30,
                 },
             ),
         ]) },
