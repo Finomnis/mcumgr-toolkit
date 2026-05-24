@@ -132,9 +132,7 @@ pub struct ImageUploadResponse {
 /// # Arguments
 ///
 /// * `smp_frame_size`  - The max allowed size of an SMP frame.
-/// * `first_chunk`     - Whether this is the first chunk. It
-///                       carries several optional fields that
-///                       can be omitted afterwards.
+/// * `first_chunk`     - Whether this is the first chunk. It carries several optional fields that can be omitted afterwards.
 ///
 pub fn image_upload_max_data_chunk_size(
     smp_frame_size: usize,
