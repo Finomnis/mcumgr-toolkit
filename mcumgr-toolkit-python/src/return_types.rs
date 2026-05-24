@@ -217,7 +217,7 @@ pub struct MemoryPoolStatistics {
     /// number of free blocks
     #[pyo3(get)]
     pub nfree: u64,
-    /// lowest number of free blocks the pool reached during run-time
+    /// lowest number of free blocks the pool reached during runtime
     #[pyo3(get)]
     pub min: u64,
 }

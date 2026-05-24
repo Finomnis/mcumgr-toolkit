@@ -684,7 +684,7 @@ class MemoryPoolStatistics:
     @property
     def min(self) -> builtins.int:
         r"""
-        lowest number of free blocks the pool reached during run-time
+        lowest number of free blocks the pool reached during runtime
         """
 
 @typing.final
