@@ -196,7 +196,7 @@ pub fn run(
             let pools_map = client.os_memory_pool_statistics()?;
 
             let mut pools = pools_map.iter().collect::<Vec<_>>();
-            pools.sort();
+            pools.sort_by_key(|val| val.0);
 
             if args.json {
                 println!(
@@ -206,9 +206,21 @@ pub fn run(
             } else {
                 structured_print(Some("Memory Pools".into()), args.json, |s| {
                     for (name, stats) in pools {
-                        let total = stats.blksiz * stats.nblks;
-                        let free = stats.blksiz * stats.nfree;
-                        let lowest = stats.blksiz * stats.min;
+                        let total = stats
+                            .nblks
+                            .checked_mul(stats.blksiz)
+                            .map(|u| u.to_string())
+                            .unwrap_or_else(|| "??".to_string());
+                        let free = stats
+                            .nfree
+                            .checked_mul(stats.blksiz)
+                            .map(|u| u.to_string())
+                            .unwrap_or_else(|| "??".to_string());
+                        let lowest = stats
+                            .min
+                            .checked_mul(stats.blksiz)
+                            .map(|u| u.to_string())
+                            .unwrap_or_else(|| "??".to_string());
                         s.key_value(name, format!("{free} / {total} (lowest: {lowest})"));
                     }
                 })?;

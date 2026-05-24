@@ -109,7 +109,7 @@ const fn default_blksiz() -> u64 {
 }
 
 /// Statistics of a MCU memory pool
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct MemoryPoolStatisticsEntry {
     /// size of a memory block in the pool
     #[serde(default = "default_blksiz")]
