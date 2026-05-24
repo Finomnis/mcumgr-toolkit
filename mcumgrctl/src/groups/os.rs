@@ -213,7 +213,11 @@ pub fn run(
                         let occupied = total.saturating_sub(free);
                         let highest_occupied = total.saturating_sub(lowest);
 
-                        let pct = (occupied as f32) / (total as f32);
+                        let pct = if total != 0 {
+                            100.0 * (occupied as f32) / (total as f32)
+                        } else {
+                            100.0
+                        };
 
                         s.key_value(
                             name,
