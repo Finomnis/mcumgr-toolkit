@@ -508,6 +508,20 @@ impl MCUmgrClient {
             .map_err(Into::into)
     }
 
+    /// Queries live memory pool statistics
+    ///
+    /// # Return
+    ///
+    /// A map of memory pool names with their respective statistics
+    pub fn os_memory_pool_statistics(
+        &self,
+    ) -> Result<HashMap<String, commands::os::MemoryPoolStatisticsEntry>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::os::MemoryPoolStatistics)
+            .map(|resp| resp.pools)
+            .map_err(Into::into)
+    }
+
     /// Sets the RTC of the device to the given datetime.
     pub fn os_set_datetime(
         &self,

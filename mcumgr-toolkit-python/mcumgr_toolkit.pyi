@@ -17,6 +17,7 @@ __all__ = [
     "MCUmgrClient",
     "MCUmgrParameters",
     "McubootImageInfo",
+    "MemoryPoolStatistics",
     "SettingData",
     "SlotInfoImage",
     "SlotInfoImageSlot",
@@ -267,6 +268,14 @@ class MCUmgrClient:
         ### Return
         
         A map of task names with their respective statistics
+        """
+    def os_memory_pool_statistics(self) -> builtins.dict[builtins.str, MemoryPoolStatistics]:
+        r"""
+        Queries live memory pool statistics
+        
+        ### Return
+        
+        A map of memory pool names with their respective statistics
         """
     def os_set_datetime(self, datetime: datetime.datetime) -> None:
         r"""
@@ -650,6 +659,32 @@ class McubootImageInfo:
         Note that this will not be the same as the SHA256 of the whole file, it is the field in the
         MCUboot TLV section that contains a hash of the data which is used for signature
         verification purposes.
+        """
+
+@typing.final
+class MemoryPoolStatistics:
+    r"""
+    Statistics of an MCU memory pool
+    """
+    @property
+    def blksiz(self) -> builtins.int:
+        r"""
+        size of a memory block in the pool
+        """
+    @property
+    def nblks(self) -> builtins.int:
+        r"""
+        number of blocks in the pool
+        """
+    @property
+    def nfree(self) -> builtins.int:
+        r"""
+        number of free blocks
+        """
+    @property
+    def min(self) -> builtins.int:
+        r"""
+        lowest number of free blocks the pool reached during runtime
         """
 
 @typing.final
