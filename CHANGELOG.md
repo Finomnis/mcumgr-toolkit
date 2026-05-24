@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.13.3] - 2026-05-24
+
+### Changes
+
+- Implement memory pool statistics:
+    - Add Python/Rust library command:
+        - `os_memory_pool_statistics`
+    - Add CLI command:
+        - `os`
+            - `memory-pool-statistics`
+
+
 ## [0.13.2] - 2026-04-24
 
 ### Fixes
@@ -454,6 +466,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.13.3]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.13.2...0.13.3
 [0.13.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.13.1...0.13.2
 [0.13.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.13.0...0.13.1
 [0.13.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.12.1...0.13.0

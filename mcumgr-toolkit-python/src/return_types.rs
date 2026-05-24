@@ -203,6 +203,37 @@ impl From<commands::os::TaskStatisticsEntry> for TaskStatistics {
     }
 }
 
+/// Statistics of an MCU memory pool
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Serialize)]
+pub struct MemoryPoolStatistics {
+    /// size of a memory block in the pool
+    #[pyo3(get)]
+    pub blksiz: u64,
+    /// number of blocks in the pool
+    #[pyo3(get)]
+    pub nblks: u64,
+    /// number of free blocks
+    #[pyo3(get)]
+    pub nfree: u64,
+    /// lowest number of free blocks the pool reached during run-time
+    #[pyo3(get)]
+    pub min: u64,
+}
+generate_repr_from_serialize!(MemoryPoolStatistics);
+
+impl From<commands::os::MemoryPoolStatisticsEntry> for MemoryPoolStatistics {
+    fn from(value: commands::os::MemoryPoolStatisticsEntry) -> Self {
+        Self {
+            blksiz: value.blksiz,
+            nblks: value.nblks,
+            nfree: value.nfree,
+            min: value.min,
+        }
+    }
+}
+
 /// The state of an image slot
 #[gen_stub_pyclass]
 #[pyclass(frozen)]
