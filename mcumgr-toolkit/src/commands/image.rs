@@ -132,8 +132,14 @@ pub struct ImageUploadResponse {
 /// # Arguments
 ///
 /// * `smp_frame_size`  - The max allowed size of an SMP frame.
+/// * `first_chunk`     - Whether this is the first chunk. It
+///                       carries several optional fields that
+///                       can be omitted afterwards.
 ///
-pub fn image_upload_max_data_chunk_size(smp_frame_size: usize) -> std::io::Result<usize> {
+pub fn image_upload_max_data_chunk_size(
+    smp_frame_size: usize,
+    first_chunk: bool,
+) -> std::io::Result<usize> {
     const MGMT_HDR_SIZE: usize = 8; // Size of SMP header
 
     let mut size_counter = CountingWriter::new();
@@ -141,10 +147,10 @@ pub fn image_upload_max_data_chunk_size(smp_frame_size: usize) -> std::io::Resul
         &ImageUpload {
             off: u64::MAX,
             data: &[0u8],
-            len: Some(u64::MAX),
-            image: Some(u32::MAX),
-            sha: Some(&[42; 32]),
-            upgrade: Some(true),
+            len: first_chunk.then_some(u64::MAX),
+            image: first_chunk.then_some(u32::MAX),
+            sha: first_chunk.then_some(&[42; 32]),
+            upgrade: first_chunk.then_some(true),
         },
         &mut size_counter,
     )
@@ -483,11 +489,12 @@ mod tests {
     }
 
     #[test]
-    fn image_upload_max_data_chunk_size() {
+    fn image_upload_max_first_data_chunk_size() {
         for smp_frame_size in 101..100000 {
             let smp_payload_size = smp_frame_size - 8 /* SMP frame header */;
 
-            let max_data_size = super::image_upload_max_data_chunk_size(smp_frame_size).unwrap();
+            let max_data_size =
+                super::image_upload_max_data_chunk_size(smp_frame_size, true).unwrap();
 
             let cmd = ImageUpload {
                 off: u64::MAX,
@@ -512,9 +519,48 @@ mod tests {
     }
 
     #[test]
-    fn image_upload_max_data_chunk_size_too_small() {
+    fn image_upload_max_first_data_chunk_size_too_small() {
         for smp_frame_size in 0..101 {
-            let max_data_size = super::image_upload_max_data_chunk_size(smp_frame_size);
+            let max_data_size = super::image_upload_max_data_chunk_size(smp_frame_size, true);
+
+            assert!(max_data_size.is_err());
+        }
+    }
+
+    #[test]
+    fn image_upload_max_data_chunk_size() {
+        for smp_frame_size in 30..100000 {
+            let smp_payload_size = smp_frame_size - 8 /* SMP frame header */;
+
+            let max_data_size =
+                super::image_upload_max_data_chunk_size(smp_frame_size, false).unwrap();
+
+            let cmd = ImageUpload {
+                off: u64::MAX,
+                data: &vec![0; max_data_size],
+                len: None,
+                image: None,
+                sha: None,
+                upgrade: None,
+            };
+
+            let mut cbor_data = vec![];
+            ciborium::into_writer(&cmd, &mut cbor_data).unwrap();
+
+            assert!(
+                smp_payload_size - 2 <= cbor_data.len() && cbor_data.len() <= smp_payload_size,
+                "Failed at frame size {}: actual={}, max={}",
+                smp_frame_size,
+                cbor_data.len(),
+                smp_payload_size,
+            );
+        }
+    }
+
+    #[test]
+    fn image_upload_max_data_chunk_size_too_small() {
+        for smp_frame_size in 0..30 {
+            let max_data_size = super::image_upload_max_data_chunk_size(smp_frame_size, false);
 
             assert!(max_data_size.is_err());
         }
