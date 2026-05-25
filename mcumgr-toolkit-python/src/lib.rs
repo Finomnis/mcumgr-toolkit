@@ -288,6 +288,23 @@ impl MCUmgrClient {
             .map_err(err_to_pyerr)
     }
 
+    /// Queries live memory pool statistics
+    ///
+    /// ### Return
+    ///
+    /// A map of memory pool names with their respective statistics
+    fn os_memory_pool_statistics(&self) -> PyResult<HashMap<String, MemoryPoolStatistics>> {
+        self.get_client()?
+            .os_memory_pool_statistics()
+            .map(|pools| {
+                pools
+                    .into_iter()
+                    .map(|(name, stats)| (name, stats.into()))
+                    .collect()
+            })
+            .map_err(err_to_pyerr)
+    }
+
     /// Sets the RTC of the device to the given datetime.
     ///
     /// Uses the contained local time and discards timezone information.
@@ -961,6 +978,8 @@ mod mcumgr_toolkit {
     use super::return_types::ImageState;
     #[pymodule_export]
     use super::return_types::MCUmgrParameters;
+    #[pymodule_export]
+    use super::return_types::MemoryPoolStatistics;
     #[pymodule_export]
     use super::return_types::SettingData;
     #[pymodule_export]

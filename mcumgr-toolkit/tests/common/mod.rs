@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![allow(clippy::collapsible_if)]
 
 use std::{
     collections::VecDeque,

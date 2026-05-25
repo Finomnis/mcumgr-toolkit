@@ -677,6 +677,20 @@ impl MCUmgrClient {
             .map_err(Into::into)
     }
 
+    /// Queries live memory pool statistics
+    ///
+    /// # Return
+    ///
+    /// A map of memory pool names with their respective statistics
+    pub fn os_memory_pool_statistics(
+        &self,
+    ) -> Result<HashMap<String, commands::os::MemoryPoolStatisticsEntry>, MCUmgrClientError> {
+        self.connection
+            .execute_command(&commands::os::MemoryPoolStatistics)
+            .map(|resp| resp.pools)
+            .map_err(Into::into)
+    }
+
     /// Sets the RTC of the device to the given datetime.
     pub fn os_set_datetime(
         &self,
@@ -831,11 +845,19 @@ impl MCUmgrClient {
         upgrade_only: bool,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), MCUmgrClientError> {
-        let chunk_size_max = image_upload_max_data_chunk_size(
+        let first_chunk_size_max = image_upload_max_data_chunk_size(
             self.smp_frame_size
                 .load(std::sync::atomic::Ordering::SeqCst),
+            true,
         )
         .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let other_chunk_size_max = image_upload_max_data_chunk_size(
+            self.smp_frame_size
+                .load(std::sync::atomic::Ordering::SeqCst),
+            false,
+        )
+        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        log::debug!("Max chunk size: {first_chunk_size_max}, {other_chunk_size_max}");
 
         let data = data.as_ref();
 
@@ -852,10 +874,10 @@ impl MCUmgrClient {
         let mut checksum_matched = None;
 
         while offset < size {
-            let current_chunk_size = (size - offset).min(chunk_size_max);
-            let chunk_data = &data[offset..offset + current_chunk_size];
-
             let upload_response = if offset == 0 {
+                let current_chunk_size = (size - offset).min(first_chunk_size_max);
+                let chunk_data = &data[offset..offset + current_chunk_size];
+
                 let result = self
                     .connection
                     .execute_command(&commands::image::ImageUpload {
@@ -875,6 +897,9 @@ impl MCUmgrClient {
 
                 result?
             } else {
+                let current_chunk_size = (size - offset).min(other_chunk_size_max);
+                let chunk_data = &data[offset..offset + current_chunk_size];
+
                 self.connection
                     .execute_command(&commands::image::ImageUpload {
                         image: None,

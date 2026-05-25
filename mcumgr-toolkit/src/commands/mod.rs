@@ -93,6 +93,7 @@ impl std::io::Write for CountingWriter {
 
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 0): os::Echo<'_> => os::EchoResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 2): os::TaskStatistics => os::TaskStatisticsResponse);
+impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 3): os::MemoryPoolStatistics => os::MemoryPoolStatisticsResponse);
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 4): os::DateTimeGet => os::DateTimeGetResponse);
 impl_mcumgr_command!((write, MGMT_GROUP_ID_OS, 4): os::DateTimeSet => os::DateTimeSetResponse);
 impl_mcumgr_command!((write, MGMT_GROUP_ID_OS, 5): os::SystemReset => os::SystemResetResponse);
