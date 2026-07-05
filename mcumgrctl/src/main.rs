@@ -85,7 +85,7 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     } else if let Some(addr) = args.udp {
         Client::new(
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
-                .map_err(CliError::OpenUdpFailed)?,
+                .map_err(CliError::UdpOpenFailed)?,
         )
     } else {
         Client::default()
