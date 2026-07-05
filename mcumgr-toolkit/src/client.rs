@@ -720,12 +720,10 @@ impl MCUmgrClient {
                         upgrade: Some(upgrade_only),
                     });
 
-                if let Err(ExecuteError::ReceiveFailed(ReceiveError::TransportError(e))) = &result {
-                    if let io::ErrorKind::TimedOut = e.kind() {
-                        log::warn!(
-                            "Timed out during transfer of first chunk. Consider enabling CONFIG_IMG_ERASE_PROGRESSIVELY."
-                        )
-                    }
+                if let Err(ExecuteError::ReceiveFailed(ReceiveError::Timeout)) = &result {
+                    log::warn!(
+                        "Timed out during transfer of first chunk. Consider enabling CONFIG_IMG_ERASE_PROGRESSIVELY."
+                    )
                 }
 
                 result?
