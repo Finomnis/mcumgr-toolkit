@@ -191,7 +191,7 @@ class MCUmgrClient:
         - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
         """
     @staticmethod
-    def udp(host: builtins.str | ipaddress.IPv4Address | ipaddress.IPv6Address, port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+    def udp(host: typing.Union[builtins.str, ipaddress.IPv4Address | ipaddress.IPv6Address], port: builtins.int = 1337, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
         r"""
         Creates a new UDP-based Zephyr MCUmgr SMP client.
         
