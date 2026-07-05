@@ -1141,7 +1141,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "base64",
  "btleplug",
@@ -1171,7 +1171,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgr-toolkit-python"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "ciborium",
  "either",
@@ -1190,7 +1190,7 @@ dependencies = [
 
 [[package]]
 name = "mcumgrctl"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "btleplug",
  "chrono",
