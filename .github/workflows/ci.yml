@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install Rust
         run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }} && rustup target add ${{ matrix.target }}
@@ -52,7 +52,7 @@ jobs:
       RUSTFLAGS: "-D warnings"
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -90,7 +90,7 @@ jobs:
       RUSTFLAGS: "-C target-feature=+crt-static"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -123,7 +123,7 @@ jobs:
       RUSTFLAGS: "-D warnings"
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install cargo-binstall
         uses: taiki-e/install-action@cargo-binstall
@@ -143,7 +143,7 @@ jobs:
     needs: [lints, docs]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
@@ -156,7 +156,7 @@ jobs:
   #   needs: [lints, docs]
   #   steps:
   #     - name: Checkout sources
-  #       uses: actions/checkout@v6
+  #       uses: actions/checkout@v7
 
   #     - name: Install nightly toolchain
   #       uses: dtolnay/rust-toolchain@nightly
@@ -177,7 +177,7 @@ jobs:
   #     RUSTFLAGS: "-D warnings"
   #   steps:
   #     - name: Checkout sources
-  #       uses: actions/checkout@v6
+  #       uses: actions/checkout@v7
 
   #     - name: Install nightly toolchain
   #       uses: dtolnay/rust-toolchain@nightly
@@ -208,7 +208,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -226,7 +226,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -242,7 +242,7 @@ jobs:
     needs: [lints, docs]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         # llvm required to resolve symbols in sanitizer output
@@ -282,7 +282,7 @@ jobs:
       ]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
