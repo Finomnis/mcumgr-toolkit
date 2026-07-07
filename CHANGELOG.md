@@ -491,6 +491,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.15.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.14.1...0.15.0
 [0.14.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.14.0...0.14.1
 [0.14.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.13.3...0.14.0
 [0.13.3]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.13.2...0.13.3
