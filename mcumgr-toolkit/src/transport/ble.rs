@@ -65,8 +65,6 @@ impl BleRuntime {
         F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>, &Adapter) -> R,
     {
         let future = async {
-            self.adapter.clear_peripherals().await?;
-
             let events = self.adapter.events().await?;
 
             self.adapter
@@ -288,7 +286,7 @@ impl Drop for BleTransport {
             self.notifications.take();
 
             let _ = self.device.unsubscribe(&self.characteristic).await;
-            //let _ = self.device.disconnect().await;
+            let _ = self.device.disconnect().await;
         });
     }
 }
