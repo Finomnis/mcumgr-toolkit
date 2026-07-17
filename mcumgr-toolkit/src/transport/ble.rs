@@ -70,9 +70,7 @@ impl BleRuntime {
             let events = self.adapter.events().await?;
 
             self.adapter
-                .start_scan(ScanFilter {
-                    services: vec![SMP_UUID],
-                })
+                .start_scan(ScanFilter { services: vec![] })
                 .await?;
 
             let result = f(events, &self.adapter).await;

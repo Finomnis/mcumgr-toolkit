@@ -457,9 +457,12 @@ impl MCUmgrClient {
                 tokio::time::timeout(SCAN_TIMEOUT, async {
                     loop {
                         match events.next().await.ok_or(BleError::ScanStopped)? {
-                            btleplug::api::CentralEvent::DeviceDiscovered(id) => {
+                            btleplug::api::CentralEvent::DeviceDiscovered(id)
+                            | btleplug::api::CentralEvent::DeviceUpdated(id) => {
                                 let device = central.peripheral(&id).await?;
                                 let properties = device.properties().await?;
+
+                                // println!("{id} {device:?} {properties:?}");
 
                                 if let Some(properties) = properties
                                     && properties
