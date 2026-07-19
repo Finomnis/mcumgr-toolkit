@@ -1,9 +1,17 @@
-use std::time::Duration;
+mod async_reactor;
+pub mod backend;
 
 use macaddr::MacAddr6;
 use serde::Serialize;
+use uuid::{Uuid, uuid};
 
-fn bdaddr_to_str<S>(mac: &MacAddr6, ser: S) -> Result<S::Ok, S::Error>
+/// The BLE service UUID that signals SMP capability
+pub const SMP_UUID: Uuid = uuid!("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
+/// The BLE characteristic UUID used to communicate SMP messages
+pub const CHARACTERISTIC_UUID: Uuid = uuid!("DA2E7828-FBCE-4E01-AE9E-261174997C48");
+
+/// Serialize macaddres as a string opposed to its internal representation
+fn serialize_mac_as_string<S>(mac: &MacAddr6, ser: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -14,7 +22,7 @@ where
 #[derive(Debug, Serialize, Clone, Eq, PartialEq)]
 pub struct BleDeviceInfo {
     /// The device BLE MAC address
-    #[serde(serialize_with = "bdaddr_to_str")]
+    #[serde(serialize_with = "serialize_mac_as_string")]
     pub mac: MacAddr6,
     /// The device name
     pub name: String,
@@ -22,29 +30,5 @@ pub struct BleDeviceInfo {
     pub rssi: Option<i16>,
 }
 
-#[derive(thiserror::Error, Debug)]
-#[error(transparent)]
-pub struct BleRuntimeError(#[from] Box<dyn std::error::Error>);
-pub type BleResult<T> = Result<T, BleRuntimeError>;
-
-pub enum BleScanResult<'a> {
-    Connected(Box<dyn BleDevice + 'a>),
-    NotFound(Vec<BleDeviceInfo>),
-}
-
-/// The runtime environment required for BLE
-/// communication
-trait BleRuntime {
-    async fn scan(
-        &mut self,
-        name: Option<&str>,
-        addr: Option<MacAddr6>,
-        timeout: Duration,
-    ) -> BleResult<BleScanResult<'_>>;
-}
-
-/// A connected device
-trait BleDevice {}
-
-/// A BLE transport
+/// Backend agnostic BLE transport
 pub struct BleTransport {}
