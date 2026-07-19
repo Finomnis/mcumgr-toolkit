@@ -35,6 +35,7 @@ btleplug.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 futures.workspace = true
 uuid.workspace = true
+macaddr.workspace = true
 
 [dev-dependencies]
 proptest = "1.11.0"

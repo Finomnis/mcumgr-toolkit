@@ -183,25 +183,6 @@ impl std::fmt::Debug for UsbSerialPorts {
     }
 }
 
-fn bdaddr_to_str<S>(mac: &BDAddr, ser: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    ser.collect_str(mac)
-}
-
-/// Information about a BLE device
-#[derive(Debug, Serialize, Clone, Eq, PartialEq)]
-pub struct BleDeviceInfo {
-    /// The device BLE MAC address
-    #[serde(serialize_with = "bdaddr_to_str")]
-    mac: BDAddr,
-    /// The device name
-    name: String,
-    /// RSSI, in dBm
-    rssi: Option<i16>,
-}
-
 /// A list of available BLE devices
 ///
 /// Used for pretty error messages.

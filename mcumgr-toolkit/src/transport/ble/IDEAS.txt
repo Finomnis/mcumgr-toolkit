@@ -1,0 +1,2 @@
+- Pass the tokio runtime around via Arcs
+- See if the BleRuntime trait can be called using Arc's as self
