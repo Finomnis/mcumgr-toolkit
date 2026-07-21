@@ -1,4 +1,6 @@
 mod async_reactor;
+
+/// BLE backends
 pub mod backend;
 
 use macaddr::MacAddr6;

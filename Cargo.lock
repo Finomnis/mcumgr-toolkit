@@ -1199,7 +1199,6 @@ dependencies = [
 name = "mcumgrctl"
 version = "0.15.0"
 dependencies = [
- "btleplug",
  "chrono",
  "ciborium",
  "clap",
@@ -1211,6 +1210,7 @@ dependencies = [
  "indicatif",
  "indicatif-log-bridge",
  "log",
+ "macaddr",
  "mcumgr-toolkit",
  "miette",
  "pretty-hex",

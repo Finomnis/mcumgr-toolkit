@@ -1,7 +1,7 @@
 use std::net::ToSocketAddrs;
 
-use btleplug::api::BDAddr;
 use clap::{ArgGroup, Args, Parser};
+use macaddr::MacAddr6;
 use miette::IntoDiagnostic;
 
 use crate::groups::Group;
@@ -98,7 +98,7 @@ pub struct App {
 
     /// Filter BLE devices by MAC address
     #[arg(long, verbatim_doc_comment, requires = "ble")]
-    pub ble_mac: Option<BDAddr>,
+    pub ble_mac: Option<MacAddr6>,
 
     /// Settings that customize runtime behaviour
     #[command(flatten)]

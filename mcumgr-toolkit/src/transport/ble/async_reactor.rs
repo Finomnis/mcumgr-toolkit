@@ -1,7 +1,7 @@
 pub(super) struct AsyncReactor(Box<tokio::runtime::Runtime>);
 
 impl AsyncReactor {
-    pub fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self(Box::new(
             tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
@@ -11,7 +11,7 @@ impl AsyncReactor {
         ))
     }
 
-    pub fn block_on<F>(&self, future: F) -> F::Output
+    pub(super) fn block_on<F>(&self, future: F) -> F::Output
     where
         F: Future,
     {

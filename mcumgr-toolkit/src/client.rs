@@ -6,6 +6,7 @@ pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
 use futures::StreamExt;
+use macaddr::MacAddr6;
 use tokio::time::error::Elapsed;
 
 use std::{
@@ -30,7 +31,10 @@ use crate::{
     connection::{Connection, ExecuteError},
     transport::{
         ReceiveError,
-        ble::BleRuntimeError,
+        ble::{
+            BleDeviceInfo,
+            backend::{BleBackend, BleBackendError},
+        },
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -265,10 +269,10 @@ pub enum UsbSerialError {
 /// Possible error values of [`MCUmgrClient::new_from_ble`].
 #[derive(Error, Debug, Diagnostic)]
 pub enum BleError {
-    /// BLE Runtime error
-    #[error("BLE runtime layer returned an error")]
+    /// BLE Backend error
+    #[error("BLE backend returned an error")]
     #[diagnostic(code(mcumgr_toolkit::ble::runtime))]
-    BleRuntime(#[from] BleRuntimeError),
+    BleBackend(#[from] BleBackendError),
     /// BLE Scanning stopped unexpectedly
     #[error("BLE scanning unexpectedly stopped")]
     #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
@@ -422,82 +426,83 @@ impl MCUmgrClient {
     ///
     pub fn new_from_ble(
         name: impl AsRef<str>,
-        mac: Option<BDAddr>,
+        mac: Option<MacAddr6>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
         let name = name.as_ref();
 
-        let mut runtime = crate::transport::ble::BleRuntime::new()?;
+        let mut backend = crate::transport::ble::backend::BtleplugBackend::new()?;
 
         const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
 
-        let mut devices = HashMap::new();
+        backend.connect(Some(name), mac, timeout)?;
 
-        let device = runtime.scan(
-            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
-                tokio::time::timeout(SCAN_TIMEOUT, async {
-                    loop {
-                        match events.next().await.ok_or(BleError::ScanStopped)? {
-                            btleplug::api::CentralEvent::DeviceDiscovered(id)
-                            | btleplug::api::CentralEvent::DeviceUpdated(id) => {
-                                let device = central.peripheral(&id).await?;
-                                let properties = device.properties().await?;
+        // let device = runtime.scan(
+        //     async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
+        //         tokio::time::timeout(SCAN_TIMEOUT, async {
+        //             loop {
+        //                 match events.next().await.ok_or(BleError::ScanStopped)? {
+        //                     btleplug::api::CentralEvent::DeviceDiscovered(id)
+        //                     | btleplug::api::CentralEvent::DeviceUpdated(id) => {
+        //                         let device = central.peripheral(&id).await?;
+        //                         let properties = device.properties().await?;
 
-                                // println!("{id} {device:?} {properties:?}");
+        //                         // println!("{id} {device:?} {properties:?}");
 
-                                if let Some(properties) = properties
-                                    && properties
-                                        .services
-                                        .contains(&crate::transport::ble::SMP_UUID)
-                                    && let Some(local_name) = properties.local_name
-                                {
-                                    // We found a matching device name
-                                    if !name.is_empty() && name == local_name {
-                                        if let Some(mac) = &mac {
-                                            // If a mac is given, check it
-                                            if mac == &properties.address {
-                                                break Ok(device);
-                                            }
-                                        } else {
-                                            // If no mac is given, accept all devices with
-                                            // the given name
-                                            break Ok(device);
-                                        }
-                                    }
+        //                         if let Some(properties) = properties
+        //                             && properties
+        //                                 .services
+        //                                 .contains(&crate::transport::ble::SMP_UUID)
+        //                             && let Some(local_name) = properties.local_name
+        //                         {
+        //                             // We found a matching device name
+        //                             if !name.is_empty() && name == local_name {
+        //                                 if let Some(mac) = &mac {
+        //                                     // If a mac is given, check it
+        //                                     if mac == &properties.address {
+        //                                         break Ok(device);
+        //                                     }
+        //                                 } else {
+        //                                     // If no mac is given, accept all devices with
+        //                                     // the given name
+        //                                     break Ok(device);
+        //                                 }
+        //                             }
 
-                                    devices.entry(id).insert_entry(BleDeviceInfo {
-                                        mac: properties.address,
-                                        name: local_name,
-                                        rssi: properties.rssi,
-                                    });
-                                }
-                            }
-                            btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
-                                if let Some(device) = devices.get_mut(&id) {
-                                    device.rssi = Some(rssi);
-                                }
-                            }
-                            _ => (),
-                        }
-                    }
-                })
-                .await
-                .map_err(|_: Elapsed| {
-                    let devices = BleDevices(devices.into_values().collect());
-                    if name.is_empty() {
-                        BleError::IdentifierEmpty { devices }
-                    } else {
-                        BleError::DeviceNotFound { available: devices }
-                    }
-                })?
-            },
-        )??;
+        //                             devices.entry(id).insert_entry(BleDeviceInfo {
+        //                                 mac: properties.address,
+        //                                 name: local_name,
+        //                                 rssi: properties.rssi,
+        //                             });
+        //                         }
+        //                     }
+        //                     btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
+        //                         if let Some(device) = devices.get_mut(&id) {
+        //                             device.rssi = Some(rssi);
+        //                         }
+        //                     }
+        //                     _ => (),
+        //                 }
+        //             }
+        //         })
+        //         .await
+        //         .map_err(|_: Elapsed| {
+        //             let devices = BleDevices(devices.into_values().collect());
+        //             if name.is_empty() {
+        //                 BleError::IdentifierEmpty { devices }
+        //             } else {
+        //                 BleError::DeviceNotFound { available: devices }
+        //             }
+        //         })?
+        //     },
+        // )??;
 
-        let transport = runtime.into_transport(device, timeout)?;
-        Ok(Self {
-            connection: Connection::new(transport),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        })
+        todo!();
+        // let transport = runtime.into_transport(device, timeout)?;
+        // Ok(Self {
+        //     connection: Connection::new(transport),
+        //     smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
+        // })
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a UDP socket.
