@@ -435,7 +435,7 @@ impl MCUmgrClient {
 
         const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
 
-        backend.connect(Some(name), mac, timeout)?;
+        backend.connect(Some(name), mac, SCAN_TIMEOUT)?;
 
         // let device = runtime.scan(
         //     async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
