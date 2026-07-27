@@ -273,10 +273,6 @@ pub enum BleError {
     #[error("BLE backend returned an error")]
     #[diagnostic(code(mcumgr_toolkit::ble::runtime))]
     BleBackend(#[from] BleBackendError),
-    /// BLE Scanning stopped unexpectedly
-    #[error("BLE scanning unexpectedly stopped")]
-    #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
-    ScanStopped,
     /// No matching BLE device was discovered
     #[error("Device not found\nAvailable devices:\n{available}")]
     #[diagnostic(code(mcumgr_toolkit::ble::device_not_found))]

@@ -1,4 +1,4 @@
-use btleplug::api::{Central, Manager};
+use btleplug::api::{Central, Manager, Peripheral};
 use macaddr::MacAddr6;
 
 use crate::transport::ble::{
@@ -6,10 +6,15 @@ use crate::transport::ble::{
     backend::{BleBackend, BleBackendError},
 };
 
+/// The actual async implementation of the backend
+struct BtleplugInner {
+    adapter: btleplug::platform::Adapter,
+}
+
 /// BLE backend based on btleplug
 pub struct BtleplugBackend {
     reactor: AsyncReactor,
-    adapter: btleplug::platform::Adapter,
+    inner: BtleplugInner,
 }
 
 impl From<btleplug::Error> for BleBackendError {
@@ -36,9 +41,28 @@ impl BtleplugBackend {
             Result::<_, BleBackendError>::Ok(adapter)
         })?;
 
-        Ok(Self { reactor, adapter })
+        Ok(Self {
+            reactor,
+            inner: BtleplugInner { adapter },
+        })
     }
 }
+
+impl BtleplugInner {
+    async fn connect(
+        &mut self,
+        name: Option<&str>,
+        addr: Option<MacAddr6>,
+        timeout: std::time::Duration,
+    ) -> Result<(), crate::client::BleError> {
+        for peripheral in self.adapter.peripherals().await.unwrap() {
+            println!("{:?}", peripheral.is_connected().await);
+        }
+        todo!()
+    }
+}
+
+struct ScanState {}
 
 impl BleBackend for BtleplugBackend {
     fn connect(
@@ -47,7 +71,7 @@ impl BleBackend for BtleplugBackend {
         addr: Option<MacAddr6>,
         timeout: std::time::Duration,
     ) -> Result<(), crate::client::BleError> {
-        println!("{:?}", self.reactor.block_on(self.adapter.peripherals()));
-        todo!()
+        self.reactor
+            .block_on(self.inner.connect(name, addr, timeout))
     }
 }
