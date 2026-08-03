@@ -286,9 +286,14 @@ impl Drop for BleTransport {
         // Drop of notifications seems to contain a tokio::spawn
         self.runtime.block_on(async {
             self.notifications.take();
+        });
 
-            let _ = self.device.unsubscribe(&self.characteristic).await;
-            let _ = self.device.disconnect().await;
+        if std::thread::panicking() {
+            return;
+        }
+
+        let _ = self.runtime.block_on(async {
+            tokio::time::timeout(Duration::from_secs(5), self.device.disconnect()).await
         });
     }
 }
