@@ -163,7 +163,9 @@ impl Transport for BleTransport {
 
         // Clear pending notifications
         let notifications = self.notifications.as_mut().unwrap();
-        while notifications.next().now_or_never().is_some() {}
+        while let Some(Some(_)) = notifications.next().now_or_never() {
+            // discard pending notification
+        }
 
         self.send_buffer.clear();
         self.send_buffer.extend_from_slice(&header);
