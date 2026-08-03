@@ -2,6 +2,7 @@ mod async_reactor;
 
 /// BLE backends
 pub mod backend;
+use backend::BleBackend;
 
 use macaddr::MacAddr6;
 use serde::Serialize;
@@ -33,4 +34,6 @@ pub struct BleDeviceInfo {
 }
 
 /// Backend agnostic BLE transport
-pub struct BleTransport {}
+pub struct BleTransport {
+    backend: Box<dyn BleBackend>,
+}

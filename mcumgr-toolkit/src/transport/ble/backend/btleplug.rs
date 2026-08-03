@@ -2,6 +2,7 @@ use btleplug::api::{Central, Manager, Peripheral};
 use macaddr::MacAddr6;
 
 use crate::transport::ble::{
+    SMP_UUID,
     async_reactor::AsyncReactor,
     backend::{BleBackend, BleBackendError},
 };
@@ -49,6 +50,18 @@ impl BtleplugBackend {
 }
 
 impl BtleplugInner {
+    async fn try_connect(
+        &mut self,
+        peripheral: Peripheral,
+        name: Option<&str>,
+        addr: Option<MacAddr6>,
+    ) -> Result<bool, crate::client::BleError> {
+        peripheral
+            .properties()
+            .await?
+            .is_some_and(|props| props.services.contains(&SMP_UUID))
+    }
+
     async fn connect(
         &mut self,
         name: Option<&str>,
@@ -56,7 +69,9 @@ impl BtleplugInner {
         timeout: std::time::Duration,
     ) -> Result<(), crate::client::BleError> {
         for peripheral in self.adapter.peripherals().await.unwrap() {
-            println!("{:?}", peripheral.is_connected().await);
+            // if self.try_connect(peripheral) {
+            //     return Ok();
+            // }
         }
         todo!()
     }
@@ -73,5 +88,24 @@ impl BleBackend for BtleplugBackend {
     ) -> Result<(), crate::client::BleError> {
         self.reactor
             .block_on(self.inner.connect(name, addr, timeout))
+    }
+
+    fn mtu(&mut self) -> Result<usize, BleBackendError> {
+        todo!()
+    }
+
+    fn send_chunk(&mut self, data: &[u8]) -> Result<(), crate::transport::SendError> {
+        todo!()
+    }
+
+    fn drain_recv_queue(&mut self) -> Result<(), BleBackendError> {
+        todo!()
+    }
+
+    fn recv_chunk<'a>(
+        &mut self,
+        buffer: &'a mut [u8],
+    ) -> Result<usize, crate::transport::ReceiveError> {
+        todo!()
     }
 }
