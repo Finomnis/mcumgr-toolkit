@@ -34,7 +34,7 @@ pub trait BleBackend {
     ///
     /// This function must be provided by the implementing struct
     /// but should not be called directly.
-    fn send_chunk(&mut self, data: &[u8]) -> Result<(), SendError>;
+    fn send_chunk(&mut self, data: &[u8]) -> Result<(), BleBackendError>;
 
     /// Drain the receive queue to clear out stale notifications
     fn drain_recv_queue(&mut self) -> Result<(), BleBackendError>;
