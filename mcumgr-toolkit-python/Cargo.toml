@@ -35,6 +35,9 @@ pyo3-ext = ["pyo3/abi3-py310", "pyo3/extension-module"]
 # Feature for building the stub_gen binary (no abi3, no extension-module)
 pyo3-embed = []
 
+# Build libdbus statically from scratch instead of linking to it
+vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
+
 [dependencies]
 pyo3 = { workspace = true, features = ["chrono", "either"] }
 pyo3-stub-gen.workspace = true

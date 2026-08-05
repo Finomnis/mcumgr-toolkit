@@ -11,6 +11,14 @@ readme.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+[features]
+
+# Build libdbus statically from scratch instead of linking to it
+vendored-dbus = ["dep:dbus", "dbus/vendored"]
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dbus = { workspace = true, optional = true }
+
 [dependencies]
 thiserror.workspace = true
 serialport = { workspace = true, features = ["usbportinfo-interface", "serde"] }
