@@ -101,9 +101,11 @@ impl BleRuntime {
         async fn connect(
             device: &Peripheral,
             timeout: Duration,
+            connection_owned: &mut bool,
         ) -> Result<Characteristic, BleRuntimeError> {
             if !device.is_connected().await? {
                 device.connect_with_timeout(Duration::from_secs(5)).await?;
+                *connection_owned = true;
             }
 
             device.discover_services_with_timeout(timeout).await?;
@@ -124,16 +126,29 @@ impl BleRuntime {
             Ok(characteristic)
         }
 
+        let mut connection_owned = false;
         let characteristic = self.block_on(async {
-            match connect(&device, timeout).await {
+            match connect(&device, timeout, &mut connection_owned).await {
                 Ok(ch) => Ok(ch),
                 Err(e) => {
-                    let _ = device.disconnect().await;
+                    if connection_owned {
+                        let _ = device.disconnect().await;
+                    }
                     Err(e)
                 }
             }
         })?;
-        let notifications = self.block_on(async { device.notifications().await })?;
+        let notifications = self.block_on(async {
+            match device.notifications().await {
+                Ok(not) => Ok(not),
+                Err(e) => {
+                    if connection_owned {
+                        let _ = device.disconnect().await;
+                    }
+                    Err(e)
+                }
+            }
+        })?;
 
         Ok(BleTransport {
             runtime: self,
@@ -142,6 +157,7 @@ impl BleRuntime {
             notifications: Some(notifications),
             timeout,
             send_buffer: Vec::new(),
+            connection_owned,
         })
     }
 }
@@ -154,6 +170,8 @@ pub struct BleTransport {
     notifications: Option<Pin<Box<dyn futures::Stream<Item = ValueNotification> + Send>>>,
     timeout: Duration,
     send_buffer: Vec<u8>,
+    /// Signals that we own the connection and should disconnect in the end
+    connection_owned: bool,
 }
 
 impl Transport for BleTransport {
@@ -295,8 +313,10 @@ impl Drop for BleTransport {
             return;
         }
 
-        let _ = self.runtime.block_on(async {
-            tokio::time::timeout(Duration::from_secs(5), self.device.disconnect()).await
-        });
+        if self.connection_owned {
+            let _ = self.runtime.block_on(async {
+                tokio::time::timeout(Duration::from_secs(5), self.device.disconnect()).await
+            });
+        }
     }
 }
