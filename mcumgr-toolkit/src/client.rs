@@ -675,7 +675,7 @@ impl MCUmgrClient {
             .execute_command(&commands::os::TaskStatistics)
             .map(|resp| {
                 let mut tasks = resp.tasks;
-                for (_, stats) in tasks.iter_mut() {
+                for stats in tasks.values_mut() {
                     stats.stkuse = stats.stkuse.map(|val| val * 4);
                     stats.stksiz = stats.stksiz.map(|val| val * 4);
                 }
