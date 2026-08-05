@@ -100,6 +100,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install musl toolchain
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get install -y musl-tools
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
