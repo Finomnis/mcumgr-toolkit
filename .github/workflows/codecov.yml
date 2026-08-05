@@ -21,6 +21,8 @@ jobs:
           components: llvm-tools-preview
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
       - name: Install llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Compute Coverage

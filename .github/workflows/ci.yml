@@ -54,6 +54,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
+
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -125,6 +128,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
+
       - name: Install cargo-binstall
         uses: taiki-e/install-action@cargo-binstall
 
@@ -144,6 +150,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
 
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
@@ -210,6 +219,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
+
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -227,6 +239,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -246,7 +261,7 @@ jobs:
 
       - name: Install dependencies
         # llvm required to resolve symbols in sanitizer output
-        run: sudo apt-get install -y llvm
+        run: sudo apt-get install -y llvm libdbus-1-dev
 
       - name: Install nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -283,6 +298,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+
+      - name: Install libdbus
+        run: sudo apt install -y libdbus-1-dev
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
