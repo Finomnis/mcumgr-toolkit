@@ -58,7 +58,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build
-        run: cargo build --examples --all-features --release
+        run: cargo build --examples --release
 
   build-cli:
     name: Build CLI

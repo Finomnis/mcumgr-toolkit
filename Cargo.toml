@@ -21,7 +21,7 @@ serialport = { version = "4.9.0", default-features = false }
 thiserror = "2.0.18"
 miette = "7.6.0"
 rand = "0.10.1"
-base64 = "0.22.1"
+base64 = "0.23.1"
 crc = "3.4.0"
 sha2 = "0.11.0"
 ringbuf = "0.5.0"
@@ -53,6 +53,7 @@ tokio = "1.51.1"
 futures = "0.3.32"
 uuid = "1.23.0"
 either = "1.15.0"
+dbus = "*"
 
 [profile.release]
 strip = true
