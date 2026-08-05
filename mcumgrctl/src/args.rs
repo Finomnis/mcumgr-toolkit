@@ -97,10 +97,6 @@ pub struct App {
     #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = None, value_name = BleIdentifier::help_name())]
     pub ble: Option<Option<BleIdentifier>>,
 
-    /// Filter BLE devices by MAC address
-    #[arg(long, verbatim_doc_comment, requires = "ble")]
-    pub ble_mac: Option<BDAddr>,
-
     /// Settings that customize runtime behaviour
     #[command(flatten)]
     pub common: CommonArgs,

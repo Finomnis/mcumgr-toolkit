@@ -48,10 +48,10 @@ impl BleIdentifier {
     pub const fn help_name() -> &'static str {
         cfg_select! {
             any(target_os = "macos", target_os = "ios") => {
-                "UUID"
+                "BLE_UUID"
             }
             _ => {
-                "MAC_ADDR"
+                "BLE_MAC"
             }
         }
     }
