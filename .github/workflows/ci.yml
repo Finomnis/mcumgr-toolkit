@@ -87,6 +87,7 @@ jobs:
             image: ubuntu-latest
             target: x86_64-unknown-linux-musl
             extension: ""
+            features: "vendored-dbus"
           - os: macos
             image: macos-latest
             target: aarch64-apple-darwin
@@ -104,7 +105,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }}
+        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
 
       - name: Collect binary
         run: cp target/${{ matrix.target }}/release/mcumgrctl${{ matrix.extension }} mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
