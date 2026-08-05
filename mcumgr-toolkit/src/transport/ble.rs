@@ -1,3 +1,6 @@
+mod identifier;
+pub use identifier::BleIdentifier;
+
 use std::{pin::Pin, time::Duration};
 
 use btleplug::{

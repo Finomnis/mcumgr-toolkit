@@ -1,7 +1,7 @@
 /// High-level firmware update routine
 mod firmware_update;
 
-use btleplug::api::{BDAddr, Central, Peripheral};
+use btleplug::api::{Central, Peripheral};
 pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
@@ -30,7 +30,7 @@ use crate::{
     connection::{Connection, ExecuteError},
     transport::{
         ReceiveError,
-        ble::BleRuntimeError,
+        ble::{BleIdentifier, BleRuntimeError},
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -183,21 +183,21 @@ impl std::fmt::Debug for UsbSerialPorts {
     }
 }
 
-fn bdaddr_to_str<S>(mac: &BDAddr, ser: S) -> Result<S::Ok, S::Error>
+fn ble_identifier_to_str<S>(id: &BleIdentifier, ser: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
-    ser.collect_str(mac)
+    ser.collect_str(id)
 }
 
 /// Information about a BLE device
 #[derive(Debug, Serialize, Clone, Eq, PartialEq)]
 pub struct BleDeviceInfo {
     /// The device BLE MAC address
-    #[serde(serialize_with = "bdaddr_to_str")]
-    mac: BDAddr,
+    #[serde(serialize_with = "ble_identifier_to_str")]
+    id: BleIdentifier,
     /// The device name
-    name: String,
+    name: Option<String>,
     /// RSSI, in dBm
     rssi: Option<i16>,
 }
@@ -216,9 +216,14 @@ impl std::fmt::Display for BleDevices {
             return Ok(());
         }
 
-        for BleDeviceInfo { mac, name, rssi } in &self.0 {
+        for BleDeviceInfo { id, name, rssi } in &self.0 {
             writeln!(f)?;
-            write!(f, " - {mac} - {name:?}")?;
+
+            if let Some(name) = name {
+                write!(f, " - {id} - {name:?}")?;
+            } else {
+                write!(f, " - {id} - <unknown>")?;
+            }
 
             if let Some(rssi) = rssi {
                 write!(f, " ({rssi} dBm)")?;
@@ -440,12 +445,9 @@ impl MCUmgrClient {
     /// and are usually not well suited as a permanent identifier.
     ///
     pub fn new_from_ble(
-        name: impl AsRef<str>,
-        mac: Option<BDAddr>,
+        device_id: Option<BleIdentifier>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
-        let name = name.as_ref();
-
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
         const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
@@ -458,35 +460,37 @@ impl MCUmgrClient {
                     loop {
                         match events.next().await.ok_or(BleError::ScanStopped)? {
                             btleplug::api::CentralEvent::DeviceDiscovered(id)
-                            | btleplug::api::CentralEvent::DeviceUpdated(id) => {
+                            | btleplug::api::CentralEvent::DeviceUpdated(id)
+                            | btleplug::api::CentralEvent::DeviceServicesModified(id)
+                            | btleplug::api::CentralEvent::ServiceDataAdvertisement {
+                                id,
+                                service_data: _,
+                            }
+                            | btleplug::api::CentralEvent::ServicesAdvertisement {
+                                id,
+                                services: _,
+                            } => {
                                 let device = central.peripheral(&id).await?;
                                 let properties = device.properties().await?;
 
-                                // println!("{id} {device:?} {properties:?}");
+                                println!("{id} {device:?} {properties:?}");
 
+                                #[allow(clippy::unnecessary_fallible_conversions)]
                                 if let Some(properties) = properties
                                     && properties
                                         .services
                                         .contains(&crate::transport::ble::SMP_UUID)
-                                    && let Some(local_name) = properties.local_name
+                                    && let Ok(identifier) = BleIdentifier::try_from(&device)
                                 {
-                                    // We found a matching device name
-                                    if !name.is_empty() && name == local_name {
-                                        if let Some(mac) = &mac {
-                                            // If a mac is given, check it
-                                            if mac == &properties.address {
-                                                break Ok(device);
-                                            }
-                                        } else {
-                                            // If no mac is given, accept all devices with
-                                            // the given name
-                                            break Ok(device);
-                                        }
+                                    if let Some(device_id) = &device_id
+                                        && device_id == &identifier
+                                    {
+                                        break Ok(device);
                                     }
 
                                     devices.entry(id).insert_entry(BleDeviceInfo {
-                                        mac: properties.address,
-                                        name: local_name,
+                                        id: identifier,
+                                        name: properties.local_name,
                                         rssi: properties.rssi,
                                     });
                                 }
@@ -503,7 +507,7 @@ impl MCUmgrClient {
                 .await
                 .map_err(|_: Elapsed| {
                     let devices = BleDevices(devices.into_values().collect());
-                    if name.is_empty() {
+                    if device_id.is_none() {
                         BleError::IdentifierEmpty { devices }
                     } else {
                         BleError::DeviceNotFound { available: devices }

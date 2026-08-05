@@ -2,6 +2,7 @@ use std::net::ToSocketAddrs;
 
 use btleplug::api::BDAddr;
 use clap::{ArgGroup, Args, Parser};
+use mcumgr_toolkit::transport::ble::BleIdentifier;
 use miette::IntoDiagnostic;
 
 use crate::groups::Group;
@@ -91,10 +92,10 @@ pub struct App {
 
     /// Use the given BLE device as backend
     ///
-    /// Must contain a regex that matches the device name.
-    /// If no argument provided, list all available devices and exit.
-    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "", value_name = "DEVICE_NAME")]
-    pub ble: Option<String>,
+    /// Accepts an OS dependent BLE device identifier.
+    /// If no argument profived, list all available BLE devices and exit.
+    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = None, value_name = BleIdentifier::help_name())]
+    pub ble: Option<Option<BleIdentifier>>,
 
     /// Filter BLE devices by MAC address
     #[arg(long, verbatim_doc_comment, requires = "ble")]
