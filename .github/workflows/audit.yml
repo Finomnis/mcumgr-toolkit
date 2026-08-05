@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install libdbus
-        run: sudo apt install -y libdbus-1-dev
+        run: sudo apt-get install -y libdbus-1-dev
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
