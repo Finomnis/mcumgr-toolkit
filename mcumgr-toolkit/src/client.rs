@@ -473,7 +473,7 @@ impl MCUmgrClient {
                                 let device = central.peripheral(&id).await?;
                                 let properties = device.properties().await?;
 
-                                println!("{id} {device:?} {properties:?}");
+                                // println!("{id} {device:?} {properties:?}");
 
                                 #[allow(clippy::unnecessary_fallible_conversions)]
                                 if let Some(properties) = properties

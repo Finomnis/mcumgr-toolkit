@@ -1,6 +1,5 @@
 use std::net::ToSocketAddrs;
 
-use btleplug::api::BDAddr;
 use clap::{ArgGroup, Args, Parser};
 use mcumgr_toolkit::transport::ble::BleIdentifier;
 use miette::IntoDiagnostic;
