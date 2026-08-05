@@ -28,7 +28,7 @@ cfg_select! {
         impl<'a> TryFrom<&'a Peripheral> for BleIdentifier {
             type Error = <Self as FromStr>::Err;
             fn try_from(peripheral: &'a Peripheral) -> Result<Self, Self::Error> {
-                Self::from_str(peripheral.id().to_string())
+                peripheral.id().to_string().parse()
             }
         }
     }
