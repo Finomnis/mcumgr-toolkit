@@ -25,16 +25,16 @@ impl FromStr for BleIdentifier {
 
 cfg_select! {
     any(target_os = "macos", target_os = "ios") => {
-        impl<'a> TryFrom<&'a Peripheral> for BleIdentifier {
+        impl TryFrom<&Peripheral> for BleIdentifier {
             type Error = <Self as FromStr>::Err;
-            fn try_from(peripheral: &'a Peripheral) -> Result<Self, Self::Error> {
+            fn try_from(peripheral: &Peripheral) -> Result<Self, Self::Error> {
                 peripheral.id().to_string().parse()
             }
         }
     }
     _ => {
-        impl<'a> From<&'a Peripheral> for BleIdentifier {
-            fn from(peripheral: &'a Peripheral) -> Self {
+        impl From<&Peripheral> for BleIdentifier {
+            fn from(peripheral: &Peripheral) -> Self {
                 Self(peripheral.address())
             }
         }
