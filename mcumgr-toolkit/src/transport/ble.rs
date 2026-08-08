@@ -251,7 +251,10 @@ impl Transport for BleTransport {
                     ));
                 };
 
-                if msg.service_uuid == SMP_UUID && msg.uuid == CHARACTERISTIC_UUID {
+                if msg.service_uuid == SMP_UUID
+                    && msg.uuid == CHARACTERISTIC_UUID
+                    && !msg.value.is_empty()
+                {
                     return Ok(msg);
                 }
             }
@@ -272,6 +275,10 @@ impl Transport for BleTransport {
                 .data_length,
         ) + SMP_HEADER_SIZE;
 
+        if expected_len > buffer.len() {
+            return Err(ReceiveError::FrameTooBig);
+        }
+
         let mut len = msg.value.len();
         buffer
             .get_mut(..msg.value.len())
@@ -290,6 +297,10 @@ impl Transport for BleTransport {
                 .block_on(next_smp_notification(notifications, self.timeout))?;
 
             let new_len = len + msg.value.len();
+            if new_len > expected_len {
+                return Err(ReceiveError::UnexpectedResponse);
+            }
+
             buffer
                 .get_mut(len..new_len)
                 .ok_or(ReceiveError::FrameTooBig)?
