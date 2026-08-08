@@ -45,7 +45,7 @@ pyo3-log.workspace = true
 serde-pyobject.workspace = true
 serde.workspace = true
 ciborium.workspace = true
-mcumgr-toolkit.workspace = true
+mcumgr-toolkit = { workspace = true, features = ["ble"] }
 serialport.workspace = true
 miette = { workspace = true, features = ["fancy"] }
 hex.workspace = true

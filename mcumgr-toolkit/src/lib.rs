@@ -5,6 +5,7 @@
 #![doc(issue_tracker_base_url = "https://github.com/Finomnis/mcumgr-toolkit/issues")]
 // That's just a bad lint, in many cases I want two ifs for readability
 #![allow(clippy::collapsible_if)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 /// A high-level client for Zephyr's MCUmgr SMP functionality
 pub mod client;

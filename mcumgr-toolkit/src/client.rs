@@ -1,12 +1,9 @@
 /// High-level firmware update routine
 mod firmware_update;
 
-use btleplug::api::{Central, Peripheral};
 pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
-use futures::StreamExt;
-use tokio::time::error::Elapsed;
 
 use std::{
     collections::HashMap,
@@ -30,11 +27,13 @@ use crate::{
     connection::{Connection, ExecuteError},
     transport::{
         ReceiveError,
-        ble::{BleIdentifier, BleRuntimeError},
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
 };
+
+#[cfg(feature = "ble")]
+use crate::transport::ble::{BleIdentifier, BleRuntimeError};
 
 /// The default SMP frame size of Zephyr.
 ///
@@ -183,6 +182,7 @@ impl std::fmt::Debug for UsbSerialPorts {
     }
 }
 
+#[cfg(feature = "ble")]
 fn ble_identifier_to_str<S>(id: &BleIdentifier, ser: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -191,6 +191,7 @@ where
 }
 
 /// Information about a BLE device
+#[cfg(feature = "ble")]
 #[derive(Debug, Serialize, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct BleDeviceInfo {
     /// An device identifier
@@ -205,9 +206,12 @@ pub struct BleDeviceInfo {
 /// A list of available BLE devices
 ///
 /// Used for pretty error messages.
+#[cfg(feature = "ble")]
 #[derive(Serialize, Clone, Eq, PartialEq)]
 #[serde(transparent)]
 pub struct BleDevices(pub Vec<BleDeviceInfo>);
+
+#[cfg(feature = "ble")]
 impl std::fmt::Display for BleDevices {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.0.is_empty() {
@@ -232,6 +236,8 @@ impl std::fmt::Display for BleDevices {
         Ok(())
     }
 }
+
+#[cfg(feature = "ble")]
 impl std::fmt::Debug for BleDevices {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.0, f)
@@ -287,6 +293,7 @@ pub enum UsbSerialError {
 }
 
 /// Possible error values of [`MCUmgrClient::new_from_ble`].
+#[cfg(feature = "ble")]
 #[derive(Error, Debug, Diagnostic)]
 pub enum BleError {
     /// BLE Runtime error
@@ -441,10 +448,15 @@ impl MCUmgrClient {
     /// * `identifier` - An OS dependent identifier for BLE devices.
     /// * `timeout` - The communication timeout.
     ///
+    #[cfg(feature = "ble")]
     pub fn new_from_ble(
         identifier: Option<BleIdentifier>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
+        use btleplug::api::{Central, Peripheral};
+        use futures::StreamExt;
+        use tokio::time::error::Elapsed;
+
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
         let scan_timeout = Duration::from_secs(3).max(timeout);

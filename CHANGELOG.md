@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CLI: add `--ble` flag
     - When no identifier is specified, list all available BLE MCUmgr devices
 - Add features:
-  - `ble` (default)
-    - enables the BLE backend
+  - `ble`
+    - Enables the BLE backend
   - `vendored-dbus`
     - Only for Linux
     - Build `libdbus` from source instead of linking to the system library

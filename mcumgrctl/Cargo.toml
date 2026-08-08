@@ -23,7 +23,7 @@ doc = false
 vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
 
 [dependencies]
-mcumgr-toolkit.workspace = true
+mcumgr-toolkit = { workspace = true, features = ["ble"] }
 serialport = { workspace = true, features = ["usbportinfo-interface"] }
 miette = { workspace = true, features = ["fancy"] }
 env_logger.workspace = true

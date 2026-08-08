@@ -144,6 +144,9 @@ cargo add mcumgr-toolkit
 
 ## Features
 
+- `ble`
+  - Enable the BLE backend
+  - Automatically enabled for mcumgrctl and Python API
 - `vendored-dbus` (on Linux)
   - Build `libdbus` from scratch instead of linking to the system's `libdbus`
 
