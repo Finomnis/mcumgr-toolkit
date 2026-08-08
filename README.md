@@ -142,6 +142,11 @@ To use this library in your project, enter your project directory and run:
 cargo add mcumgr-toolkit
 ```
 
+## Features
+
+- `vendored-dbus` (on Linux)
+  - Build `libdbus` from scratch instead of linking to the system's `libdbus`
+
 ## Performance
 
 Zephyr's default buffer sizes are quite small and reduce the read/write performance drastically.

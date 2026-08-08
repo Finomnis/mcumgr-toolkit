@@ -8,8 +8,20 @@ type BleIdentifierRepr = uuid::Uuid;
 type BleIdentifierRepr = btleplug::api::BDAddr;
 
 /// An identifier that uniquely identifies a BLE device
+///
+/// Note that this differs based on OS.
+///
+/// In most OS this will be the BLE device MAC address.
+/// The notable exception is MacOS/iOS where it is the
+/// device UUID.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub struct BleIdentifier(BleIdentifierRepr);
+pub struct BleIdentifier(pub BleIdentifierRepr);
+
+impl From<BleIdentifierRepr> for BleIdentifier {
+    fn from(value: BleIdentifierRepr) -> Self {
+        Self(value)
+    }
+}
 
 impl FromStr for BleIdentifier {
     type Err = <BleIdentifierRepr as FromStr>::Err;

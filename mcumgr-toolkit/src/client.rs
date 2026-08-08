@@ -438,11 +438,11 @@ impl MCUmgrClient {
     ///
     /// # Arguments
     ///
-    /// * `device_id` - An OS dependent identifier for BLE devices
-    /// * `timeout` - The timeout for all read/write actions.
+    /// * `identifier` - An OS dependent identifier for BLE devices.
+    /// * `timeout` - The communication timeout.
     ///
     pub fn new_from_ble(
-        device_id: Option<BleIdentifier>,
+        identifier: Option<BleIdentifier>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
@@ -471,29 +471,30 @@ impl MCUmgrClient {
                                 id,
                                 manufacturer_data: _,
                             } => {
-                                let device = central.peripheral(&id).await?;
+                                if let Ok(device) = central.peripheral(&id).await {
+                                    // println!("{id} {device:?} {properties:?}");
 
-                                // println!("{id} {device:?} {properties:?}");
-
-                                #[allow(irrefutable_let_patterns)]
-                                #[allow(clippy::unnecessary_fallible_conversions)]
-                                if let Ok(identifier) = BleIdentifier::try_from(&device) {
-                                    if let Some(device_id) = &device_id
-                                        && device_id == &identifier
+                                    #[allow(irrefutable_let_patterns)]
+                                    #[allow(clippy::unnecessary_fallible_conversions)]
+                                    if let Ok(current_identifier) = BleIdentifier::try_from(&device)
                                     {
-                                        break Ok(device);
-                                    }
+                                        if let Some(identifier) = &identifier
+                                            && identifier == &current_identifier
+                                        {
+                                            break Ok(device);
+                                        }
 
-                                    if let Ok(Some(properties)) = device.properties().await
-                                        && properties
-                                            .services
-                                            .contains(&crate::transport::ble::SMP_UUID)
-                                    {
-                                        devices.entry(id).insert_entry(BleDeviceInfo {
-                                            id: identifier,
-                                            name: properties.local_name,
-                                            rssi: properties.rssi,
-                                        });
+                                        if let Ok(Some(properties)) = device.properties().await
+                                            && properties
+                                                .services
+                                                .contains(&crate::transport::ble::SMP_UUID)
+                                        {
+                                            devices.entry(id).insert_entry(BleDeviceInfo {
+                                                id: current_identifier,
+                                                name: properties.local_name,
+                                                rssi: properties.rssi,
+                                            });
+                                        }
                                     }
                                 }
                             }
@@ -513,7 +514,7 @@ impl MCUmgrClient {
                         device_list.sort();
                         device_list
                     });
-                    if device_id.is_none() {
+                    if identifier.is_none() {
                         BleError::IdentifierEmpty { devices }
                     } else {
                         BleError::DeviceNotFound { available: devices }
