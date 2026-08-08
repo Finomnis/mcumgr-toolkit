@@ -272,6 +272,10 @@ impl Transport for BleTransport {
                 ));
             };
 
+            if msg.service_uuid != SMP_UUID || msg.uuid != CHARACTERISTIC_UUID {
+                continue;
+            }
+
             let new_len = len + msg.value.len();
             buffer
                 .get_mut(len..new_len)

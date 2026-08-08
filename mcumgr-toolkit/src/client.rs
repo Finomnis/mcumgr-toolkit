@@ -471,28 +471,31 @@ impl MCUmgrClient {
                                 services: _,
                             } => {
                                 let device = central.peripheral(&id).await?;
-                                let properties = device.properties().await?;
 
                                 // println!("{id} {device:?} {properties:?}");
 
+                                #[allow(irrefutable_let_patterns)]
                                 #[allow(clippy::unnecessary_fallible_conversions)]
-                                if let Some(properties) = properties
-                                    && properties
-                                        .services
-                                        .contains(&crate::transport::ble::SMP_UUID)
-                                    && let Ok(identifier) = BleIdentifier::try_from(&device)
-                                {
+                                if let Ok(identifier) = BleIdentifier::try_from(&device) {
                                     if let Some(device_id) = &device_id
                                         && device_id == &identifier
                                     {
                                         break Ok(device);
                                     }
 
-                                    devices.entry(id).insert_entry(BleDeviceInfo {
-                                        id: identifier,
-                                        name: properties.local_name,
-                                        rssi: properties.rssi,
-                                    });
+                                    let properties = device.properties().await?;
+
+                                    if let Some(properties) = properties
+                                        && properties
+                                            .services
+                                            .contains(&crate::transport::ble::SMP_UUID)
+                                    {
+                                        devices.entry(id).insert_entry(BleDeviceInfo {
+                                            id: identifier,
+                                            name: properties.local_name,
+                                            rssi: properties.rssi,
+                                        });
+                                    }
                                 }
                             }
                             btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
