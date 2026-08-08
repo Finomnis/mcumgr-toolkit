@@ -12,7 +12,7 @@ repository.workspace = true
 keywords.workspace = true
 
 [features]
-# Enable the BLE backend; adds dependency to libdbus
+# Enable the BLE backend
 ble = ["dep:btleplug", "dep:tokio", "dep:futures", "dep:uuid"]
 
 # Build libdbus statically from scratch instead of linking to it
