@@ -487,9 +487,7 @@ impl MCUmgrClient {
                                         break Ok(device);
                                     }
 
-                                    let properties = device.properties().await?;
-
-                                    if let Some(properties) = properties
+                                    if let Ok(Some(properties)) = device.properties().await
                                         && properties
                                             .services
                                             .contains(&crate::transport::ble::SMP_UUID)
