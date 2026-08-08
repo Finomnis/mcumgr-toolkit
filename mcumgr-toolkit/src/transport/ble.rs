@@ -74,7 +74,7 @@ impl BleRuntime {
 
             let result = f(events, &self.adapter).await;
 
-            self.adapter.stop_scan().await?;
+            let _ = self.adapter.stop_scan().await;
 
             Ok(result)
         };
