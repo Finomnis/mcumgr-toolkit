@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.16.0] - xxxx-xx-xx
+
+### Breaking Changes
+
+- Add BLE transport layer support
+  - Add `MCUmgrClient::new_from_ble` that connects to a BLE MCUmgr device
+  - Python: `MCUmgrClient::ble`
+  - CLI: add `--ble` flag
+    - When no identifier is specified, list all available BLE MCUmgr devices
+- Add features:
+  - `ble` (default)
+    - enables the BLE backend
+  - `vendored-dbus`
+    - Only for Linux
+    - Build `libdbus` from source instead of linking to the system library
+- Update dependency versions
+
+
 ## [0.15.0] - 2026-07-05
 
 ### Breaking Changes
@@ -491,6 +509,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.16.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.14.1...0.15.0
 [0.14.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.14.0...0.14.1
 [0.14.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.13.3...0.14.0

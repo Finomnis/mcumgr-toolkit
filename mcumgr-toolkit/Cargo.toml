@@ -40,10 +40,10 @@ regex.workspace = true
 polonius-the-crab.workspace = true
 either = { workspace = true, features = ["serde"] }
 btleplug.workspace = true
-tokio = { workspace = true, features = ["rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "time"] }
 futures.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
 proptest = "1.11.0"
-tokio = { workspace = true, features = ["macros", "time", "test-util"] }
+tokio = { workspace = true, features = ["macros", "test-util"] }

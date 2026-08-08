@@ -38,10 +38,12 @@ impl TryFrom<&Peripheral> for BleIdentifier {
         peripheral.id().to_string().parse()
     }
 }
+#[allow(clippy::infallible_try_from)]
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
-impl From<&Peripheral> for BleIdentifier {
-    fn from(peripheral: &Peripheral) -> Self {
-        Self(peripheral.address())
+impl TryFrom<&Peripheral> for BleIdentifier {
+    type Error = std::convert::Infallible;
+    fn try_from(peripheral: &Peripheral) -> Result<Self, Self::Error> {
+        Ok(Self(peripheral.address()))
     }
 }
 

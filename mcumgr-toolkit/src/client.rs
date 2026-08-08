@@ -447,13 +447,13 @@ impl MCUmgrClient {
     ) -> Result<Self, BleError> {
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
-        const SCAN_TIMEOUT: Duration = Duration::from_secs(3);
+        let scan_timeout = Duration::from_secs(3).max(timeout);
 
         let mut devices = HashMap::new();
 
         let device = runtime.scan(
             async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
-                tokio::time::timeout(SCAN_TIMEOUT, async {
+                tokio::time::timeout(scan_timeout, async {
                     loop {
                         match events.next().await.ok_or(BleError::ScanStopped)? {
                             btleplug::api::CentralEvent::DeviceDiscovered(id)

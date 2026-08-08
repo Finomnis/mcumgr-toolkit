@@ -105,7 +105,9 @@ impl BleRuntime {
             connection_owned: &mut bool,
         ) -> Result<Characteristic, BleRuntimeError> {
             if !device.is_connected().await? {
-                device.connect_with_timeout(Duration::from_secs(5)).await?;
+                device
+                    .connect_with_timeout(Duration::from_secs(5).max(timeout))
+                    .await?;
                 *connection_owned = true;
             }
 
@@ -350,16 +352,16 @@ impl Drop for BleTransport {
         }
 
         let _ = self.runtime.block_on(async {
-            tokio::time::timeout(
-                Duration::from_secs(5),
-                self.device.unsubscribe(&self.characteristic),
-            )
-            .await
+            tokio::time::timeout(self.timeout, self.device.unsubscribe(&self.characteristic)).await
         });
 
         if self.connection_owned {
             let _ = self.runtime.block_on(async {
-                tokio::time::timeout(Duration::from_secs(5), self.device.disconnect()).await
+                tokio::time::timeout(
+                    Duration::from_secs(5).max(self.timeout),
+                    self.device.disconnect(),
+                )
+                .await
             });
         }
     }

@@ -154,16 +154,19 @@ impl MCUmgrClient {
     ///
     #[staticmethod]
     #[pyo3(signature = (identifier, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
-    fn ble(identifier: &str, timeout_ms: u64) -> PyResult<Self> {
+    fn ble(py: Python<'_>, identifier: &str, timeout_ms: u64) -> PyResult<Self> {
         let identifier = identifier
             .parse()
             .map_err(|e| PyRuntimeError::new_err(format!("Invalid BLE device identifier: {e}")))?;
 
-        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_ble(
-            Some(identifier),
-            Duration::from_millis(timeout_ms),
-        )
-        .map_err(err_to_pyerr)?;
+        let client = py
+            .detach(move || {
+                ::mcumgr_toolkit::MCUmgrClient::new_from_ble(
+                    Some(identifier),
+                    Duration::from_millis(timeout_ms),
+                )
+            })
+            .map_err(err_to_pyerr)?;
 
         Ok(MCUmgrClient {
             client: Mutex::new(Some(Arc::new(client))),
