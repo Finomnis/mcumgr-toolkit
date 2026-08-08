@@ -18,6 +18,9 @@ use crate::transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport};
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
 
+/// A stream of BLE notifications
+type NotificationStream = Pin<Box<dyn futures::Stream<Item = ValueNotification> + Send>>;
+
 /// A runtime manager that encapsulates all the
 /// async BLE boilerplate code.
 pub struct BleRuntime {
@@ -198,7 +201,13 @@ impl Transport for BleTransport {
             data: &[u8],
         ) -> Result<(), super::SendError> {
             let chunk_size = usize::from(device.mtu().saturating_sub(3));
+            if chunk_size == 0 {
+                return Err(super::SendError::TransportError(
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid BLE MTU").into(),
+                ));
+            }
             log::debug!("Chunk size: {}", chunk_size);
+
             for chunk in data.chunks(chunk_size) {
                 log::debug!("Sending SMP Frame Chunk ({} bytes)", chunk.len());
                 device
@@ -226,18 +235,33 @@ impl Transport for BleTransport {
         &mut self,
         buffer: &'a mut [u8; super::SMP_TRANSFER_BUFFER_SIZE],
     ) -> Result<&'a [u8], super::ReceiveError> {
+        async fn next_smp_notification(
+            notifications: &mut NotificationStream,
+            timeout: tokio::time::Duration,
+        ) -> Result<ValueNotification, super::ReceiveError> {
+            let deadline = tokio::time::Instant::now() + timeout;
+            loop {
+                let msg = tokio::time::timeout_at(deadline, notifications.next())
+                    .await
+                    .map_err(|_| super::ReceiveError::Timeout)?;
+
+                let Some(msg) = msg else {
+                    return Err(ReceiveError::TransportError(
+                        "Notify queue closed unexpectedly".into(),
+                    ));
+                };
+
+                if msg.service_uuid == SMP_UUID && msg.uuid == CHARACTERISTIC_UUID {
+                    return Ok(msg);
+                }
+            }
+        }
+
         let notifications = self.notifications.as_mut().unwrap();
 
         let msg = self
             .runtime
-            .block_on(async { tokio::time::timeout(self.timeout, notifications.next()).await })
-            .map_err(|_| ReceiveError::Timeout)?;
-
-        let Some(msg) = msg else {
-            return Err(ReceiveError::TransportError(
-                "Notify queue closed unexpectedly".into(),
-            ));
-        };
+            .block_on(next_smp_notification(notifications, self.timeout))?;
 
         let expected_len: usize = usize::from(
             msg.value
@@ -263,18 +287,7 @@ impl Transport for BleTransport {
         while len < expected_len {
             let msg = self
                 .runtime
-                .block_on(async { tokio::time::timeout(self.timeout, notifications.next()).await })
-                .map_err(|_| ReceiveError::Timeout)?;
-
-            let Some(msg) = msg else {
-                return Err(ReceiveError::TransportError(
-                    "Notify queue closed unexpectedly".into(),
-                ));
-            };
-
-            if msg.service_uuid != SMP_UUID || msg.uuid != CHARACTERISTIC_UUID {
-                continue;
-            }
+                .block_on(next_smp_notification(notifications, self.timeout))?;
 
             let new_len = len + msg.value.len();
             buffer
@@ -308,10 +321,12 @@ impl Transport for BleTransport {
 
 impl Drop for BleTransport {
     fn drop(&mut self) {
-        // Drop of notifications seems to contain a tokio::spawn
-        self.runtime.block_on(async {
+        {
+            // Drop of notifications seems to contain a tokio::spawn,
+            // so it requires being inside of a runtime or it will panic
+            let _guard = self.runtime.runtime.enter();
             self.notifications.take();
-        });
+        }
 
         if std::thread::panicking() {
             return;

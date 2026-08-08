@@ -469,6 +469,10 @@ impl MCUmgrClient {
                             | btleplug::api::CentralEvent::ServicesAdvertisement {
                                 id,
                                 services: _,
+                            }
+                            | btleplug::api::CentralEvent::ManufacturerDataAdvertisement {
+                                id,
+                                manufacturer_data: _,
                             } => {
                                 let device = central.peripheral(&id).await?;
 
