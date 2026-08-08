@@ -351,17 +351,19 @@ impl Drop for BleTransport {
             return;
         }
 
+        const CLEANUP_TIMEOUT: Duration = Duration::from_secs(5);
+
         let _ = self.runtime.block_on(async {
-            tokio::time::timeout(self.timeout, self.device.unsubscribe(&self.characteristic)).await
+            tokio::time::timeout(
+                CLEANUP_TIMEOUT,
+                self.device.unsubscribe(&self.characteristic),
+            )
+            .await
         });
 
         if self.connection_owned {
             let _ = self.runtime.block_on(async {
-                tokio::time::timeout(
-                    Duration::from_secs(5).max(self.timeout),
-                    self.device.disconnect(),
-                )
-                .await
+                tokio::time::timeout(CLEANUP_TIMEOUT, self.device.disconnect()).await
             });
         }
     }

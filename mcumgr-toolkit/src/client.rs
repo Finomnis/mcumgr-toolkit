@@ -459,7 +459,7 @@ impl MCUmgrClient {
 
         let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
-        let scan_timeout = Duration::from_secs(3).max(timeout);
+        let scan_timeout = Duration::from_secs(3);
 
         let mut devices = HashMap::new();
 
