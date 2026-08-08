@@ -145,6 +145,7 @@ impl BleRuntime {
             match device.notifications().await {
                 Ok(not) => Ok(not),
                 Err(e) => {
+                    let _ = device.unsubscribe(&characteristic).await;
                     if connection_owned {
                         let _ = device.disconnect().await;
                     }
@@ -342,6 +343,14 @@ impl Drop for BleTransport {
         if std::thread::panicking() {
             return;
         }
+
+        let _ = self.runtime.block_on(async {
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                self.device.unsubscribe(&self.characteristic),
+            )
+            .await
+        });
 
         if self.connection_owned {
             let _ = self.runtime.block_on(async {
