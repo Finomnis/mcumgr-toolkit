@@ -281,6 +281,9 @@ impl Transport for BleTransport {
         }
 
         let mut len = msg.value.len();
+        if len > expected_len {
+            return Err(ReceiveError::UnexpectedResponse);
+        }
         buffer
             .get_mut(..msg.value.len())
             .ok_or(ReceiveError::FrameTooBig)?
