@@ -55,6 +55,10 @@ fn main() {
 cargo install mcumgrctl
 ```
 
+### Linux dependencies
+
+On Linux, building `mcumgrctl` requires the D-Bus development package (`libdbus-1-dev` and `pkg-config` on Debian/Ubuntu). Alternatively, build with `--features vendored-dbus`.
+
 ### Usage examples
 
 List all available USB serial ports:

@@ -93,7 +93,11 @@ impl BleRuntime {
         self.runtime.block_on(future)
     }
 
-    /// Creates a BLE transport to a connected device
+    /// Creates a BLE transport for the given peripheral.
+    ///
+    /// Connects the peripheral if necessary and takes ownership of the
+    /// SMP characteristic's notification subscription for the lifetime
+    /// of the transport.
     pub fn into_transport(
         self,
         device: Peripheral,
