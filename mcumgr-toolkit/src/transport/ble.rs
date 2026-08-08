@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod identifier;
 pub use identifier::BleIdentifier;
 
@@ -161,6 +164,92 @@ impl BleRuntime {
     }
 }
 
+async fn next_smp_notification(
+    notifications: &mut NotificationStream,
+    timeout: tokio::time::Duration,
+) -> Result<ValueNotification, super::ReceiveError> {
+    let deadline = tokio::time::Instant::now() + timeout;
+    loop {
+        let msg = tokio::time::timeout_at(deadline, notifications.next())
+            .await
+            .map_err(|_| super::ReceiveError::Timeout)?;
+
+        let Some(msg) = msg else {
+            return Err(ReceiveError::TransportError(
+                "Notify queue closed unexpectedly".into(),
+            ));
+        };
+
+        if msg.service_uuid == SMP_UUID && msg.uuid == CHARACTERISTIC_UUID && !msg.value.is_empty()
+        {
+            return Ok(msg);
+        }
+    }
+}
+
+async fn receive_smp_frame<'a>(
+    notifications: &mut NotificationStream,
+    timeout: tokio::time::Duration,
+    buffer: &'a mut [u8; super::SMP_TRANSFER_BUFFER_SIZE],
+) -> Result<&'a [u8], super::ReceiveError> {
+    let msg = next_smp_notification(notifications, timeout).await?;
+
+    let expected_len: usize = usize::from(
+        msg.value
+            .first_chunk()
+            .copied()
+            .map(SmpHeader::from_bytes)
+            .ok_or(ReceiveError::UnexpectedResponse)?
+            .data_length,
+    ) + SMP_HEADER_SIZE;
+
+    if expected_len > buffer.len() {
+        return Err(ReceiveError::FrameTooBig);
+    }
+
+    let mut len = msg.value.len();
+    if len > expected_len {
+        return Err(ReceiveError::UnexpectedResponse);
+    }
+    buffer
+        .get_mut(..msg.value.len())
+        .ok_or(ReceiveError::FrameTooBig)?
+        .copy_from_slice(&msg.value);
+
+    log::debug!(
+        "Received SMP frame chunk: {} (expected: {})",
+        len,
+        expected_len
+    );
+
+    while len < expected_len {
+        let msg = next_smp_notification(notifications, timeout).await?;
+
+        let new_len = len + msg.value.len();
+        if new_len > expected_len {
+            return Err(ReceiveError::UnexpectedResponse);
+        }
+
+        buffer
+            .get_mut(len..new_len)
+            .ok_or(ReceiveError::FrameTooBig)?
+            .copy_from_slice(&msg.value);
+
+        len = new_len;
+
+        log::debug!(
+            "Received SMP continuation chunk: {} ({}/{})",
+            msg.value.len(),
+            len,
+            expected_len
+        );
+    }
+
+    log::debug!("Received SMP Frame ({} bytes)", len);
+
+    buffer.get(..len).ok_or(ReceiveError::FrameTooBig)
+}
+
 /// An active connection to a BLE device
 pub struct BleTransport {
     runtime: BleRuntime,
@@ -231,93 +320,11 @@ impl Transport for BleTransport {
         &mut self,
         buffer: &'a mut [u8; super::SMP_TRANSFER_BUFFER_SIZE],
     ) -> Result<&'a [u8], super::ReceiveError> {
-        async fn next_smp_notification(
-            notifications: &mut NotificationStream,
-            timeout: tokio::time::Duration,
-        ) -> Result<ValueNotification, super::ReceiveError> {
-            let deadline = tokio::time::Instant::now() + timeout;
-            loop {
-                let msg = tokio::time::timeout_at(deadline, notifications.next())
-                    .await
-                    .map_err(|_| super::ReceiveError::Timeout)?;
-
-                let Some(msg) = msg else {
-                    return Err(ReceiveError::TransportError(
-                        "Notify queue closed unexpectedly".into(),
-                    ));
-                };
-
-                if msg.service_uuid == SMP_UUID
-                    && msg.uuid == CHARACTERISTIC_UUID
-                    && !msg.value.is_empty()
-                {
-                    return Ok(msg);
-                }
-            }
-        }
-
         let notifications = self.notifications.as_mut().unwrap();
+        let timeout = self.timeout;
 
-        let msg = self
-            .runtime
-            .block_on(next_smp_notification(notifications, self.timeout))?;
-
-        let expected_len: usize = usize::from(
-            msg.value
-                .first_chunk()
-                .copied()
-                .map(SmpHeader::from_bytes)
-                .ok_or(ReceiveError::UnexpectedResponse)?
-                .data_length,
-        ) + SMP_HEADER_SIZE;
-
-        if expected_len > buffer.len() {
-            return Err(ReceiveError::FrameTooBig);
-        }
-
-        let mut len = msg.value.len();
-        if len > expected_len {
-            return Err(ReceiveError::UnexpectedResponse);
-        }
-        buffer
-            .get_mut(..msg.value.len())
-            .ok_or(ReceiveError::FrameTooBig)?
-            .copy_from_slice(&msg.value);
-
-        log::debug!(
-            "Received SMP frame chunk: {} (expected: {})",
-            len,
-            expected_len
-        );
-
-        while len < expected_len {
-            let msg = self
-                .runtime
-                .block_on(next_smp_notification(notifications, self.timeout))?;
-
-            let new_len = len + msg.value.len();
-            if new_len > expected_len {
-                return Err(ReceiveError::UnexpectedResponse);
-            }
-
-            buffer
-                .get_mut(len..new_len)
-                .ok_or(ReceiveError::FrameTooBig)?
-                .copy_from_slice(&msg.value);
-
-            len = new_len;
-
-            log::debug!(
-                "Received SMP continuation chunk: {} ({}/{})",
-                msg.value.len(),
-                len,
-                expected_len
-            );
-        }
-
-        log::debug!("Received SMP Frame ({} bytes)", len);
-
-        buffer.get(..len).ok_or(ReceiveError::FrameTooBig)
+        self.runtime
+            .block_on(receive_smp_frame(notifications, timeout, buffer))
     }
 
     fn set_timeout(

@@ -46,3 +46,4 @@ uuid.workspace = true
 
 [dev-dependencies]
 proptest = "1.11.0"
+tokio = { workspace = true, features = ["macros", "time", "test-util"] }
