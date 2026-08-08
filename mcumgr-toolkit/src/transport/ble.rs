@@ -35,18 +35,13 @@ pub const CHARACTERISTIC_UUID: Uuid = uuid!("DA2E7828-FBCE-4E01-AE9E-261174997C4
 
 impl BleRuntime {
     /// Create a new [`BleRuntime`].
-    ///
-    /// # Arguments
-    ///
-    /// * `serial` - A serial port object, like [`serialport::SerialPort`].
-    ///
     pub fn new() -> Result<Self, BleRuntimeError> {
         let runtime = Box::new(
             tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
                 .enable_all()
                 .build()
-                .unwrap(),
+                .map_err(|e| BleRuntimeError::Other(e.into()))?,
         );
 
         let adapter = runtime.block_on(async {

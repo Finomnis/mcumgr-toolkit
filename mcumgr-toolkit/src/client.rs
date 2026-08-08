@@ -191,15 +191,15 @@ where
 }
 
 /// Information about a BLE device
-#[derive(Debug, Serialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Serialize, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct BleDeviceInfo {
-    /// The device BLE MAC address
+    /// An device identifier
     #[serde(serialize_with = "ble_identifier_to_str")]
-    id: BleIdentifier,
+    pub id: BleIdentifier,
     /// The device name
-    name: Option<String>,
+    pub name: Option<String>,
     /// RSSI, in dBm
-    rssi: Option<i16>,
+    pub rssi: Option<i16>,
 }
 
 /// A list of available BLE devices
@@ -438,11 +438,8 @@ impl MCUmgrClient {
     ///
     /// # Arguments
     ///
-    /// * `name` - The primary identifier name of the BLE device
-    /// * `mac` - The mac address of the device.
-    ///
-    /// Be aware that MAC addresses of BLE devices might be randomized
-    /// and are usually not well suited as a permanent identifier.
+    /// * `device_id` - An OS dependent identifier for BLE devices
+    /// * `timeout` - The timeout for all read/write actions.
     ///
     pub fn new_from_ble(
         device_id: Option<BleIdentifier>,
@@ -511,7 +508,11 @@ impl MCUmgrClient {
                 })
                 .await
                 .map_err(|_: Elapsed| {
-                    let devices = BleDevices(devices.into_values().collect());
+                    let devices = BleDevices({
+                        let mut device_list = devices.into_values().collect::<Vec<_>>();
+                        device_list.sort();
+                        device_list
+                    });
                     if device_id.is_none() {
                         BleError::IdentifierEmpty { devices }
                     } else {

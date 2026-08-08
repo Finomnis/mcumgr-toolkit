@@ -92,7 +92,7 @@ pub struct App {
     /// Use the given BLE device as backend
     ///
     /// Accepts an OS dependent BLE device identifier.
-    /// If no argument profived, list all available BLE devices and exit.
+    /// If no argument provided, list all available BLE devices and exit.
     #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = None, value_name = BleIdentifier::help_name())]
     pub ble: Option<Option<BleIdentifier>>,
 

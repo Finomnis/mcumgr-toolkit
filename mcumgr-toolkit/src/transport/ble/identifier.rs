@@ -2,17 +2,13 @@ use std::str::FromStr;
 
 use btleplug::{api::Peripheral as _, platform::Peripheral};
 
-cfg_select! {
-    any(target_os = "macos", target_os = "ios") => {
-        type BleIdentifierRepr = uuid::Uuid;
-    }
-    _ => {
-        type BleIdentifierRepr = btleplug::api::BDAddr;
-    }
-}
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+type BleIdentifierRepr = uuid::Uuid;
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+type BleIdentifierRepr = btleplug::api::BDAddr;
 
 /// An identifier that uniquely identifies a BLE device
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct BleIdentifier(BleIdentifierRepr);
 
 impl FromStr for BleIdentifier {
@@ -23,21 +19,17 @@ impl FromStr for BleIdentifier {
     }
 }
 
-cfg_select! {
-    any(target_os = "macos", target_os = "ios") => {
-        impl TryFrom<&Peripheral> for BleIdentifier {
-            type Error = <Self as FromStr>::Err;
-            fn try_from(peripheral: &Peripheral) -> Result<Self, Self::Error> {
-                peripheral.id().to_string().parse()
-            }
-        }
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+impl TryFrom<&Peripheral> for BleIdentifier {
+    type Error = <Self as FromStr>::Err;
+    fn try_from(peripheral: &Peripheral) -> Result<Self, Self::Error> {
+        peripheral.id().to_string().parse()
     }
-    _ => {
-        impl From<&Peripheral> for BleIdentifier {
-            fn from(peripheral: &Peripheral) -> Self {
-                Self(peripheral.address())
-            }
-        }
+}
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+impl From<&Peripheral> for BleIdentifier {
+    fn from(peripheral: &Peripheral) -> Self {
+        Self(peripheral.address())
     }
 }
 
@@ -46,13 +38,13 @@ impl BleIdentifier {
      * A human readable description of what the identifier contains
      */
     pub const fn help_name() -> &'static str {
-        cfg_select! {
-            any(target_os = "macos", target_os = "ios") => {
-                "BLE_UUID"
-            }
-            _ => {
-                "BLE_MAC"
-            }
+        #[cfg(any(target_os = "macos", target_os = "ios"))]
+        {
+            "BLE_UUID"
+        }
+        #[cfg(not(any(target_os = "macos", target_os = "ios")))]
+        {
+            "BLE_MAC"
         }
     }
 }
