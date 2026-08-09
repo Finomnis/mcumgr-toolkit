@@ -332,7 +332,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     if: github.event_name == 'release'
-    needs: [
+    needs:
+      [
         test,
         test_with_ble,
         test_without_ble,
@@ -343,8 +344,7 @@ jobs:
         docs,
         leaks,
         semver,
-        # min-versions,
-        # min-versions-msrv,
+        min-versions,
       ]
     steps:
       - name: Checkout sources
