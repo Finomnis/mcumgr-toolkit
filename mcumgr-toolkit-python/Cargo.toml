@@ -13,6 +13,8 @@ license.workspace = true
 repository.workspace = true
 keywords.workspace = true
 
+publish = false
+
 [lib]
 # "cdylib" is necessary to produce a shared library for Python to import from.
 crate-type = ["cdylib", "rlib"]
