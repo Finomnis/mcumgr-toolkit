@@ -55,6 +55,10 @@ fn main() {
 cargo install mcumgrctl
 ```
 
+### Linux dependencies
+
+On Linux, building `mcumgrctl` requires the D-Bus development package (`libdbus-1-dev` and `pkg-config` on Debian/Ubuntu). Alternatively, build with `--features vendored-dbus`.
+
 ### Usage examples
 
 List all available USB serial ports:
@@ -141,6 +145,14 @@ To use this library in your project, enter your project directory and run:
 ```none
 cargo add mcumgr-toolkit
 ```
+
+## Features
+
+- `ble`
+  - Enable the BLE backend
+  - Automatically enabled for `mcumgrctl` and Python API
+- `vendored-dbus` (on Linux)
+  - Build `libdbus` from scratch instead of linking to the system's `libdbus`
 
 ## Performance
 

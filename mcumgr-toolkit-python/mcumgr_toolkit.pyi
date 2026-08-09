@@ -201,6 +201,19 @@ class MCUmgrClient:
         * `port` - The UDP endpoint port number.
         * `timeout_ms` - The communication timeout, in ms.
         """
+    @staticmethod
+    def ble(identifier: builtins.str, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+        r"""
+        Creates a Zephyr MCUmgr SMP client based on a BLE connection.
+        
+        ### Arguments
+        
+        * `identifier` - An OS dependent identifier for BLE devices.
+        * `timeout_ms` - The communication timeout, in ms.
+        
+        On most operating systems, the identifier is the BLE device MAC address.
+        The notable exception is MacOS/iOS where it is the device UUID.
+        """
     def set_frame_size(self, smp_frame_size: builtins.int) -> None:
         r"""
         Configures the maximum SMP frame size that we can send to the device.

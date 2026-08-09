@@ -35,6 +35,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libdbus-1-dev
+
       - name: Install Rust
         run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }} && rustup target add ${{ matrix.target }}
 
@@ -43,6 +47,80 @@ jobs:
 
       - name: Test
         run: cargo test --release --target ${{ matrix.target }} --workspace --exclude mcumgr-toolkit-python --verbose $DOCTEST_XCOMPILE -- --test-threads 1
+
+  test_with_ble:
+    name: Test core with BLE
+    env:
+      RUSTFLAGS: "-D warnings"
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          - x86_64-unknown-linux-gnu
+          - aarch64-apple-darwin
+        rust:
+          - stable
+          - nightly
+        include:
+          - target: x86_64-pc-windows-msvc
+            image: windows-latest
+          - target: x86_64-unknown-linux-gnu
+            image: ubuntu-latest
+          - target: aarch64-apple-darwin
+            image: macos-latest
+    runs-on: ${{ matrix.image }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libdbus-1-dev
+
+      - name: Install Rust
+        run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }} && rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --target ${{ matrix.target }} -p mcumgr-toolkit --features ble
+
+      - name: Test
+        run: cargo test --target ${{ matrix.target }} -p mcumgr-toolkit --features ble --verbose $DOCTEST_XCOMPILE -- --test-threads 1
+
+  test_without_ble:
+    name: Test core without BLE
+    env:
+      RUSTFLAGS: "-D warnings"
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          - x86_64-unknown-linux-gnu
+          - aarch64-apple-darwin
+        rust:
+          - stable
+          - nightly
+        include:
+          - target: x86_64-pc-windows-msvc
+            image: windows-latest
+          - target: x86_64-unknown-linux-gnu
+            image: ubuntu-latest
+          - target: aarch64-apple-darwin
+            image: macos-latest
+    runs-on: ${{ matrix.image }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Install Rust
+        run: rustup update ${{ matrix.rust }} && rustup default ${{ matrix.rust }} && rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --target ${{ matrix.target }} -p mcumgr-toolkit --no-default-features
+
+      - name: Test
+        run: cargo test --target ${{ matrix.target }} -p mcumgr-toolkit --no-default-features --verbose $DOCTEST_XCOMPILE -- --test-threads 1
 
   build-examples:
     name: Build Examples
@@ -54,11 +132,14 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
+
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build
-        run: cargo build --examples --all-features --release
+        run: cargo build --examples --release --features "mcumgr-toolkit/ble"
 
   build-cli:
     name: Build CLI
@@ -80,6 +161,7 @@ jobs:
             image: ubuntu-latest
             target: x86_64-unknown-linux-musl
             extension: ""
+            features: "vendored-dbus"
           - os: macos
             image: macos-latest
             target: aarch64-apple-darwin
@@ -92,12 +174,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install musl toolchain
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get install -y musl-tools
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }}
+        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
 
       - name: Collect binary
         run: cp target/${{ matrix.target }}/release/mcumgrctl${{ matrix.extension }} mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
@@ -125,6 +212,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
+
       - name: Install cargo-binstall
         uses: taiki-e/install-action@cargo-binstall
 
@@ -144,6 +234,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
 
       - name: Check semver
         uses: obi1kenobi/cargo-semver-checks-action@v2
@@ -210,6 +303,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
 
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
+
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -227,6 +323,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -246,7 +345,7 @@ jobs:
 
       - name: Install dependencies
         # llvm required to resolve symbols in sanitizer output
-        run: sudo apt-get install -y llvm
+        run: sudo apt-get install -y llvm libdbus-1-dev
 
       - name: Install nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -270,6 +369,8 @@ jobs:
     if: github.event_name == 'release'
     needs: [
         test,
+        test_with_ble,
+        test_without_ble,
         build-examples,
         build-cli,
         msrv,
@@ -283,6 +384,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
+
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable

@@ -21,10 +21,12 @@ jobs:
           components: llvm-tools-preview
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Install libdbus
+        run: sudo apt-get install -y libdbus-1-dev
       - name: Install llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Compute Coverage
-        run: cargo llvm-cov --package mcumgr-toolkit --codecov --output-path codecov.json -- --test-threads 1
+        run: cargo llvm-cov --package mcumgr-toolkit --features ble --codecov --output-path codecov.json -- --test-threads 1
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         env:

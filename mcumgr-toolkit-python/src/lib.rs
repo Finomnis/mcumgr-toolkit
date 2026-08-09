@@ -142,6 +142,37 @@ impl MCUmgrClient {
         })
     }
 
+    /// Creates a Zephyr MCUmgr SMP client based on a BLE connection.
+    ///
+    /// ### Arguments
+    ///
+    /// * `identifier` - An OS dependent identifier for BLE devices.
+    /// * `timeout_ms` - The communication timeout, in ms.
+    ///
+    /// On most operating systems, the identifier is the BLE device MAC address.
+    /// The notable exception is MacOS/iOS where it is the device UUID.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (identifier, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn ble(py: Python<'_>, identifier: &str, timeout_ms: u64) -> PyResult<Self> {
+        let identifier = identifier
+            .parse()
+            .map_err(|e| PyRuntimeError::new_err(format!("Invalid BLE device identifier: {e}")))?;
+
+        let client = py
+            .detach(move || {
+                ::mcumgr_toolkit::MCUmgrClient::new_from_ble(
+                    Some(identifier),
+                    Duration::from_millis(timeout_ms),
+                )
+            })
+            .map_err(err_to_pyerr)?;
+
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
     /// Configures the maximum SMP frame size that we can send to the device.
     ///
     /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),

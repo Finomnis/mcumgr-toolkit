@@ -9,13 +9,16 @@ mod groups;
 mod progress;
 
 use client::Client;
-use indicatif::MultiProgress;
+use indicatif::{MultiProgress, ProgressBar};
 use indicatif_log_bridge::LogWrapper;
 
 use std::time::Duration;
 
 use clap::{CommandFactory as _, Parser};
-use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
+use mcumgr_toolkit::{
+    MCUmgrClient,
+    client::{BleError, UsbSerialError},
+};
 
 use crate::errors::CliError;
 
@@ -75,6 +78,42 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
                 } else {
                     println!("Available USB serial ports:");
                     println!("{}", ports);
+                }
+                println!();
+            }
+            return Ok(());
+        }
+
+        Client::new(result?)
+    } else if let Some(ble_identifier) = args.ble {
+        let mut scan_spinner = None;
+        if !(args.common.quiet || args.common.json) {
+            let scan_spinner = scan_spinner.insert(multiprogress.add(ProgressBar::new_spinner()));
+            scan_spinner.set_message("Scanning ...");
+            scan_spinner.enable_steady_tick(Duration::from_millis(100));
+        }
+
+        let result =
+            MCUmgrClient::new_from_ble(ble_identifier, Duration::from_millis(args.common.timeout));
+
+        if let Some(scan_spinner) = scan_spinner {
+            scan_spinner.finish_and_clear();
+            multiprogress.remove(&scan_spinner);
+        }
+
+        if let Err(BleError::IdentifierEmpty { devices }) = &result {
+            if args.common.json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(devices).map_err(CliError::JsonEncodeError)?
+                );
+            } else {
+                println!();
+                if devices.0.is_empty() {
+                    println!("No BLE MCUmgr devices available.");
+                } else {
+                    println!("Available BLE MCUmgr devices:");
+                    println!("{}", devices);
                 }
                 println!();
             }

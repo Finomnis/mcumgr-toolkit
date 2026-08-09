@@ -32,6 +32,9 @@ use crate::{
     },
 };
 
+#[cfg(feature = "ble")]
+use crate::transport::ble::{BleIdentifier, BleRuntimeError};
+
 /// The default SMP frame size of Zephyr.
 ///
 /// Matches Zephyr default value of [MCUMGR_TRANSPORT_NETBUF_SIZE](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
@@ -179,6 +182,68 @@ impl std::fmt::Debug for UsbSerialPorts {
     }
 }
 
+#[cfg(feature = "ble")]
+fn ble_identifier_to_str<S>(id: &BleIdentifier, ser: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    ser.collect_str(id)
+}
+
+/// Information about a BLE device
+#[cfg(feature = "ble")]
+#[derive(Debug, Serialize, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct BleDeviceInfo {
+    /// An device identifier
+    #[serde(serialize_with = "ble_identifier_to_str")]
+    pub id: BleIdentifier,
+    /// The device name
+    pub name: Option<String>,
+    /// RSSI, in dBm
+    pub rssi: Option<i16>,
+}
+
+/// A list of available BLE devices
+///
+/// Used for pretty error messages.
+#[cfg(feature = "ble")]
+#[derive(Serialize, Clone, Eq, PartialEq)]
+#[serde(transparent)]
+pub struct BleDevices(pub Vec<BleDeviceInfo>);
+
+#[cfg(feature = "ble")]
+impl std::fmt::Display for BleDevices {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.is_empty() {
+            writeln!(f)?;
+            write!(f, " - None -")?;
+            return Ok(());
+        }
+
+        for BleDeviceInfo { id, name, rssi } in &self.0 {
+            writeln!(f)?;
+
+            if let Some(name) = name {
+                write!(f, " - {id} - {name:?}")?;
+            } else {
+                write!(f, " - {id} - <unknown>")?;
+            }
+
+            if let Some(rssi) = rssi {
+                write!(f, " ({rssi} dBm)")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "ble")]
+impl std::fmt::Debug for BleDevices {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.0, f)
+    }
+}
+
 /// Possible error values of [`MCUmgrClient::new_from_udp`].
 #[derive(Error, Debug, Diagnostic)]
 pub enum UdpError {
@@ -225,6 +290,35 @@ pub enum UsbSerialError {
     #[error("The given identifier was not a valid RegEx")]
     #[diagnostic(code(mcumgr_toolkit::usb_serial::regex_error))]
     RegexError(#[from] regex::Error),
+}
+
+/// Possible error values of [`MCUmgrClient::new_from_ble`].
+#[cfg(feature = "ble")]
+#[derive(Error, Debug, Diagnostic)]
+pub enum BleError {
+    /// BLE Runtime error
+    #[error("BLE runtime layer returned an error")]
+    #[diagnostic(code(mcumgr_toolkit::ble::runtime))]
+    BleRuntime(#[from] BleRuntimeError),
+    /// BLE Scanning stopped unexpectedly
+    #[error("BLE scanning unexpectedly stopped")]
+    #[diagnostic(code(mcumgr_toolkit::ble::scan_stopped))]
+    ScanStopped,
+    /// No matching BLE device was discovered
+    #[error("Device not found\nAvailable devices:\n{available}")]
+    #[diagnostic(code(mcumgr_toolkit::ble::device_not_found))]
+    DeviceNotFound {
+        /// A list of available devices
+        available: BleDevices,
+    },
+    /// Returned when the identifier was empty;
+    /// can be used to query all available devices
+    #[error("An empty identifier was provided")]
+    #[diagnostic(code(mcumgr_toolkit::ble::empty_identifier))]
+    IdentifierEmpty {
+        /// A list of available devices
+        devices: BleDevices,
+    },
 }
 
 impl MCUmgrClient {
@@ -345,6 +439,108 @@ impl MCUmgrClient {
             .open()?;
 
         Ok(Self::new_from_serial(serial))
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client based on a BLE connection.
+    ///
+    /// # Arguments
+    ///
+    /// * `identifier` - An OS dependent identifier for BLE devices.
+    /// * `timeout` - The communication timeout.
+    ///
+    #[cfg(feature = "ble")]
+    pub fn new_from_ble(
+        identifier: Option<BleIdentifier>,
+        timeout: Duration,
+    ) -> Result<Self, BleError> {
+        use btleplug::api::{Central, Peripheral};
+        use futures::StreamExt;
+        use tokio::time::error::Elapsed;
+
+        let mut runtime = crate::transport::ble::BleRuntime::new()?;
+
+        let scan_timeout = Duration::from_secs(3);
+
+        let mut devices = HashMap::new();
+
+        let device = runtime.scan(
+            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
+                tokio::time::timeout(scan_timeout, async {
+                    loop {
+                        match events.next().await.ok_or(BleError::ScanStopped)? {
+                            btleplug::api::CentralEvent::DeviceDiscovered(id)
+                            | btleplug::api::CentralEvent::DeviceConnected(id)
+                            | btleplug::api::CentralEvent::DeviceUpdated(id)
+                            | btleplug::api::CentralEvent::DeviceServicesModified(id)
+                            | btleplug::api::CentralEvent::ServiceDataAdvertisement {
+                                id,
+                                service_data: _,
+                            }
+                            | btleplug::api::CentralEvent::ServicesAdvertisement {
+                                id,
+                                services: _,
+                            }
+                            | btleplug::api::CentralEvent::ManufacturerDataAdvertisement {
+                                id,
+                                manufacturer_data: _,
+                            } => {
+                                if let Ok(device) = central.peripheral(&id).await {
+                                    // println!("{id} {device:?} {properties:?}");
+
+                                    #[allow(irrefutable_let_patterns)]
+                                    #[allow(clippy::unnecessary_fallible_conversions)]
+                                    if let Ok(current_identifier) = BleIdentifier::try_from(&device)
+                                    {
+                                        if let Some(identifier) = &identifier
+                                            && identifier == &current_identifier
+                                        {
+                                            break Ok(device);
+                                        }
+
+                                        if let Ok(Some(properties)) = device.properties().await
+                                            && properties
+                                                .services
+                                                .contains(&crate::transport::ble::SMP_UUID)
+                                        {
+                                            devices.entry(id).insert_entry(BleDeviceInfo {
+                                                id: current_identifier,
+                                                name: properties.local_name,
+                                                rssi: properties.rssi,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
+                                if let Some(device) = devices.get_mut(&id) {
+                                    device.rssi = Some(rssi);
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                })
+                .await
+                .map_err(|_: Elapsed| {
+                    let devices = BleDevices({
+                        let mut device_list = devices.into_values().collect::<Vec<_>>();
+                        device_list.sort();
+                        device_list
+                    });
+                    if identifier.is_none() {
+                        BleError::IdentifierEmpty { devices }
+                    } else {
+                        BleError::DeviceNotFound { available: devices }
+                    }
+                })?
+            },
+        )??;
+
+        let transport = runtime.into_transport(device, timeout)?;
+        Ok(Self {
+            connection: Connection::new(transport),
+            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
+        })
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a UDP socket.
@@ -499,7 +695,7 @@ impl MCUmgrClient {
             .execute_command(&commands::os::TaskStatistics)
             .map(|resp| {
                 let mut tasks = resp.tasks;
-                for (_, stats) in tasks.iter_mut() {
+                for stats in tasks.values_mut() {
                     stats.stkuse = stats.stkuse.map(|val| val * 4);
                     stats.stksiz = stats.stksiz.map(|val| val * 4);
                 }

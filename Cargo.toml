@@ -3,7 +3,7 @@ resolver = "3"
 members = ["mcumgr-toolkit", "mcumgr-toolkit-python", "mcumgrctl"]
 
 [workspace.package]
-version = "0.15.0"
+version = "0.16.0"
 authors = ["Finomnis <finomnis@gmail.com>"]
 edition = "2024"
 rust-version = "1.88"
@@ -16,12 +16,12 @@ keywords = ["zephyr", "mcumgr", "smp"]
 exclude = ["/.gitignore", "/.github/"]
 
 [workspace.dependencies]
-mcumgr-toolkit = { version = "0.15.0", path = "./mcumgr-toolkit" }
+mcumgr-toolkit = { version = "0.16.0", path = "./mcumgr-toolkit" }
 serialport = { version = "4.9.0", default-features = false }
-thiserror = "2.0.17"
+thiserror = "2.0.18"
 miette = "7.6.0"
 rand = "0.10.1"
-base64 = "0.22.1"
+base64 = "0.23.1"
 crc = "3.4.0"
 sha2 = "0.11.0"
 ringbuf = "0.5.0"
@@ -34,7 +34,7 @@ log = "0.4.28"
 env_logger = "0.11.10"
 clap = "4.6.0"
 clap_mangen = "0.3.0"
-clap_complete = "4.6.2"
+clap_complete = "4.6.3"
 strum = "0.28.0"
 indicatif = "0.18.3"
 indicatif-log-bridge = "0.2.3"
@@ -48,7 +48,12 @@ regex = "1.12.2"
 console = "0.16.2"
 polonius-the-crab = "0.5.0"
 pretty-hex = "0.4.2"
+btleplug = "0.12.0"
+tokio = "1.51.1"
+futures = "0.3.32"
+uuid = "1.23.0"
 either = "1.15.0"
+dbus = "0.9"
 
 [profile.release]
 strip = true

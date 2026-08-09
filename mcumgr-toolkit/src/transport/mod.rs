@@ -6,6 +6,10 @@ use thiserror::Error;
 /// Serial port based transport
 pub mod serial;
 
+/// BLE based transport
+#[cfg(feature = "ble")]
+pub mod ble;
+
 /// UDP based transport
 pub mod udp;
 
@@ -113,6 +117,28 @@ impl From<std::io::Error> for SendError {
 impl From<std::io::Error> for ReceiveError {
     fn from(e: std::io::Error) -> Self {
         if std::io::ErrorKind::TimedOut == e.kind() {
+            Self::Timeout
+        } else {
+            Self::TransportError(e.into())
+        }
+    }
+}
+
+#[cfg(feature = "ble")]
+impl From<btleplug::Error> for SendError {
+    fn from(e: btleplug::Error) -> Self {
+        if let btleplug::Error::TimedOut(_) = e {
+            Self::Timeout
+        } else {
+            Self::TransportError(e.into())
+        }
+    }
+}
+
+#[cfg(feature = "ble")]
+impl From<btleplug::Error> for ReceiveError {
+    fn from(e: btleplug::Error) -> Self {
+        if let btleplug::Error::TimedOut(_) = e {
             Self::Timeout
         } else {
             Self::TransportError(e.into())

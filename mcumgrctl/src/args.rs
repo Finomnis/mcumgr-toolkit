@@ -1,6 +1,7 @@
 use std::net::ToSocketAddrs;
 
 use clap::{ArgGroup, Args, Parser};
+use mcumgr_toolkit::transport::ble::BleIdentifier;
 use miette::IntoDiagnostic;
 
 use crate::groups::Group;
@@ -56,7 +57,7 @@ pub struct CommonArgs {
 #[command(disable_help_subcommand = true)]
 #[command(group(
     ArgGroup::new("transport")
-        .args(["serial", "usb_serial", "udp"])
+        .args(["serial", "usb_serial", "udp", "ble"])
 ))]
 #[command(group(
     ArgGroup::new("serial_transport")
@@ -87,6 +88,13 @@ pub struct App {
     /// Port defaults to 1337 if omitted (e.g. "mydevice.local" or "192.168.1.1:1337").
     #[arg(long, verbatim_doc_comment, value_parser = parse_udp_addr, value_name = "ADDR")]
     pub udp: Option<std::net::SocketAddr>,
+
+    /// Use the given BLE device as backend
+    ///
+    /// Accepts an OS dependent BLE device identifier.
+    /// If no argument provided, list all available BLE devices and exit.
+    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = None, value_name = BleIdentifier::help_name())]
+    pub ble: Option<Option<BleIdentifier>>,
 
     /// Settings that customize runtime behaviour
     #[command(flatten)]
