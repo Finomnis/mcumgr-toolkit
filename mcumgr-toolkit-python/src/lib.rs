@@ -149,7 +149,7 @@ impl MCUmgrClient {
     /// * `identifier` - An OS dependent identifier for BLE devices.
     /// * `timeout_ms` - The communication timeout, in ms.
     ///
-    /// In most OS the identifier will be the BLE device MAC address.
+    /// In most OS the identifier is the BLE device MAC address.
     /// The notable exception is MacOS/iOS where it is the device UUID.
     ///
     #[staticmethod]
