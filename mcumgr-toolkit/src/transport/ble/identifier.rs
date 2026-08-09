@@ -11,7 +11,7 @@ type BleIdentifierRepr = btleplug::api::BDAddr;
 ///
 /// Note that this differs based on OS.
 ///
-/// In most OS this is the BLE device MAC address.
+/// In most operating systems this is the BLE device MAC address.
 /// The notable exception is MacOS/iOS where it is the
 /// device UUID.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
