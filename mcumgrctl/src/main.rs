@@ -86,15 +86,20 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
 
         Client::new(result?)
     } else if let Some(ble_identifier) = args.ble {
-        let scan_spinner = multiprogress.add(ProgressBar::new_spinner());
-        scan_spinner.set_message("Scanning ...");
-        scan_spinner.enable_steady_tick(Duration::from_millis(100));
+        let mut scan_spinner = None;
+        if !args.common.quiet {
+            let scan_spinner = scan_spinner.insert(multiprogress.add(ProgressBar::new_spinner()));
+            scan_spinner.set_message("Scanning ...");
+            scan_spinner.enable_steady_tick(Duration::from_millis(100));
+        }
 
         let result =
             MCUmgrClient::new_from_ble(ble_identifier, Duration::from_millis(args.common.timeout));
 
-        scan_spinner.finish_and_clear();
-        multiprogress.remove(&scan_spinner);
+        if let Some(scan_spinner) = scan_spinner {
+            scan_spinner.finish_and_clear();
+            multiprogress.remove(&scan_spinner);
+        }
 
         if let Err(BleError::IdentifierEmpty { devices }) = &result {
             if args.common.json {
