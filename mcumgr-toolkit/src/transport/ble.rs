@@ -218,7 +218,7 @@ async fn receive_smp_frame<'a>(
         return Err(ReceiveError::UnexpectedResponse);
     }
     buffer
-        .get_mut(..msg.value.len())
+        .get_mut(..len)
         .ok_or(ReceiveError::FrameTooBig)?
         .copy_from_slice(&msg.value);
 
