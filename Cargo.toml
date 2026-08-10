@@ -30,7 +30,7 @@ serde_bytes = "0.11.19"
 serde_json = "1.0.145"
 serde_repr = "0.1.20"
 ciborium = "0.2.2"
-log = "0.4.28"
+log = "0.4.29"
 env_logger = "0.11.10"
 clap = "4.6.0"
 clap_mangen = "0.3.0"
@@ -53,7 +53,7 @@ tokio = "1.51.1"
 futures = "0.3.32"
 uuid = "1.23.0"
 either = "1.15.0"
-dbus = "0.9"
+dbus = "0.9.10"
 
 [profile.release]
 strip = true
