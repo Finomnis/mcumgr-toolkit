@@ -146,7 +146,7 @@ jobs:
           manylinux: 2014
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10 --features vendored-dbus
 
-      - uses: uraimo/run-on-arch-action@v3.1.0
+      - uses: uraimo/run-on-arch-action@v3.2.0
         if: matrix.target != 'ppc64'
         name: Install built wheel
         with:
@@ -239,7 +239,7 @@ jobs:
           manylinux: musllinux_1_2
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10 --features vendored-dbus
 
-      - uses: uraimo/run-on-arch-action@v3.1.0
+      - uses: uraimo/run-on-arch-action@v3.2.0
         name: Install built wheel
         with:
           arch: ${{ matrix.platform.arch }}
