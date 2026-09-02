@@ -26,7 +26,7 @@ use crate::{
     },
     connection::{Connection, ExecuteError},
     transport::{
-        ReceiveError,
+        ReceiveError, Transport,
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -541,6 +541,28 @@ impl MCUmgrClient {
             connection: Connection::new(transport),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
         })
+    }
+
+    /// Creates a client over any transport implementing [`Transport`].
+    ///
+    /// The built-in constructors cover serial, USB serial, BLE and UDP. This one
+    /// exists for transports living outside the crate: SMP over ISO-TP on a CAN
+    /// bus, over a test harness, or over anything else that can carry a raw SMP
+    /// frame. Without it a third-party [`Transport`] implementation cannot be
+    /// used, because [`MCUmgrClient`]'s connection field is private and every
+    /// other constructor is tied to a concrete transport type.
+    ///
+    /// ```no_run
+    /// # use mcumgr_toolkit::{MCUmgrClient, transport::Transport};
+    /// # fn example<T: Transport + Send + 'static>(my_transport: T) {
+    /// let client = MCUmgrClient::new_from_transport(my_transport);
+    /// # }
+    /// ```
+    pub fn new_from_transport<T: Transport + Send + 'static>(transport: T) -> Self {
+        Self {
+            connection: Connection::new(transport),
+            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
+        }
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a UDP socket.
