@@ -76,7 +76,7 @@ impl BleRuntime {
         identifier: Option<BleIdentifier>,
         scan_timeout: Duration,
     ) -> Result<Peripheral, BleError> {
-        #[cfg(not(any(target_os = "linux")))]
+        #[cfg(any(target_os = "windows", target_os = "macos", target_os = "ios"))]
         if let Some(identifier) = &identifier {
             match self.direct_connect_to_device(identifier.into()) {
                 Ok(device) => return Ok(device),
