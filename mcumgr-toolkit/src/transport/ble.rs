@@ -78,7 +78,7 @@ impl BleRuntime {
     ) -> Result<Peripheral, BleError> {
         #[cfg(any(target_os = "windows", target_os = "macos", target_os = "ios"))]
         if let Some(identifier) = &identifier {
-            match self.direct_connect_to_device(identifier.into()) {
+            match self.direct_connect_to_device(identifier.clone().into()) {
                 Ok(device) => return Ok(device),
                 Err(e) => log::warn!("Failed to connect directly: {e}"),
             }
