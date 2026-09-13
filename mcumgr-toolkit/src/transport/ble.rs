@@ -127,7 +127,9 @@ impl BleRuntime {
                 found_device
             })
             .unwrap_or_else(|e| {
-                log::warn!("Failed to fetch known BLE devices: {e}");
+                if !matches!(e, btleplug::Error::NotSupported(_)) {
+                    log::warn!("Failed to fetch known BLE devices: {e}");
+                }
                 None
             });
 
