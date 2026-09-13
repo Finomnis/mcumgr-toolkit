@@ -210,13 +210,10 @@ impl BleRuntime {
     }
 
     /// Try to connect based on peripheral ID
-    pub fn direct_connect_to_device<F, R>(
+    pub fn direct_connect_to_device(
         &mut self,
         identifier: PeripheralId,
-    ) -> Result<Peripheral, BleRuntimeError>
-    where
-        F: AsyncFnOnce(Vec<Peripheral>) -> R,
-    {
+    ) -> Result<Peripheral, BleRuntimeError> {
         let future = async {
             match self.adapter.add_peripheral(&identifier).await {
                 Ok(peripheral) => Ok(peripheral),
