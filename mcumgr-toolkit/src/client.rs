@@ -453,13 +453,12 @@ impl MCUmgrClient {
         identifier: Option<BleIdentifier>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
-        let mut runtime = crate::transport::ble::BleRuntime::new()?;
-
         let scan_timeout = Duration::from_secs(3);
+        let connect_timeout = Duration::from_secs(5).max(timeout);
+        let connection =
+            crate::transport::ble::connect_to_device(identifier, scan_timeout, connect_timeout)?;
 
-        let device = runtime.connect_to_device(identifier, scan_timeout)?;
-
-        let transport = runtime.into_transport(device, timeout)?;
+        let transport = crate::transport::ble::BleTransport::from_connection(connection, timeout)?;
         Ok(Self {
             connection: Connection::new(transport),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
