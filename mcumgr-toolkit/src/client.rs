@@ -453,90 +453,12 @@ impl MCUmgrClient {
         identifier: Option<BleIdentifier>,
         timeout: Duration,
     ) -> Result<Self, BleError> {
-        use btleplug::api::{Central, Peripheral};
-        use futures::StreamExt;
-        use tokio::time::error::Elapsed;
-
-        let mut runtime = crate::transport::ble::BleRuntime::new()?;
-
         let scan_timeout = Duration::from_secs(3);
+        let connect_timeout = Duration::from_secs(5).max(timeout);
+        let connection =
+            crate::transport::ble::connect_to_device(identifier, scan_timeout, connect_timeout)?;
 
-        let mut devices = HashMap::new();
-
-        let device = runtime.scan(
-            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
-                tokio::time::timeout(scan_timeout, async {
-                    loop {
-                        match events.next().await.ok_or(BleError::ScanStopped)? {
-                            btleplug::api::CentralEvent::DeviceDiscovered(id)
-                            | btleplug::api::CentralEvent::DeviceConnected(id)
-                            | btleplug::api::CentralEvent::DeviceUpdated(id)
-                            | btleplug::api::CentralEvent::DeviceServicesModified(id)
-                            | btleplug::api::CentralEvent::ServiceDataAdvertisement {
-                                id,
-                                service_data: _,
-                            }
-                            | btleplug::api::CentralEvent::ServicesAdvertisement {
-                                id,
-                                services: _,
-                            }
-                            | btleplug::api::CentralEvent::ManufacturerDataAdvertisement {
-                                id,
-                                manufacturer_data: _,
-                            } => {
-                                if let Ok(device) = central.peripheral(&id).await {
-                                    // println!("{id} {device:?} {properties:?}");
-
-                                    #[allow(irrefutable_let_patterns)]
-                                    #[allow(clippy::unnecessary_fallible_conversions)]
-                                    if let Ok(current_identifier) = BleIdentifier::try_from(&device)
-                                    {
-                                        if let Some(identifier) = &identifier
-                                            && identifier == &current_identifier
-                                        {
-                                            break Ok(device);
-                                        }
-
-                                        if let Ok(Some(properties)) = device.properties().await
-                                            && properties
-                                                .services
-                                                .contains(&crate::transport::ble::SMP_UUID)
-                                        {
-                                            devices.entry(id).insert_entry(BleDeviceInfo {
-                                                id: current_identifier,
-                                                name: properties.local_name,
-                                                rssi: properties.rssi,
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                            btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
-                                if let Some(device) = devices.get_mut(&id) {
-                                    device.rssi = Some(rssi);
-                                }
-                            }
-                            _ => (),
-                        }
-                    }
-                })
-                .await
-                .map_err(|_: Elapsed| {
-                    let devices = BleDevices({
-                        let mut device_list = devices.into_values().collect::<Vec<_>>();
-                        device_list.sort();
-                        device_list
-                    });
-                    if identifier.is_none() {
-                        BleError::IdentifierEmpty { devices }
-                    } else {
-                        BleError::DeviceNotFound { available: devices }
-                    }
-                })?
-            },
-        )??;
-
-        let transport = runtime.into_transport(device, timeout)?;
+        let transport = crate::transport::ble::BleTransport::from_connection(connection, timeout)?;
         Ok(Self {
             connection: Connection::new(transport),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
