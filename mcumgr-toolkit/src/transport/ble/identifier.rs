@@ -46,9 +46,9 @@ impl From<&Peripheral> for BleIdentifier {
 }
 
 #[cfg(not(any(target_os = "linux")))]
-impl From<BleIdentifier> for PeripheralId {
+impl From<BleIdentifier> for btleplug::platform::PeripheralId {
     fn from(value: BleIdentifier) -> Self {
-        PeripheralId::from(value.0)
+        value.0.into()
     }
 }
 

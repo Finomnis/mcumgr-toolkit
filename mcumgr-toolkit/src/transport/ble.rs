@@ -250,7 +250,7 @@ impl BleRuntime {
         F: AsyncFnOnce(Vec<Peripheral>) -> R,
     {
         let future = async {
-            let adapters = self
+            let peripherals = self
                 .adapter
                 .retrieve_peripherals(RetrievePeripheralsOptions {
                     identifiers: None,
@@ -258,7 +258,7 @@ impl BleRuntime {
                 })
                 .await?;
 
-            Ok(f(adapters).await)
+            Ok(f(peripherals).await)
         };
 
         self.block_on(future)
