@@ -3,20 +3,24 @@ mod tests;
 
 mod identifier;
 pub use identifier::BleIdentifier;
+use tokio::time::error::Elapsed;
 
-use std::{pin::Pin, time::Duration};
+use std::{collections::HashMap, pin::Pin, time::Duration};
 
 use btleplug::{
     api::{
         Central, CentralEvent, Characteristic, Manager, Peripheral as _,
         RetrievePeripheralsOptions, ScanFilter, ValueNotification,
     },
-    platform::{Adapter, Peripheral},
+    platform::{Adapter, Peripheral, PeripheralId},
 };
 use futures::{FutureExt, StreamExt};
 use uuid::{Uuid, uuid};
 
-use crate::transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport};
+use crate::{
+    client::{BleDeviceInfo, BleDevices, BleError},
+    transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport},
+};
 
 /// The error type of [`BleRuntime`].
 pub type BleRuntimeError = btleplug::Error;
@@ -63,8 +67,185 @@ impl BleRuntime {
         Ok(Self { runtime, adapter })
     }
 
+    /// Attempt to connect to a given device.
+    ///
+    /// If the device was not found, retrieve which devices
+    /// would have been available.
+    pub fn connect_to_device(
+        &mut self,
+        identifier: Option<BleIdentifier>,
+        scan_timeout: Duration,
+    ) -> Result<Peripheral, BleError> {
+        #[cfg(not(any(target_os = "linux")))]
+        if let Some(identifier) = identifier {
+            match self.direct_connect_to_device(identifier.into()) {
+                Ok(device) => return Ok(device),
+                Err(e) => log::warn!("Failed to connect directly: {e}"),
+            }
+        }
+
+        let mut devices = HashMap::new();
+
+        let device = self
+            .retrieve_peripherals_with_smp_service(async |previously_known_devices| {
+                // log::info!("{:#?}", previously_known_devices);
+
+                // Attempt to find the device we search for
+                let mut found_device = None;
+                for potential_device in &previously_known_devices {
+                    #[allow(irrefutable_let_patterns)]
+                    #[allow(clippy::unnecessary_fallible_conversions)]
+                    if let Ok(current_identifier) = BleIdentifier::try_from(potential_device) {
+                        if let Some(identifier) = &identifier
+                            && identifier == &current_identifier
+                        {
+                            found_device = Some(potential_device.clone());
+                            break;
+                        }
+                    }
+                }
+
+                // If device is not found, store the other devices that were given to us
+                if found_device.is_none() {
+                    for potential_device in previously_known_devices {
+                        #[allow(irrefutable_let_patterns)]
+                        #[allow(clippy::unnecessary_fallible_conversions)]
+                        if let Ok(current_identifier) = BleIdentifier::try_from(&potential_device) {
+                            if let Ok(Some(properties)) = potential_device.properties().await {
+                                devices
+                                    .entry(potential_device.id())
+                                    .insert_entry(BleDeviceInfo {
+                                        id: current_identifier,
+                                        name: properties.local_name,
+                                        rssi: properties.rssi,
+                                    });
+                            }
+                        }
+                    }
+                }
+
+                found_device
+            })
+            .unwrap_or_else(|e| {
+                log::warn!("Failed to fetch known BLE devices: {e}");
+                None
+            });
+
+        if let Some(device) = device {
+            return Ok(device);
+        }
+
+        self.scan(
+            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
+                tokio::time::timeout(scan_timeout, async {
+                    loop {
+                        match events.next().await.ok_or(BleError::ScanStopped)? {
+                            btleplug::api::CentralEvent::DeviceDiscovered(id)
+                            | btleplug::api::CentralEvent::DeviceConnected(id)
+                            | btleplug::api::CentralEvent::DeviceUpdated(id)
+                            | btleplug::api::CentralEvent::DeviceServicesModified(id)
+                            | btleplug::api::CentralEvent::ServiceDataAdvertisement {
+                                id,
+                                service_data: _,
+                            }
+                            | btleplug::api::CentralEvent::ServicesAdvertisement {
+                                id,
+                                services: _,
+                            }
+                            | btleplug::api::CentralEvent::ManufacturerDataAdvertisement {
+                                id,
+                                manufacturer_data: _,
+                            } => {
+                                if let Ok(device) = central.peripheral(&id).await {
+                                    // println!("{id} {device:?} {properties:?}");
+
+                                    #[allow(irrefutable_let_patterns)]
+                                    #[allow(clippy::unnecessary_fallible_conversions)]
+                                    if let Ok(current_identifier) = BleIdentifier::try_from(&device)
+                                    {
+                                        if let Some(identifier) = &identifier
+                                            && identifier == &current_identifier
+                                        {
+                                            break Ok(device);
+                                        }
+
+                                        if let Ok(Some(properties)) = device.properties().await
+                                            && properties
+                                                .services
+                                                .contains(&crate::transport::ble::SMP_UUID)
+                                        {
+                                            devices.entry(id).insert_entry(BleDeviceInfo {
+                                                id: current_identifier,
+                                                name: properties.local_name,
+                                                rssi: properties.rssi,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
+                                if let Some(device) = devices.get_mut(&id) {
+                                    device.rssi = Some(rssi);
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                })
+                .await
+                .map_err(|_: Elapsed| {
+                    let devices = BleDevices({
+                        let mut device_list = devices.into_values().collect::<Vec<_>>();
+                        device_list.sort();
+                        device_list
+                    });
+                    if identifier.is_none() {
+                        BleError::IdentifierEmpty { devices }
+                    } else {
+                        BleError::DeviceNotFound { available: devices }
+                    }
+                })?
+            },
+        )?
+    }
+
+    /// Try to connect based on peripheral ID
+    pub fn direct_connect_to_device<F, R>(
+        &mut self,
+        identifier: PeripheralId,
+    ) -> Result<Peripheral, BleRuntimeError>
+    where
+        F: AsyncFnOnce(Vec<Peripheral>) -> R,
+    {
+        let future = async {
+            match self.adapter.add_peripheral(&identifier).await {
+                Ok(peripheral) => Ok(peripheral),
+
+                // If add_peripheral is not supported, try to `retrieve_peripherals`
+                // and see if the peripheral is contained there
+                Err(btleplug::Error::NotSupported(_)) => self
+                    .adapter
+                    .retrieve_peripherals(RetrievePeripheralsOptions {
+                        identifiers: Some(vec![identifier.clone()]),
+                        services: None,
+                    })
+                    .await?
+                    .into_iter()
+                    .next()
+                    .ok_or(btleplug::Error::DeviceNotFound),
+
+                Err(err) => Err(err),
+            }
+        };
+
+        self.block_on(future)
+    }
+
     /// Execute the given function after loading known devices from OS
-    pub fn load_known_mcumgr_peripherals<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
+    pub fn retrieve_peripherals_with_smp_service<F, R>(
+        &mut self,
+        f: F,
+    ) -> Result<R, BleRuntimeError>
     where
         F: AsyncFnOnce(Vec<Peripheral>) -> R,
     {

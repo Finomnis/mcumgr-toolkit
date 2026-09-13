@@ -45,6 +45,13 @@ impl From<&Peripheral> for BleIdentifier {
     }
 }
 
+#[cfg(not(any(target_os = "linux")))]
+impl From<BleIdentifier> for PeripheralId {
+    fn from(value: BleIdentifier) -> Self {
+        PeripheralId::from(value.0)
+    }
+}
+
 impl BleIdentifier {
     /**
      * A human readable description of what the identifier contains
