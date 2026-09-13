@@ -77,7 +77,7 @@ impl BleRuntime {
         scan_timeout: Duration,
     ) -> Result<Peripheral, BleError> {
         #[cfg(not(any(target_os = "linux")))]
-        if let Some(identifier) = identifier {
+        if let Some(identifier) = &identifier {
             match self.direct_connect_to_device(identifier.into()) {
                 Ok(device) => return Ok(device),
                 Err(e) => log::warn!("Failed to connect directly: {e}"),
