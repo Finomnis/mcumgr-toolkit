@@ -59,7 +59,7 @@ pub fn connect_to_device(
     if let Some(identifier) = &identifier {
         match runtime.get_peripheral_candidate(identifier.clone().into()) {
             Ok(device) => candidate = Some(device),
-            Err(e) => log::warn!("Failed to connect directly: {e}"),
+            Err(e) => log::debug!("Failed to resolve BLE peripheral directly: {e}"),
         }
     }
 
