@@ -67,6 +67,7 @@ pub fn connect_to_device(
     // and even if they exist, they might only be connectable after scanning.
     // So make sure we can actually connect to the peripheral.
     if let Some(candidate) = candidate {
+        log::debug!("Attempting to connect to peripheral directly");
         match connection::try_connect(&runtime, &candidate, connect_timeout) {
             Ok(ownership) => {
                 return Ok(BleConnection {
@@ -126,6 +127,7 @@ impl BleRuntime {
     ) -> Result<Peripheral, BleError> {
         let mut devices = HashMap::new();
 
+        log::debug!("Attempting to find peripheral in cached list");
         let device = self
             .retrieve_peripherals_with_smp_service(async |previously_known_devices| {
                 // Attempt to find the device we search for
@@ -172,9 +174,11 @@ impl BleRuntime {
             });
 
         if let Some(device) = device {
+            log::debug!("Peripheral found in cached list");
             return Ok(device);
         }
 
+        log::debug!("Performing full BLE scan");
         self.scan(
             async |events, central| -> Result<btleplug::platform::Peripheral, BleError> {
                 tokio::time::timeout(scan_timeout, async {
