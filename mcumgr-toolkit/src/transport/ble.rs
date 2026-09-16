@@ -67,12 +67,17 @@ pub fn connect_to_device(
     // and even if they exist, they might only be connectable after scanning.
     // So make sure we can actually connect to the peripheral.
     if let Some(candidate) = candidate {
-        if let Ok(ownership) = connection::try_connect(&runtime, &candidate, connect_timeout) {
-            return Ok(BleConnection {
-                runtime,
-                device: candidate,
-                ownership,
-            });
+        match connection::try_connect(&runtime, &candidate, connect_timeout) {
+            Ok(ownership) => {
+                return Ok(BleConnection {
+                    runtime,
+                    device: candidate,
+                    ownership,
+                });
+            }
+            Err(e) => {
+                log::debug!("Direct BLE connection failed, falling back to discovery: {e}");
+            }
         };
     }
 
@@ -123,8 +128,6 @@ impl BleRuntime {
 
         let device = self
             .retrieve_peripherals_with_smp_service(async |previously_known_devices| {
-                // log::info!("{:#?}", previously_known_devices);
-
                 // Attempt to find the device we search for
                 let mut found_device = None;
                 for potential_device in &previously_known_devices {
@@ -194,8 +197,6 @@ impl BleRuntime {
                                 manufacturer_data: _,
                             } => {
                                 if let Ok(device) = central.peripheral(&id).await {
-                                    // println!("{id} {device:?} {properties:?}");
-
                                     #[allow(irrefutable_let_patterns)]
                                     #[allow(clippy::unnecessary_fallible_conversions)]
                                     if let Ok(current_identifier) = BleIdentifier::try_from(&device)
@@ -246,7 +247,7 @@ impl BleRuntime {
         )?
     }
 
-    /// Try to connect based on peripheral ID
+    /// Try to resolve a peripheral candidate from a known peripheral ID
     pub fn get_peripheral_candidate(
         &mut self,
         identifier: PeripheralId,
@@ -275,7 +276,8 @@ impl BleRuntime {
         self.block_on(future)
     }
 
-    /// Execute the given function after loading known devices from OS
+    /// Execute the given function after retrieving known peripherals
+    /// that offer the SMP service
     pub fn retrieve_peripherals_with_smp_service<F, R>(
         &mut self,
         f: F,
