@@ -164,7 +164,6 @@ impl MCUmgrClient {
                 ::mcumgr_toolkit::MCUmgrClient::new_from_ble(
                     Some(identifier),
                     Duration::from_millis(timeout_ms),
-                    None,
                 )
             })
             .map_err(err_to_pyerr)?;

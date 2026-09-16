@@ -49,7 +49,7 @@ pub fn connect_to_device(
     identifier: Option<BleIdentifier>,
     scan_timeout: Duration,
     connect_timeout: Duration,
-    on_start_scanning: Option<impl FnOnce()>,
+    on_start_scanning: impl FnOnce(),
 ) -> Result<BleConnection, BleError> {
     let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
@@ -125,7 +125,7 @@ impl BleRuntime {
         &mut self,
         identifier: Option<BleIdentifier>,
         scan_timeout: Duration,
-        on_start_scanning: Option<impl FnOnce()>,
+        on_start_scanning: impl FnOnce(),
     ) -> Result<Peripheral, BleError> {
         let mut devices = HashMap::new();
 
@@ -180,9 +180,7 @@ impl BleRuntime {
             return Ok(device);
         }
 
-        if let Some(scanning_callback) = on_start_scanning {
-            scanning_callback();
-        }
+        on_start_scanning();
 
         log::debug!("Performing full BLE scan");
         self.scan(

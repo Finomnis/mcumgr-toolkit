@@ -447,13 +447,30 @@ impl MCUmgrClient {
     ///
     /// * `identifier` - An OS dependent identifier for BLE devices.
     /// * `timeout` - The communication timeout.
-    /// * `on_start_scanning` - A callback that gets executed if we start a full BLE discovery scan
     ///
     #[cfg(feature = "ble")]
     pub fn new_from_ble(
         identifier: Option<BleIdentifier>,
         timeout: Duration,
-        on_start_scanning: Option<impl FnOnce()>,
+    ) -> Result<Self, BleError> {
+        Self::new_from_ble_with_scan_callback(identifier, timeout, || {})
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client based on a BLE connection.
+    ///
+    /// Additionally, notifies the caller when a full BLE discovery scan has started.
+    ///
+    /// # Arguments
+    ///
+    /// * `identifier` - An OS dependent identifier for BLE devices.
+    /// * `timeout` - The communication timeout.
+    /// * `on_start_scanning` - A callback that gets executed if a full BLE discovery scan was started
+    ///
+    #[cfg(feature = "ble")]
+    pub fn new_from_ble_with_scan_callback(
+        identifier: Option<BleIdentifier>,
+        timeout: Duration,
+        on_start_scanning: impl FnOnce(),
     ) -> Result<Self, BleError> {
         let scan_timeout = Duration::from_secs(3);
         let connect_timeout = Duration::from_secs(5).max(timeout);

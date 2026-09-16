@@ -88,17 +88,17 @@ fn cli_main(multiprogress: &MultiProgress) -> Result<(), CliError> {
     } else if let Some(ble_identifier) = args.ble {
         let mut scan_spinner = None;
 
-        let result = MCUmgrClient::new_from_ble(
+        let result = MCUmgrClient::new_from_ble_with_scan_callback(
             ble_identifier,
             Duration::from_millis(args.common.timeout),
-            Some(|| {
+            || {
                 if !(args.common.quiet || args.common.json) {
                     let scan_spinner =
                         scan_spinner.insert(multiprogress.add(ProgressBar::new_spinner()));
                     scan_spinner.set_message("Scanning ...");
                     scan_spinner.enable_steady_tick(Duration::from_millis(100));
                 }
-            }),
+            },
         );
 
         if let Some(scan_spinner) = scan_spinner {
