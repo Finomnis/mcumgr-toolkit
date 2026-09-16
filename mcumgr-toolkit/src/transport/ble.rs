@@ -180,7 +180,7 @@ impl BleRuntime {
 
         log::debug!("Performing full BLE scan");
         self.scan(
-            async |events, central| -> Result<btleplug::platform::Peripheral, BleError> {
+            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
                 tokio::time::timeout(scan_timeout, async {
                     loop {
                         match events.next().await.ok_or(BleError::ScanStopped)? {
