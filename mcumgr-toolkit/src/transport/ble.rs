@@ -1,24 +1,30 @@
 #[cfg(test)]
 mod tests;
 
+mod connection;
+pub use connection::BleConnection;
 mod identifier;
 pub use identifier::BleIdentifier;
+use tokio::time::error::Elapsed;
 
-use std::{pin::Pin, time::Duration};
+use std::{collections::HashMap, pin::Pin, time::Duration};
 
 use btleplug::{
     api::{
-        Central, CentralEvent, Characteristic, Manager, Peripheral as _, ScanFilter,
-        ValueNotification,
+        Central, CentralEvent, Characteristic, Manager, Peripheral as _,
+        RetrievePeripheralsOptions, ScanFilter, ValueNotification,
     },
     platform::{Adapter, Peripheral},
 };
 use futures::{FutureExt, StreamExt};
 use uuid::{Uuid, uuid};
 
-use crate::transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport};
+use crate::{
+    client::{BleDeviceInfo, BleDevices, BleError},
+    transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport},
+};
 
-/// The error type of [`BleRuntime`].
+/// The error type of the BLE backend.
 pub type BleRuntimeError = btleplug::Error;
 
 /// A stream of BLE notifications
@@ -26,7 +32,7 @@ type NotificationStream = Pin<Box<dyn futures::Stream<Item = ValueNotification> 
 
 /// A runtime manager that encapsulates all the
 /// async BLE boilerplate code.
-pub struct BleRuntime {
+struct BleRuntime {
     runtime: Box<tokio::runtime::Runtime>,
     adapter: btleplug::platform::Adapter,
 }
@@ -36,9 +42,59 @@ pub const SMP_UUID: Uuid = uuid!("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
 /// The BLE characteristic UUID used to communicate SMP messages
 pub const CHARACTERISTIC_UUID: Uuid = uuid!("DA2E7828-FBCE-4E01-AE9E-261174997C48");
 
+/// Attempt to connect to a given BLE device.
+///
+/// If no identifier is given, return an error that contains all available devices.
+pub fn connect_to_device(
+    identifier: Option<BleIdentifier>,
+    scan_timeout: Duration,
+    connect_timeout: Duration,
+) -> Result<BleConnection, BleError> {
+    let mut runtime = crate::transport::ble::BleRuntime::new()?;
+
+    // First, try to retrieve a peripheral candidate from the cache.
+    #[allow(unused_mut)]
+    let mut candidate: Option<Peripheral> = None;
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "ios"))]
+    if let Some(identifier) = &identifier {
+        match runtime.get_peripheral_candidate(identifier.clone().into()) {
+            Ok(device) => candidate = Some(device),
+            Err(e) => log::debug!("Failed to resolve BLE peripheral directly: {e}"),
+        }
+    }
+
+    // Try to connect; on windows candidates must not actually exist,
+    // and even if they exist, they might only be connectable after scanning.
+    // So make sure we can actually connect to the peripheral.
+    if let Some(candidate) = candidate {
+        log::debug!("Attempting to connect to peripheral directly");
+        match connection::try_connect(&runtime, &candidate, connect_timeout) {
+            Ok(ownership) => {
+                return Ok(BleConnection {
+                    runtime,
+                    device: candidate,
+                    ownership,
+                });
+            }
+            Err(e) => {
+                log::debug!("Direct BLE connection failed, falling back to discovery: {e}");
+            }
+        };
+    }
+
+    let device = runtime.scan_for_device(identifier, scan_timeout)?;
+
+    let ownership = connection::try_connect(&runtime, &device, connect_timeout)?;
+    Ok(BleConnection {
+        runtime,
+        device,
+        ownership,
+    })
+}
+
 impl BleRuntime {
     /// Create a new [`BleRuntime`].
-    pub fn new() -> Result<Self, BleRuntimeError> {
+    fn new() -> Result<Self, BleRuntimeError> {
         let runtime = Box::new(
             tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
@@ -63,8 +119,191 @@ impl BleRuntime {
         Ok(Self { runtime, adapter })
     }
 
+    /// Scan for a device.
+    fn scan_for_device(
+        &mut self,
+        identifier: Option<BleIdentifier>,
+        scan_timeout: Duration,
+    ) -> Result<Peripheral, BleError> {
+        let mut devices = HashMap::new();
+
+        log::debug!("Attempting to find peripheral in cached list");
+        let device = self
+            .retrieve_peripherals_with_smp_service(async |previously_known_devices| {
+                // Attempt to find the device we search for
+                let mut found_device = None;
+                for potential_device in &previously_known_devices {
+                    #[allow(irrefutable_let_patterns)]
+                    #[allow(clippy::unnecessary_fallible_conversions)]
+                    if let Ok(current_identifier) = BleIdentifier::try_from(potential_device) {
+                        if let Some(identifier) = &identifier
+                            && identifier == &current_identifier
+                        {
+                            found_device = Some(potential_device.clone());
+                            break;
+                        }
+                    }
+                }
+
+                // If device is not found, store the other devices that were given to us
+                if found_device.is_none() {
+                    for potential_device in previously_known_devices {
+                        #[allow(irrefutable_let_patterns)]
+                        #[allow(clippy::unnecessary_fallible_conversions)]
+                        if let Ok(current_identifier) = BleIdentifier::try_from(&potential_device) {
+                            if let Ok(Some(properties)) = potential_device.properties().await {
+                                devices
+                                    .entry(potential_device.id())
+                                    .insert_entry(BleDeviceInfo {
+                                        id: current_identifier,
+                                        name: properties.local_name,
+                                        rssi: properties.rssi,
+                                    });
+                            }
+                        }
+                    }
+                }
+
+                found_device
+            })
+            .unwrap_or_else(|e| {
+                if !matches!(e, btleplug::Error::NotSupported(_)) {
+                    log::warn!("Failed to fetch known BLE devices: {e}");
+                }
+                None
+            });
+
+        if let Some(device) = device {
+            log::debug!("Peripheral found in cached list");
+            return Ok(device);
+        }
+
+        log::debug!("Performing full BLE scan");
+        self.scan(
+            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
+                tokio::time::timeout(scan_timeout, async {
+                    loop {
+                        match events.next().await.ok_or(BleError::ScanStopped)? {
+                            btleplug::api::CentralEvent::DeviceDiscovered(id)
+                            | btleplug::api::CentralEvent::DeviceConnected(id)
+                            | btleplug::api::CentralEvent::DeviceUpdated(id)
+                            | btleplug::api::CentralEvent::DeviceServicesModified(id)
+                            | btleplug::api::CentralEvent::ServiceDataAdvertisement {
+                                id,
+                                service_data: _,
+                            }
+                            | btleplug::api::CentralEvent::ServicesAdvertisement {
+                                id,
+                                services: _,
+                            }
+                            | btleplug::api::CentralEvent::ManufacturerDataAdvertisement {
+                                id,
+                                manufacturer_data: _,
+                            } => {
+                                if let Ok(device) = central.peripheral(&id).await {
+                                    #[allow(irrefutable_let_patterns)]
+                                    #[allow(clippy::unnecessary_fallible_conversions)]
+                                    if let Ok(current_identifier) = BleIdentifier::try_from(&device)
+                                    {
+                                        if let Some(identifier) = &identifier
+                                            && identifier == &current_identifier
+                                        {
+                                            break Ok(device);
+                                        }
+
+                                        if let Ok(Some(properties)) = device.properties().await
+                                            && properties
+                                                .services
+                                                .contains(&crate::transport::ble::SMP_UUID)
+                                        {
+                                            devices.entry(id).insert_entry(BleDeviceInfo {
+                                                id: current_identifier,
+                                                name: properties.local_name,
+                                                rssi: properties.rssi,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            btleplug::api::CentralEvent::RssiUpdate { id, rssi } => {
+                                if let Some(device) = devices.get_mut(&id) {
+                                    device.rssi = Some(rssi);
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                })
+                .await
+                .map_err(|_: Elapsed| {
+                    let devices = BleDevices({
+                        let mut device_list = devices.into_values().collect::<Vec<_>>();
+                        device_list.sort();
+                        device_list
+                    });
+                    if identifier.is_none() {
+                        BleError::IdentifierEmpty { devices }
+                    } else {
+                        BleError::DeviceNotFound { available: devices }
+                    }
+                })?
+            },
+        )?
+    }
+
+    /// Try to resolve a peripheral candidate from a known peripheral ID
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "ios"))]
+    fn get_peripheral_candidate(
+        &mut self,
+        identifier: btleplug::platform::PeripheralId,
+    ) -> Result<Peripheral, BleRuntimeError> {
+        let future = async {
+            match self.adapter.add_peripheral(&identifier).await {
+                Ok(peripheral) => Ok(peripheral),
+
+                // If add_peripheral is not supported, try to `retrieve_peripherals`
+                // and see if the peripheral is contained there
+                Err(btleplug::Error::NotSupported(_)) => self
+                    .adapter
+                    .retrieve_peripherals(RetrievePeripheralsOptions {
+                        identifiers: Some(vec![identifier.clone()]),
+                        services: None,
+                    })
+                    .await?
+                    .into_iter()
+                    .next()
+                    .ok_or(btleplug::Error::DeviceNotFound),
+
+                Err(err) => Err(err),
+            }
+        };
+
+        self.block_on(future)
+    }
+
+    /// Execute the given function after retrieving known peripherals
+    /// that offer the SMP service
+    fn retrieve_peripherals_with_smp_service<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
+    where
+        F: AsyncFnOnce(Vec<Peripheral>) -> R,
+    {
+        let future = async {
+            let peripherals = self
+                .adapter
+                .retrieve_peripherals(RetrievePeripheralsOptions {
+                    identifiers: None,
+                    services: Some(vec![SMP_UUID]),
+                })
+                .await?;
+
+            Ok(f(peripherals).await)
+        };
+
+        self.block_on(future)
+    }
+
     /// Execute the given function while scanning for devices
-    pub fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
+    fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
     where
         F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>, &Adapter) -> R,
     {
@@ -86,87 +325,11 @@ impl BleRuntime {
     }
 
     /// Run a future to completion
-    pub fn block_on<F>(&self, future: F) -> F::Output
+    fn block_on<F>(&self, future: F) -> F::Output
     where
         F: Future,
     {
         self.runtime.block_on(future)
-    }
-
-    /// Creates a BLE transport for the given peripheral.
-    ///
-    /// Connects the peripheral if necessary and takes ownership of the
-    /// SMP characteristic's notification subscription for the lifetime
-    /// of the transport.
-    pub fn into_transport(
-        self,
-        device: Peripheral,
-        timeout: Duration,
-    ) -> Result<BleTransport, BleRuntimeError> {
-        async fn connect(
-            device: &Peripheral,
-            timeout: Duration,
-            connection_owned: &mut bool,
-        ) -> Result<Characteristic, BleRuntimeError> {
-            if !device.is_connected().await? {
-                device
-                    .connect_with_timeout(Duration::from_secs(5).max(timeout))
-                    .await?;
-                *connection_owned = true;
-            }
-
-            device.discover_services_with_timeout(timeout).await?;
-
-            let characteristic = device
-                .characteristics()
-                .iter()
-                .find(|ch| ch.service_uuid == SMP_UUID && ch.uuid == CHARACTERISTIC_UUID)
-                .cloned()
-                .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
-
-            let _ = device.unsubscribe(&characteristic).await;
-            if let Err(e) = device.subscribe(&characteristic).await {
-                let _ = device.unsubscribe(&characteristic).await;
-                return Err(e);
-            }
-
-            Ok(characteristic)
-        }
-
-        let mut connection_owned = false;
-        let characteristic = self.block_on(async {
-            match connect(&device, timeout, &mut connection_owned).await {
-                Ok(ch) => Ok(ch),
-                Err(e) => {
-                    if connection_owned {
-                        let _ = device.disconnect().await;
-                    }
-                    Err(e)
-                }
-            }
-        })?;
-        let notifications = self.block_on(async {
-            match device.notifications().await {
-                Ok(not) => Ok(not),
-                Err(e) => {
-                    let _ = device.unsubscribe(&characteristic).await;
-                    if connection_owned {
-                        let _ = device.disconnect().await;
-                    }
-                    Err(e)
-                }
-            }
-        })?;
-
-        Ok(BleTransport {
-            runtime: self,
-            device,
-            characteristic,
-            notifications: Some(notifications),
-            timeout,
-            send_buffer: Vec::new(),
-            connection_owned,
-        })
     }
 }
 
@@ -258,14 +421,62 @@ async fn receive_smp_frame<'a>(
 
 /// An active connection to a BLE device
 pub struct BleTransport {
-    runtime: BleRuntime,
-    device: Peripheral,
+    connection: BleConnection,
     characteristic: Characteristic,
     notifications: Option<Pin<Box<dyn futures::Stream<Item = ValueNotification> + Send>>>,
     timeout: Duration,
     send_buffer: Vec<u8>,
-    /// Signals that we own the connection and should disconnect in the end
-    connection_owned: bool,
+}
+
+impl BleTransport {
+    /// Creates a BLE transport from a given BLE connection.
+    pub fn from_connection(
+        connection: BleConnection,
+        timeout: Duration,
+    ) -> Result<BleTransport, BleRuntimeError> {
+        connection
+            .runtime
+            .block_on(connection.device.discover_services_with_timeout(timeout))?;
+
+        let characteristic = connection
+            .device
+            .characteristics()
+            .iter()
+            .find(|ch| ch.service_uuid == SMP_UUID && ch.uuid == CHARACTERISTIC_UUID)
+            .cloned()
+            .ok_or(BleRuntimeError::NoSuchCharacteristic)?;
+
+        let _ = connection
+            .runtime
+            .block_on(connection.device.unsubscribe(&characteristic));
+        if let Err(e) = connection
+            .runtime
+            .block_on(connection.device.subscribe(&characteristic))
+        {
+            let _ = connection
+                .runtime
+                .block_on(connection.device.unsubscribe(&characteristic));
+            return Err(e);
+        }
+
+        let notifications = connection.runtime.block_on(async {
+            match connection.device.notifications().await {
+                Ok(not) => Ok(not),
+                Err(e) => {
+                    let _ = connection.device.unsubscribe(&characteristic).await;
+                    Err(e)
+                }
+            }
+        })?;
+
+        Ok(BleTransport {
+            connection,
+            characteristic,
+            notifications: Some(notifications),
+            timeout,
+            send_buffer: Vec::new(),
+        })
+    }
 }
 
 impl Transport for BleTransport {
@@ -313,8 +524,8 @@ impl Transport for BleTransport {
             Ok(())
         }
 
-        self.runtime.block_on(send_frame_parts(
-            &self.device,
+        self.connection.runtime.block_on(send_frame_parts(
+            &self.connection.device,
             &self.characteristic,
             &self.send_buffer,
         ))?;
@@ -329,7 +540,8 @@ impl Transport for BleTransport {
         let notifications = self.notifications.as_mut().unwrap();
         let timeout = self.timeout;
 
-        self.runtime
+        self.connection
+            .runtime
             .block_on(receive_smp_frame(notifications, timeout, buffer))
     }
 
@@ -347,7 +559,7 @@ impl Drop for BleTransport {
         {
             // Drop of notifications seems to contain a tokio::spawn,
             // so it requires being inside of a runtime or it will panic
-            let _guard = self.runtime.runtime.enter();
+            let _guard = self.connection.runtime.runtime.enter();
             self.notifications.take();
         }
 
@@ -357,18 +569,12 @@ impl Drop for BleTransport {
 
         const CLEANUP_TIMEOUT: Duration = Duration::from_secs(5);
 
-        let _ = self.runtime.block_on(async {
+        let _ = self.connection.runtime.block_on(async {
             tokio::time::timeout(
                 CLEANUP_TIMEOUT,
-                self.device.unsubscribe(&self.characteristic),
+                self.connection.device.unsubscribe(&self.characteristic),
             )
             .await
         });
-
-        if self.connection_owned {
-            let _ = self.runtime.block_on(async {
-                tokio::time::timeout(CLEANUP_TIMEOUT, self.device.disconnect()).await
-            });
-        }
     }
 }
