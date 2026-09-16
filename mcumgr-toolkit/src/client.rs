@@ -447,16 +447,22 @@ impl MCUmgrClient {
     ///
     /// * `identifier` - An OS dependent identifier for BLE devices.
     /// * `timeout` - The communication timeout.
+    /// * `on_start_scanning` - A callback that gets executed if we start a full BLE discovery scan
     ///
     #[cfg(feature = "ble")]
     pub fn new_from_ble(
         identifier: Option<BleIdentifier>,
         timeout: Duration,
+        on_start_scanning: Option<impl FnOnce()>,
     ) -> Result<Self, BleError> {
         let scan_timeout = Duration::from_secs(3);
         let connect_timeout = Duration::from_secs(5).max(timeout);
-        let connection =
-            crate::transport::ble::connect_to_device(identifier, scan_timeout, connect_timeout)?;
+        let connection = crate::transport::ble::connect_to_device(
+            identifier,
+            scan_timeout,
+            connect_timeout,
+            on_start_scanning,
+        )?;
 
         let transport = crate::transport::ble::BleTransport::from_connection(connection, timeout)?;
         Ok(Self {
