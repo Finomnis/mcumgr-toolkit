@@ -180,7 +180,7 @@ impl BleRuntime {
 
         log::debug!("Performing full BLE scan");
         self.scan(
-            async |mut events, central| -> Result<btleplug::platform::Peripheral, BleError> {
+            async |events, central| -> Result<btleplug::platform::Peripheral, BleError> {
                 tokio::time::timeout(scan_timeout, async {
                     loop {
                         match events.next().await.ok_or(BleError::ScanStopped)? {
@@ -305,16 +305,18 @@ impl BleRuntime {
     /// Execute the given function while scanning for devices
     fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
     where
-        F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>, &Adapter) -> R,
+        F: AsyncFnOnce(
+            &mut Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>,
+            &Adapter,
+        ) -> R,
     {
         let future = async {
-            let events = self.adapter.events().await?;
+            let mut events = self.adapter.events().await?;
 
-            self.adapter
-                .start_scan(ScanFilter { services: vec![] })
-                .await?;
+            self.adapter.start_scan(ScanFilter::default()).await?;
 
-            let result = f(events, &self.adapter).await;
+            // Pass `events` as reference to delay its destructor until after `stop_scan`.
+            let result = f(&mut events, &self.adapter).await;
 
             let _ = self.adapter.stop_scan().await;
 
@@ -556,25 +558,23 @@ impl Transport for BleTransport {
 
 impl Drop for BleTransport {
     fn drop(&mut self) {
+        if !std::thread::panicking() {
+            const CLEANUP_TIMEOUT: Duration = Duration::from_secs(5);
+
+            let _ = self.connection.runtime.block_on(async {
+                tokio::time::timeout(
+                    CLEANUP_TIMEOUT,
+                    self.connection.device.unsubscribe(&self.characteristic),
+                )
+                .await
+            });
+        }
+
         {
             // Drop of notifications seems to contain a tokio::spawn,
             // so it requires being inside of a runtime or it will panic
             let _guard = self.connection.runtime.runtime.enter();
             self.notifications.take();
         }
-
-        if std::thread::panicking() {
-            return;
-        }
-
-        const CLEANUP_TIMEOUT: Duration = Duration::from_secs(5);
-
-        let _ = self.connection.runtime.block_on(async {
-            tokio::time::timeout(
-                CLEANUP_TIMEOUT,
-                self.connection.device.unsubscribe(&self.characteristic),
-            )
-            .await
-        });
     }
 }
