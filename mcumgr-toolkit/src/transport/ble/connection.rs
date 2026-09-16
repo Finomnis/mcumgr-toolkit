@@ -14,9 +14,9 @@ pub(crate) enum ConnectionOwnership {
 ///
 /// Disconnects if we connected to it.
 pub struct BleConnection {
-    pub(crate) runtime: BleRuntime,
-    pub(crate) device: Peripheral,
-    pub(crate) ownership: ConnectionOwnership,
+    pub(super) runtime: BleRuntime,
+    pub(super) device: Peripheral,
+    pub(super) ownership: ConnectionOwnership,
 }
 
 impl Drop for BleConnection {

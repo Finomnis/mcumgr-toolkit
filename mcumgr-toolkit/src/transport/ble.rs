@@ -14,7 +14,7 @@ use btleplug::{
         Central, CentralEvent, Characteristic, Manager, Peripheral as _,
         RetrievePeripheralsOptions, ScanFilter, ValueNotification,
     },
-    platform::{Adapter, Peripheral, PeripheralId},
+    platform::{Adapter, Peripheral},
 };
 use futures::{FutureExt, StreamExt};
 use uuid::{Uuid, uuid};
@@ -24,7 +24,7 @@ use crate::{
     transport::{ReceiveError, SMP_HEADER_SIZE, SmpHeader, Transport},
 };
 
-/// The error type of [`BleRuntime`].
+/// The error type of the BLE backend.
 pub type BleRuntimeError = btleplug::Error;
 
 /// A stream of BLE notifications
@@ -32,7 +32,7 @@ type NotificationStream = Pin<Box<dyn futures::Stream<Item = ValueNotification> 
 
 /// A runtime manager that encapsulates all the
 /// async BLE boilerplate code.
-pub struct BleRuntime {
+struct BleRuntime {
     runtime: Box<tokio::runtime::Runtime>,
     adapter: btleplug::platform::Adapter,
 }
@@ -93,7 +93,7 @@ pub fn connect_to_device(
 
 impl BleRuntime {
     /// Create a new [`BleRuntime`].
-    pub fn new() -> Result<Self, BleRuntimeError> {
+    fn new() -> Result<Self, BleRuntimeError> {
         let runtime = Box::new(
             tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
@@ -119,7 +119,7 @@ impl BleRuntime {
     }
 
     /// Scan for a device.
-    pub fn scan_for_device(
+    fn scan_for_device(
         &mut self,
         identifier: Option<BleIdentifier>,
         scan_timeout: Duration,
@@ -248,9 +248,10 @@ impl BleRuntime {
     }
 
     /// Try to resolve a peripheral candidate from a known peripheral ID
-    pub fn get_peripheral_candidate(
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "ios"))]
+    fn get_peripheral_candidate(
         &mut self,
-        identifier: PeripheralId,
+        identifier: btleplug::platform::PeripheralId,
     ) -> Result<Peripheral, BleRuntimeError> {
         let future = async {
             match self.adapter.add_peripheral(&identifier).await {
@@ -278,10 +279,7 @@ impl BleRuntime {
 
     /// Execute the given function after retrieving known peripherals
     /// that offer the SMP service
-    pub fn retrieve_peripherals_with_smp_service<F, R>(
-        &mut self,
-        f: F,
-    ) -> Result<R, BleRuntimeError>
+    fn retrieve_peripherals_with_smp_service<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
     where
         F: AsyncFnOnce(Vec<Peripheral>) -> R,
     {
@@ -301,7 +299,7 @@ impl BleRuntime {
     }
 
     /// Execute the given function while scanning for devices
-    pub fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
+    fn scan<F, R>(&mut self, f: F) -> Result<R, BleRuntimeError>
     where
         F: AsyncFnOnce(Pin<Box<dyn futures::Stream<Item = CentralEvent> + Send>>, &Adapter) -> R,
     {
@@ -323,7 +321,7 @@ impl BleRuntime {
     }
 
     /// Run a future to completion
-    pub fn block_on<F>(&self, future: F) -> F::Output
+    fn block_on<F>(&self, future: F) -> F::Output
     where
         F: Future,
     {
