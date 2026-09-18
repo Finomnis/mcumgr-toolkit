@@ -49,6 +49,7 @@ pub fn connect_to_device(
     identifier: Option<BleIdentifier>,
     scan_timeout: Duration,
     connect_timeout: Duration,
+    on_start_scanning: impl FnOnce(),
 ) -> Result<BleConnection, BleError> {
     let mut runtime = crate::transport::ble::BleRuntime::new()?;
 
@@ -82,7 +83,7 @@ pub fn connect_to_device(
         };
     }
 
-    let device = runtime.scan_for_device(identifier, scan_timeout)?;
+    let device = runtime.scan_for_device(identifier, scan_timeout, on_start_scanning)?;
 
     let ownership = connection::try_connect(&runtime, &device, connect_timeout)?;
     Ok(BleConnection {
@@ -124,6 +125,7 @@ impl BleRuntime {
         &mut self,
         identifier: Option<BleIdentifier>,
         scan_timeout: Duration,
+        on_start_scanning: impl FnOnce(),
     ) -> Result<Peripheral, BleError> {
         let mut devices = HashMap::new();
 
@@ -177,6 +179,8 @@ impl BleRuntime {
             log::debug!("Peripheral found in cached list");
             return Ok(device);
         }
+
+        on_start_scanning();
 
         log::debug!("Performing full BLE scan");
         self.scan(
