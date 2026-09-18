@@ -52,8 +52,15 @@ impl SmpHeader {
     }
 }
 
-const SMP_HEADER_SIZE: usize = 8;
-const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
+/// Size of the SMP header that precedes every frame's payload.
+///
+/// Public because [`Transport`]'s method signatures name it: the trait cannot
+/// be implemented outside this crate while its parameter types are private.
+pub const SMP_HEADER_SIZE: usize = 8;
+/// Size of the buffer a transport receives into.
+///
+/// Public for the same reason as [`SMP_HEADER_SIZE`].
+pub const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
 
 mod smp_op {
     pub(super) const READ: u8 = 0;
