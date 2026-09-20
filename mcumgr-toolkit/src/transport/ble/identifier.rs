@@ -45,6 +45,13 @@ impl From<&Peripheral> for BleIdentifier {
     }
 }
 
+#[cfg(any(target_os = "windows", target_os = "macos", target_os = "ios"))]
+impl From<BleIdentifier> for btleplug::platform::PeripheralId {
+    fn from(value: BleIdentifier) -> Self {
+        value.0.into()
+    }
+}
+
 impl BleIdentifier {
     /**
      * A human readable description of what the identifier contains

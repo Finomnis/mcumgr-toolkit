@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.17.0] - 2026-09-18
+
+### Breaking Changes
+
+- Bump dependencies
+- Rework BLE implementation for btleplug's new 0.13 capabilities
+  - Query existing BLE devices from the OS before scanning
+  - Improve execution time for already connected BLE devices (on some OS)
+
+### Changes
+
+- Reduce chance of triggering a BlueZ teardown panic
+- mcumgrctl: Only show 'Scanning' message when actually scanning
+
+
 ## [0.16.0] - 2026-08-09
 
 ### Breaking Changes
@@ -509,6 +524,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.17.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.14.1...0.15.0
 [0.14.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.14.0...0.14.1
