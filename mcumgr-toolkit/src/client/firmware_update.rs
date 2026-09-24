@@ -212,11 +212,18 @@ pub(crate) fn firmware_update(
     };
 
     progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-    let image_state = client
+    let mut image_state = client
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
 
-    let active_image = image_state.iter().find(|img| img.active);
+    let active_image = image_state
+        .iter()
+        .find(|img| img.image == actual_target_image && img.active)
+        .or_else(|| {
+            image_state
+                .iter()
+                .find(|img| img.image == actual_target_image && img.slot == 0)
+        });
 
     progress(
         FirmwareUpdateStep::UpdateInfo {
@@ -230,46 +237,40 @@ pub(crate) fn firmware_update(
         return Err(FirmwareUpdateError::AlreadyInstalled);
     }
 
-    let image_already_uploaded = image_state
-        .iter()
-        .any(|img| img.hash.as_ref() == Some(&image_id_hash));
+    progress(FirmwareUpdateStep::UploadingFirmware, None)?;
+    let mut upload_progress_cb = |current, total| {
+        progress(
+            FirmwareUpdateStep::UploadingFirmware,
+            Some((current, total)),
+        )
+        .is_ok()
+    };
 
-    if !image_already_uploaded {
-        progress(FirmwareUpdateStep::UploadingFirmware, None)?;
-        let mut upload_progress_cb = |current, total| {
-            progress(
-                FirmwareUpdateStep::UploadingFirmware,
-                Some((current, total)),
-            )
-            .is_ok()
-        };
-
-        client
-            .image_upload(
-                firmware,
-                target_image,
-                checksum,
-                params.upgrade_only,
-                has_progress.then_some(&mut upload_progress_cb),
-            )
-            .map_err(|err| {
-                if let MCUmgrClientError::ProgressCallbackError = err {
-                    // Users expect this error when the progress callback errors
-                    FirmwareUpdateError::ProgressCallbackError
-                } else {
-                    FirmwareUpdateError::ImageUploadFailed(err)
-                }
-            })?;
-    }
+    client
+        .image_upload(
+            firmware,
+            target_image,
+            checksum,
+            params.upgrade_only,
+            has_progress.then_some(&mut upload_progress_cb),
+        )
+        .map_err(|err| {
+            if let MCUmgrClientError::ProgressCallbackError = err {
+                // Users expect this error when the progress callback errors
+                FirmwareUpdateError::ProgressCallbackError
+            } else {
+                FirmwareUpdateError::ImageUploadFailed(err)
+            }
+        })?;
 
     progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-    let image_state = client
+    image_state = client
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
 
-    let image_already_active = image_state
-        .iter()
-        .any(|img| img.hash.as_ref() == Some(&image_id_hash) && img.active);
+    let image_already_active = image_state.iter().any(|img| {
+        img.image == actual_target_image && img.hash.as_ref() == Some(&image_id_hash) && img.active
+    });
 
     if !image_already_active {
         progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
