@@ -216,14 +216,7 @@ pub(crate) fn firmware_update(
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
 
-    let active_image = image_state
-        .iter()
-        .find(|img| img.image == actual_target_image && img.active)
-        .or_else(|| {
-            image_state
-                .iter()
-                .find(|img| img.image == actual_target_image && img.slot == 0)
-        });
+    let active_image = image_state.iter().find(|img| img.active);
 
     progress(
         FirmwareUpdateStep::UpdateInfo {
@@ -237,58 +230,76 @@ pub(crate) fn firmware_update(
         return Err(FirmwareUpdateError::AlreadyInstalled);
     }
 
-    progress(FirmwareUpdateStep::UploadingFirmware, None)?;
-    let mut upload_progress_cb = |current, total| {
-        progress(
-            FirmwareUpdateStep::UploadingFirmware,
-            Some((current, total)),
-        )
-        .is_ok()
-    };
+    let image_already_uploaded = image_state
+        .iter()
+        .any(|img| img.hash.as_ref() == Some(&image_id_hash));
 
-    client
-        .image_upload(
-            firmware,
-            target_image,
-            checksum,
-            params.upgrade_only,
-            has_progress.then_some(&mut upload_progress_cb),
-        )
-        .map_err(|err| {
-            if let MCUmgrClientError::ProgressCallbackError = err {
-                // Users expect this error when the progress callback errors
-                FirmwareUpdateError::ProgressCallbackError
-            } else {
-                FirmwareUpdateError::ImageUploadFailed(err)
+    if !image_already_uploaded {
+        progress(FirmwareUpdateStep::UploadingFirmware, None)?;
+        let mut upload_progress_cb = |current, total| {
+            progress(
+                FirmwareUpdateStep::UploadingFirmware,
+                Some((current, total)),
+            )
+            .is_ok()
+        };
+
+        client
+            .image_upload(
+                firmware,
+                target_image,
+                checksum,
+                params.upgrade_only,
+                has_progress.then_some(&mut upload_progress_cb),
+            )
+            .map_err(|err| {
+                if let MCUmgrClientError::ProgressCallbackError = err {
+                    // Users expect this error when the progress callback errors
+                    FirmwareUpdateError::ProgressCallbackError
+                } else {
+                    FirmwareUpdateError::ImageUploadFailed(err)
+                }
+            })?;
+    }
+
+    progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
+    let image_state = client
+        .image_get_state()
+        .map_err(FirmwareUpdateError::GetStateFailed)?;
+
+    let image_already_active = image_state
+        .iter()
+        .any(|img| img.hash.as_ref() == Some(&image_id_hash) && img.active);
+
+    if !image_already_active {
+        progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
+        let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
+        if let Err(set_state_error) = set_state_result {
+            let mut image_already_active = false;
+
+            // Special case: if the command isn't supported, we are most likely in
+            // the MCUmgr recovery shell, which writes directly to the active slot
+            // and does not support swapping.
+            // Sanity check that the image is on the first position already to avoid false
+            // positives of this exception.
+            if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported()
+            {
+                progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
+                let image_state = client
+                    .image_get_state()
+                    .map_err(FirmwareUpdateError::GetStateFailed)?;
+                if image_state.iter().any(|img| {
+                    img.image == actual_target_image
+                        && img.slot == 0
+                        && img.hash.as_ref() == Some(&image_id_hash)
+                }) {
+                    image_already_active = true;
+                }
             }
-        })?;
 
-    progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
-    let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
-    if let Err(set_state_error) = set_state_result {
-        let mut image_already_active = false;
-
-        // Special case: if the command isn't supported, we are most likely in
-        // the MCUmgr recovery shell, which writes directly to the active slot
-        // and does not support swapping.
-        // Sanity check that the image is on the first position already to avoid false
-        // positives of this exception.
-        if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported() {
-            progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-            let image_state = client
-                .image_get_state()
-                .map_err(FirmwareUpdateError::GetStateFailed)?;
-            if image_state.iter().any(|img| {
-                img.image == actual_target_image
-                    && img.slot == 0
-                    && img.hash.as_ref() == Some(&image_id_hash)
-            }) {
-                image_already_active = true;
+            if !image_already_active {
+                return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
             }
-        }
-
-        if !image_already_active {
-            return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
         }
     }
 
