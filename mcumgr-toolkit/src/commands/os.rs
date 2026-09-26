@@ -411,12 +411,21 @@ mod tests {
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
+        cbor!({"mpools" => {}}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::new() },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_empty_old_1,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
         cbor!({}),
         MemoryPoolStatisticsResponse{ pools: HashMap::new() },
     }
 
     command_encode_decode_test! {
-        memory_pool_statistics_empty_old,
+        memory_pool_statistics_empty_old_2,
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
@@ -426,6 +435,45 @@ mod tests {
 
     command_encode_decode_test! {
         memory_pool_statistics,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
+        cbor!({ "mpools" => {
+            "pool_a" => {
+                "blksiz" => 8,
+                "nblks" => 20,
+                "nfree" => 10,
+                "min" => 5,
+            },
+            "pool_b" => {
+                "nblks" => 50,
+                "nfree" => 35,
+                "min" => 30,
+            },
+        }}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::from([
+            (
+                "pool_a".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 8,
+                    nblks: 20,
+                    nfree: 10,
+                    min: 5,
+                },
+            ), (
+                "pool_b".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 1,
+                    nblks: 50,
+                    nfree: 35,
+                    min: 30,
+                },
+            ),
+        ]) },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_old_1,
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
@@ -464,7 +512,7 @@ mod tests {
     }
 
     command_encode_decode_test! {
-        memory_pool_statistics_old,
+        memory_pool_statistics_old_2,
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
