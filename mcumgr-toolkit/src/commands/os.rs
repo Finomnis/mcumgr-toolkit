@@ -132,7 +132,7 @@ pub struct MemoryPoolStatisticsResponse {
 /// Response for [`MemoryPoolStatistics`] command,
 /// after https://github.com/zephyrproject-rtos/zephyr/pull/119769.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-struct MemoryPoolStatisticsResponseZephyr4_5_0 {
+struct MemoryPoolStatisticsResponseMpools {
     /// Dictionary of pool names with their respective statistics
     pub mpools: HashMap<String, MemoryPoolStatisticsEntry>,
 }
@@ -140,7 +140,7 @@ struct MemoryPoolStatisticsResponseZephyr4_5_0 {
 /// Response for [`MemoryPoolStatistics`] command,
 /// before https://github.com/zephyrproject-rtos/zephyr/pull/107251.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-struct MemoryPoolStatisticsResponseZephyr4_4_0 {
+struct MemoryPoolStatisticsResponseTasks {
     /// Dictionary of pool names with their respective statistics
     pub tasks: HashMap<String, MemoryPoolStatisticsEntry>,
 }
@@ -150,22 +150,20 @@ impl<'de> serde::Deserialize<'de> for MemoryPoolStatisticsResponse {
     where
         D: serde::Deserializer<'de>,
     {
-        use either::Either::{self, Left, Right};
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum ResponseVariants {
+            Mpools(MemoryPoolStatisticsResponseMpools),
+            Flat(HashMap<String, MemoryPoolStatisticsEntry>),
+            Tasks(MemoryPoolStatisticsResponseTasks),
+        }
 
-        let pools: Either<
-            MemoryPoolStatisticsResponseZephyr4_5_0,
-            Either<
-                HashMap<String, MemoryPoolStatisticsEntry>,
-                MemoryPoolStatisticsResponseZephyr4_4_0,
-            >,
-        > = either::serde_untagged::deserialize(deserializer)?;
-
-        match pools {
-            Left(response) => Ok(Self {
+        match ResponseVariants::deserialize(deserializer)? {
+            ResponseVariants::Mpools(response) => Ok(Self {
                 pools: response.mpools,
             }),
-            Right(Left(pools)) => Ok(Self { pools }),
-            Right(Right(response)) => Ok(Self {
+            ResponseVariants::Flat(pools) => Ok(Self { pools }),
+            ResponseVariants::Tasks(response) => Ok(Self {
                 pools: response.tasks,
             }),
         }
