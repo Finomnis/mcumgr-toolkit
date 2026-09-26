@@ -130,9 +130,17 @@ pub struct MemoryPoolStatisticsResponse {
 }
 
 /// Response for [`MemoryPoolStatistics`] command,
+/// after https://github.com/zephyrproject-rtos/zephyr/pull/119769.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+struct MemoryPoolStatisticsResponseMpools {
+    /// Dictionary of pool names with their respective statistics
+    pub mpools: HashMap<String, MemoryPoolStatisticsEntry>,
+}
+
+/// Response for [`MemoryPoolStatistics`] command,
 /// before https://github.com/zephyrproject-rtos/zephyr/pull/107251.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-struct MemoryPoolStatisticsResponseZephyr4_4_0 {
+struct MemoryPoolStatisticsResponseTasks {
     /// Dictionary of pool names with their respective statistics
     pub tasks: HashMap<String, MemoryPoolStatisticsEntry>,
 }
@@ -142,14 +150,20 @@ impl<'de> serde::Deserialize<'de> for MemoryPoolStatisticsResponse {
     where
         D: serde::Deserializer<'de>,
     {
-        let pools: either::Either<
-            HashMap<String, MemoryPoolStatisticsEntry>,
-            MemoryPoolStatisticsResponseZephyr4_4_0,
-        > = either::serde_untagged::deserialize(deserializer)?;
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum ResponseVariants {
+            Mpools(MemoryPoolStatisticsResponseMpools),
+            Flat(HashMap<String, MemoryPoolStatisticsEntry>),
+            Tasks(MemoryPoolStatisticsResponseTasks),
+        }
 
-        match pools {
-            either::Either::Left(pools) => Ok(Self { pools }),
-            either::Either::Right(response) => Ok(Self {
+        match ResponseVariants::deserialize(deserializer)? {
+            ResponseVariants::Mpools(response) => Ok(Self {
+                pools: response.mpools,
+            }),
+            ResponseVariants::Flat(pools) => Ok(Self { pools }),
+            ResponseVariants::Tasks(response) => Ok(Self {
                 pools: response.tasks,
             }),
         }
@@ -395,12 +409,21 @@ mod tests {
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
+        cbor!({"mpools" => {}}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::new() },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_empty_old_1,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
         cbor!({}),
         MemoryPoolStatisticsResponse{ pools: HashMap::new() },
     }
 
     command_encode_decode_test! {
-        memory_pool_statistics_empty_old,
+        memory_pool_statistics_empty_old_2,
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
@@ -410,6 +433,45 @@ mod tests {
 
     command_encode_decode_test! {
         memory_pool_statistics,
+        (0, 0, 3),
+        MemoryPoolStatistics,
+        cbor!({}),
+        cbor!({ "mpools" => {
+            "pool_a" => {
+                "blksiz" => 8,
+                "nblks" => 20,
+                "nfree" => 10,
+                "min" => 5,
+            },
+            "pool_b" => {
+                "nblks" => 50,
+                "nfree" => 35,
+                "min" => 30,
+            },
+        }}),
+        MemoryPoolStatisticsResponse{ pools: HashMap::from([
+            (
+                "pool_a".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 8,
+                    nblks: 20,
+                    nfree: 10,
+                    min: 5,
+                },
+            ), (
+                "pool_b".to_string(),
+                MemoryPoolStatisticsEntry{
+                    blksiz: 1,
+                    nblks: 50,
+                    nfree: 35,
+                    min: 30,
+                },
+            ),
+        ]) },
+    }
+
+    command_encode_decode_test! {
+        memory_pool_statistics_old_1,
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
@@ -448,7 +510,7 @@ mod tests {
     }
 
     command_encode_decode_test! {
-        memory_pool_statistics_old,
+        memory_pool_statistics_old_2,
         (0, 0, 3),
         MemoryPoolStatistics,
         cbor!({}),
