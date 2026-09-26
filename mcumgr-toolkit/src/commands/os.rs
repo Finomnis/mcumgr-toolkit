@@ -130,6 +130,14 @@ pub struct MemoryPoolStatisticsResponse {
 }
 
 /// Response for [`MemoryPoolStatistics`] command,
+/// after https://github.com/zephyrproject-rtos/zephyr/pull/119769.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+struct MemoryPoolStatisticsResponseZephyr4_5_0 {
+    /// Dictionary of pool names with their respective statistics
+    pub mpools: HashMap<String, MemoryPoolStatisticsEntry>,
+}
+
+/// Response for [`MemoryPoolStatistics`] command,
 /// before https://github.com/zephyrproject-rtos/zephyr/pull/107251.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 struct MemoryPoolStatisticsResponseZephyr4_4_0 {
@@ -142,14 +150,22 @@ impl<'de> serde::Deserialize<'de> for MemoryPoolStatisticsResponse {
     where
         D: serde::Deserializer<'de>,
     {
-        let pools: either::Either<
-            HashMap<String, MemoryPoolStatisticsEntry>,
-            MemoryPoolStatisticsResponseZephyr4_4_0,
+        use either::Either::{self, Left, Right};
+
+        let pools: Either<
+            MemoryPoolStatisticsResponseZephyr4_5_0,
+            Either<
+                HashMap<String, MemoryPoolStatisticsEntry>,
+                MemoryPoolStatisticsResponseZephyr4_4_0,
+            >,
         > = either::serde_untagged::deserialize(deserializer)?;
 
         match pools {
-            either::Either::Left(pools) => Ok(Self { pools }),
-            either::Either::Right(response) => Ok(Self {
+            Left(response) => Ok(Self {
+                pools: response.mpools,
+            }),
+            Right(Left(pools)) => Ok(Self { pools }),
+            Right(Right(response)) => Ok(Self {
                 pools: response.tasks,
             }),
         }
