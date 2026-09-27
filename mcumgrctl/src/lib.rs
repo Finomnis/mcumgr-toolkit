@@ -246,7 +246,7 @@ fn cli_main_internal<T: clap::Args>(
 ///         println!("Custom Backend: Dummy: {dummy}");
 ///         println!("Common Args: {common:?}");
 ///
-///         // Create client connected to a custom backend here if `args` commands it
+///         // Create custom transport here
 ///         let custom_transport: Box<dyn Transport + Send> = todo!();
 ///
 ///         let client = MCUmgrClient::new_from_transport(custom_transport);
