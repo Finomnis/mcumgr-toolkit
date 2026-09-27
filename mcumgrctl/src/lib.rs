@@ -9,21 +9,74 @@ mod groups;
 mod progress;
 
 use client::Client;
-use indicatif::{MultiProgress, ProgressBar};
+use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
 
 use std::time::Duration;
 
 use clap::{CommandFactory as _, Parser};
-use mcumgr_toolkit::{
-    MCUmgrClient,
-    client::{BleError, UsbSerialError},
-};
+use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
+
+#[cfg(feature = "ble")]
+use mcumgr_toolkit::client::BleError;
 
 /// Re-export for convenience
 pub use mcumgr_toolkit::transport::Transport;
 
 use crate::errors::CliError;
+
+fn ble_init<T: clap::Args>(
+    #[allow(unused_variables)] args: &args::App<T>,
+    #[allow(unused_variables)] multiprogress: &MultiProgress,
+) -> Result<Option<Option<Client>>, CliError> {
+    #[cfg(feature = "ble")]
+    if let Some(ble_identifier) = &args.ble {
+        use indicatif::ProgressBar;
+
+        let mut scan_spinner = None;
+
+        let result = MCUmgrClient::new_from_ble_with_scan_callback(
+            ble_identifier.clone(),
+            Duration::from_millis(args.common.timeout),
+            || {
+                if !(args.common.quiet || args.common.json) {
+                    let scan_spinner =
+                        scan_spinner.insert(multiprogress.add(ProgressBar::new_spinner()));
+                    scan_spinner.set_message("Scanning ...");
+                    scan_spinner.enable_steady_tick(Duration::from_millis(100));
+                }
+            },
+        );
+
+        if let Some(scan_spinner) = scan_spinner {
+            scan_spinner.finish_and_clear();
+            multiprogress.remove(&scan_spinner);
+        }
+
+        if let Err(BleError::IdentifierEmpty { devices }) = &result {
+            if args.common.json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(devices).map_err(CliError::JsonEncodeError)?
+                );
+            } else {
+                println!();
+                if devices.0.is_empty() {
+                    println!("No BLE MCUmgr devices available.");
+                } else {
+                    println!("Available BLE MCUmgr devices:");
+                    println!("{}", devices);
+                }
+                println!();
+            }
+            return Ok(Some(None));
+        }
+
+        return Ok(Some(Some(Client::new(result?))));
+    }
+
+    Ok(None)
+}
 
 fn cli_main_internal<T: clap::Args>(
     multiprogress: &MultiProgress,
@@ -96,47 +149,14 @@ fn cli_main_internal<T: clap::Args>(
         }
 
         Client::new(result?)
-    } else if let Some(ble_identifier) = args.ble {
-        let mut scan_spinner = None;
-
-        let result = MCUmgrClient::new_from_ble_with_scan_callback(
-            ble_identifier,
-            Duration::from_millis(args.common.timeout),
-            || {
-                if !(args.common.quiet || args.common.json) {
-                    let scan_spinner =
-                        scan_spinner.insert(multiprogress.add(ProgressBar::new_spinner()));
-                    scan_spinner.set_message("Scanning ...");
-                    scan_spinner.enable_steady_tick(Duration::from_millis(100));
-                }
-            },
-        );
-
-        if let Some(scan_spinner) = scan_spinner {
-            scan_spinner.finish_and_clear();
-            multiprogress.remove(&scan_spinner);
-        }
-
-        if let Err(BleError::IdentifierEmpty { devices }) = &result {
-            if args.common.json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(devices).map_err(CliError::JsonEncodeError)?
-                );
-            } else {
-                println!();
-                if devices.0.is_empty() {
-                    println!("No BLE MCUmgr devices available.");
-                } else {
-                    println!("Available BLE MCUmgr devices:");
-                    println!("{}", devices);
-                }
-                println!();
-            }
+    } else if let Some(client) = ble_init(&args, multiprogress)? {
+        if let Some(client) = client {
+            client
+        } else {
+            // BLE discovery did run but printed a help message and
+            // we need to exit
             return Ok(());
         }
-
-        Client::new(result?)
     } else if let Some(addr) = args.udp {
         Client::new(
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))

@@ -27,7 +27,7 @@ ble = ["mcumgr-toolkit/ble"]
 vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
 
 [dependencies]
-mcumgr-toolkit = { workspace = true, features = ["ble"] }
+mcumgr-toolkit = { workspace = true }
 serialport = { workspace = true, features = ["usbportinfo-interface"] }
 miette = { workspace = true, features = ["fancy"] }
 env_logger.workspace = true
