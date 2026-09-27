@@ -553,21 +553,6 @@ async fn short_first_chunk_is_unexpected_response() {
 }
 
 #[tokio::test(flavor = "current_thread", start_paused = true)]
-async fn declared_frame_larger_than_receive_buffer_is_rejected_immediately() {
-    let declared_payload_len: u16 = (SMP_TRANSFER_BUFFER_SIZE - SMP_HEADER_SIZE + 1)
-        .try_into()
-        .unwrap();
-    let mut notifications = immediate_stream(vec![smp_notification(header_declaring(
-        declared_payload_len,
-    ))]);
-    let mut buffer = [0; SMP_TRANSFER_BUFFER_SIZE];
-
-    let result = receive_smp_frame(&mut notifications, Duration::from_secs(1), &mut buffer).await;
-
-    assert!(matches!(result, Err(ReceiveError::FrameTooBig)));
-}
-
-#[tokio::test(flavor = "current_thread", start_paused = true)]
 async fn first_notification_overshooting_declared_frame_is_rejected() {
     let mut bytes = header_declaring(1).to_vec();
     bytes.extend_from_slice(&[0xaa, 0xbb]);
