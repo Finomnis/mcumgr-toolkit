@@ -202,6 +202,49 @@ jobs:
         with:
           files: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
 
+  build-cli-without-ble:
+    name: Build CLI without BLE
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows
+          - linux
+          - macos
+        include:
+          - os: windows
+            image: windows-latest
+            target: x86_64-pc-windows-msvc
+            extension: ".exe"
+          - os: linux
+            image: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            extension: ""
+            features: "vendored-dbus"
+          - os: macos
+            image: macos-latest
+            target: aarch64-apple-darwin
+            extension: ""
+    runs-on: ${{ matrix.image }}
+
+    env:
+      RUSTFLAGS: "-C target-feature=+crt-static"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install musl toolchain
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get install -y musl-tools
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --no-default-features --features "${{ matrix.features }}"
+
   msrv:
     name: Minimum Supported Rust Version
     runs-on: ubuntu-latest
@@ -342,6 +385,7 @@ jobs:
         test_without_ble,
         build-examples,
         build-cli,
+        build-cli-without-ble,
         msrv,
         lints,
         docs,

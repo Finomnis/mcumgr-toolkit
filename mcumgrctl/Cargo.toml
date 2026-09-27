@@ -18,6 +18,10 @@ path = "src/main.rs"
 doc = false
 
 [features]
+default = ["ble"]
+
+# Support BLE targets
+ble = ["mcumgr-toolkit/ble"]
 
 # Build libdbus statically from scratch instead of linking to it
 vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
