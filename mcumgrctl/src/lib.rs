@@ -23,12 +23,21 @@ use mcumgr_toolkit::client::BleError;
 // Re-export for convenience
 pub use mcumgr_toolkit::transport::Transport;
 
-use crate::errors::CliError;
+use crate::{args::CommonArgs, errors::CliError};
+
+/// The result of a backend init function, in case it ran.
+pub enum BackendInitResult {
+    /// The backend ran some action, printed some result and is
+    /// now finished
+    Finished,
+    /// The backend successfully created a client
+    Connected(MCUmgrClient),
+}
 
 fn ble_init<T: clap::Args>(
     #[allow(unused_variables)] args: &args::App<T>,
     #[allow(unused_variables)] multiprogress: &MultiProgress,
-) -> Result<Option<Option<Client>>, CliError> {
+) -> Result<Option<BackendInitResult>, CliError> {
     #[cfg(feature = "ble")]
     if let Some(ble_identifier) = &args.ble {
         use indicatif::ProgressBar;
@@ -69,10 +78,10 @@ fn ble_init<T: clap::Args>(
                 }
                 println!();
             }
-            return Ok(Some(None));
+            return Ok(Some(BackendInitResult::Finished));
         }
 
-        return Ok(Some(Some(Client::new(result?))));
+        return Ok(Some(BackendInitResult::Connected(result?)));
     }
 
     Ok(None)
@@ -80,12 +89,7 @@ fn ble_init<T: clap::Args>(
 
 fn cli_main_internal<T: clap::Args>(
     multiprogress: &MultiProgress,
-    custom_transports: impl FnOnce(
-        &T,
-    ) -> Result<
-        Option<Box<dyn Transport + Send>>,
-        Box<dyn std::error::Error + Send + Sync>,
-    >,
+    custom_backends: impl FnOnce(&T, &CommonArgs) -> miette::Result<Option<BackendInitResult>>,
 ) -> Result<(), CliError> {
     let args = args::App::<T>::parse();
 
@@ -149,23 +153,23 @@ fn cli_main_internal<T: clap::Args>(
         }
 
         Client::new(result?)
-    } else if let Some(client) = ble_init(&args, multiprogress)? {
-        if let Some(client) = client {
-            client
-        } else {
-            // BLE discovery did run but printed a help message and
-            // we need to exit
-            return Ok(());
+    } else if let Some(init_result) = ble_init(&args, multiprogress)? {
+        match init_result {
+            BackendInitResult::Finished => return Ok(()),
+            BackendInitResult::Connected(client) => Client::new(client),
         }
     } else if let Some(addr) = args.udp {
         Client::new(
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::UdpOpenFailed)?,
         )
-    } else if let Some(custom_transport) =
-        custom_transports(&args.custom_transports).map_err(CliError::CustomTransportError)?
+    } else if let Some(init_result) = custom_backends(&args.custom_backends, &args.common)
+        .map_err(|e| CliError::CustomBackendError(e.into()))?
     {
-        Client::new(MCUmgrClient::new_from_transport(custom_transport))
+        match init_result {
+            BackendInitResult::Finished => return Ok(()),
+            BackendInitResult::Connected(client) => Client::new(client),
+        }
     } else {
         Client::default()
     };
@@ -202,40 +206,37 @@ fn cli_main_internal<T: clap::Args>(
 ///
 /// # Arguments
 ///
-/// * `custom_transports` - A handler function that can create custom transports.
+/// * `custom_backends` - A handler function that can initialize custom backends.
 ///
 /// The handler function takes custom CLI arguments that will be added to the normal CLI.
+///
+/// The custom backend must respect the parameters in [`CommonArgs`], like timeout or verbosity.
 ///
 /// Example:
 ///
 /// ```rust,no_run
 /// #[derive(Debug, clap::Args)]
-/// pub struct CustomTransports {
+/// pub struct CustomBackends {
 ///     /// Dummy argument for demonstration
 ///     #[arg(long)]
 ///     pub foo: String,
 /// }
 ///
-/// fn custom_transports(
-///     args: &CustomTransports,
-/// ) -> Result<Option<Box<dyn mcumgrctl::Transport + Send>>, Box<dyn std::error::Error + Send + Sync>> {
-///     println!("Custom Transport: Foo: {}", args.foo);
-///     // Create custom transport here if `args` commands it
+/// fn custom_backends(
+///     args: &CustomBackends,
+/// ) -> miette::Result<Option<BackendInitResult>> {
+///     println!("Custom Backend: Foo: {}", args.foo);
+///     // Create client connected to a custom backend here if `args` commands it
 ///     Ok(None)
 /// }
 ///
 /// pub fn main() -> miette::Result<()> {
-///     mcumgrctl::cli_main(custom_transports)
+///     mcumgrctl::cli_main(custom_backends)
 /// }
 /// ```
 ///
 pub fn cli_main<T: clap::Args>(
-    custom_transports: impl FnOnce(
-        &T,
-    ) -> Result<
-        Option<Box<dyn Transport + Send>>,
-        Box<dyn std::error::Error + Send + Sync>,
-    >,
+    custom_backends: impl FnOnce(&T, &CommonArgs) -> miette::Result<Option<BackendInitResult>>,
 ) -> miette::Result<()> {
     clap_complete::env::CompleteEnv::with_factory(args::App::<T>::command).complete();
 
@@ -253,16 +254,14 @@ pub fn cli_main<T: clap::Args>(
         multiprogress
     };
 
-    let result = cli_main_internal(&multiprogress, custom_transports).map_err(Into::into);
+    let result = cli_main_internal(&multiprogress, custom_backends).map_err(Into::into);
 
     multiprogress.clear().ok();
 
     result
 }
 
-/// Usable as argument for [`cli_main`] to indicate that no custom transports exist.
-pub fn no_custom_transports(
-    _: &(),
-) -> Result<Option<Box<dyn Transport + Send>>, Box<dyn std::error::Error + Send + Sync>> {
+/// Usable as argument for [`cli_main`] to indicate that no custom backends exist.
+pub fn no_custom_backends(_: &(), _: &CommonArgs) -> miette::Result<Option<BackendInitResult>> {
     Ok(None)
 }

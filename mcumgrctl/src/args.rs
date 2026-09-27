@@ -66,7 +66,7 @@ pub struct CommonArgs {
         .args(["serial", "usb_serial"])
         .multiple(true)
 ))]
-pub struct App<CustomTransportArgs: clap::Args> {
+pub struct App<CustomBackendArgs: clap::Args> {
     /// Use the given serial port as backend
     ///
     /// If no argument provided, list all available ports and exit.
@@ -103,9 +103,9 @@ pub struct App<CustomTransportArgs: clap::Args> {
     #[command(flatten)]
     pub common: CommonArgs,
 
-    /// Custom transports
+    /// Arguments for custom backends
     #[command(flatten)]
-    pub custom_transports: CustomTransportArgs,
+    pub custom_backends: CustomBackendArgs,
 
     /// Command group
     ///

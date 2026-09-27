@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allows BLE support to be removed from CLI if not needed
 - Make `mcumgrctl` a library crate
     - Add `mcumgrctl::cli_main` that runs the CLI, with the ability
-      to add custom transports
+      to add custom backends
 
 
 ## [0.17.1] - 2026-09-26
