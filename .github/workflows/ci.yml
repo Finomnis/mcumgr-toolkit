@@ -185,6 +185,8 @@ jobs:
 
       - name: Build
         run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
+      - name: Test
+        run: cargo test --release -p mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
 
       - name: Collect binary
         run: cp target/${{ matrix.target }}/release/mcumgrctl${{ matrix.extension }} mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
@@ -227,6 +229,8 @@ jobs:
 
       - name: Build
         run: cargo build --release --bin mcumgrctl --no-default-features
+      - name: Test
+        run: cargo test --release -p mcumgrctl --no-default-features
 
   msrv:
     name: Minimum Supported Rust Version

@@ -234,7 +234,7 @@ fn cli_main_internal<T: clap::Args>(
 /// #[derive(Debug, clap::Args)]
 /// pub struct CustomBackends {
 ///     /// Dummy argument for demonstration
-///     #[arg(long)]
+///     #[arg(long, group = "transport")]
 ///     pub foo: String,
 /// }
 ///

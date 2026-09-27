@@ -24,7 +24,7 @@ default = ["ble"]
 ble = ["mcumgr-toolkit/ble"]
 
 # Build libdbus statically from scratch instead of linking to it
-vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
+vendored-dbus = ["ble", "mcumgr-toolkit/vendored-dbus"]
 
 [dependencies]
 mcumgr-toolkit = { workspace = true }
