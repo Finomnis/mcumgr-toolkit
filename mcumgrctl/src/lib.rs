@@ -20,7 +20,7 @@ use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 #[cfg(feature = "ble")]
 use mcumgr_toolkit::client::BleError;
 
-/// Re-export for convenience
+// Re-export for convenience
 pub use mcumgr_toolkit::transport::Transport;
 
 use crate::errors::CliError;
@@ -260,7 +260,7 @@ pub fn cli_main<T: clap::Args>(
     result
 }
 
-/// Usable as arguemtn for [`cli_main`] to indicate that no custom transports exist.
+/// Usable as argument for [`cli_main`] to indicate that no custom transports exist.
 pub fn no_custom_transports(
     _: &(),
 ) -> Result<Option<Box<dyn Transport + Send>>, Box<dyn std::error::Error + Send + Sync>> {
