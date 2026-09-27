@@ -482,7 +482,7 @@ impl MCUmgrClient {
         Ok(Self::new_from_transport(transport))
     }
 
-    /// Creates a Zephyr MCUmgr SMP client from a generic [`Transport`].
+    /// Creates a Zephyr MCUmgr SMP client from a generic [`Transport`](crate::transport::Transport).
     ///
     /// # Arguments
     ///

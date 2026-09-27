@@ -198,7 +198,7 @@ fn cli_main_internal<T: clap::Args>(
 ///
 /// fn custom_transports(
 ///     args: &CustomTransports,
-/// ) -> miette::Result<Option<Box<dyn mcumgrctl::Transport + Send>>> {
+/// ) -> Result<Option<Box<dyn mcumgrctl::Transport + Send>>, Box<dyn std::error::Error + Send + Sync>> {
 ///     println!("Custom Transport: Foo: {}", args.foo);
 ///     // Create custom transport here if `args` commands it
 ///     Ok(None)
