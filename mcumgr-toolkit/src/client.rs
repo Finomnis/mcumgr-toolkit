@@ -488,7 +488,7 @@ impl MCUmgrClient {
     ///
     /// * `transport` - The transport the client should communicate over
     ///
-    pub fn new_from_transport<T: IntoTransport + 'static>(transport: T) -> Self {
+    pub fn new_from_transport<T: IntoTransport>(transport: T) -> Self {
         Self {
             connection: Connection::new(transport),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
