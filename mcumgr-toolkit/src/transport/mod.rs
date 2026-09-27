@@ -54,8 +54,14 @@ impl SmpHeader {
 
 /// Size of the SMP header that precedes every frame's payload
 pub const SMP_HEADER_SIZE: usize = 8;
+
+/// The max size of an SMP frame
+///
+/// Limited by the 'size' field in the header, which is a u16
+pub const SMP_BODY_MAX_SIZE: usize = u16::MAX as usize;
+
 /// The max size of a raw SMP frame
-pub const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
+pub const SMP_TRANSFER_BUFFER_SIZE: usize = SMP_HEADER_SIZE + SMP_BODY_MAX_SIZE;
 
 mod smp_op {
     pub(super) const READ: u8 = 0;
