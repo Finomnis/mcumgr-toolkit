@@ -41,9 +41,10 @@ fn test_chunking_upper_limit() {
     let mut transport = create_loopback_transport();
     let mut rng = rand::rng();
 
-    let mut header = [0; SMP_HEADER_SIZE];
+    let mut header = [0u8; SMP_HEADER_SIZE];
     rng.fill(&mut header);
-    let mut data = vec![0; SERIAL_MAX_SMP_BODY_SIZE];
+
+    let mut data = vec![0u8; SERIAL_MAX_SMP_BODY_SIZE];
     rng.fill(data.as_mut_slice());
 
     transport.send_raw_frame(header, &data).unwrap();
