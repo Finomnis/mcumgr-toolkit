@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `MCUmgrClient::new_from_transport`
     - Creates a client from a custom transport layer
+- Fix incorrect max SMP frame size for serial transport
 
 
 ## [0.17.1] - 2026-09-26

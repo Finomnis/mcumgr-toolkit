@@ -287,7 +287,7 @@ pub trait Transport {
     /// deliver reliably.
     ///
     /// The default (`usize::MAX`) means no transport-level cap — suitable for
-    /// stream-based transports like serial that handle large frames via chunking.
+    /// stream-based transports that handle large frames via chunking.
     fn max_smp_frame_size(&self) -> usize {
         usize::MAX
     }
