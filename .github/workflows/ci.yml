@@ -184,7 +184,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
+        run: cargo build --release -p mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
       - name: Test
         run: cargo test --release -p mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
 
@@ -228,7 +228,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Build
-        run: cargo build --release --bin mcumgrctl --no-default-features
+        run: cargo build --release -p mcumgrctl --no-default-features
       - name: Test
         run: cargo test --release -p mcumgrctl --no-default-features
 
