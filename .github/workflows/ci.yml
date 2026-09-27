@@ -248,8 +248,9 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      - name: Check MSRV
-        run: cargo hack check --rust-version --workspace --all-targets --ignore-private
+      # TODO: Activate once the first lib version is published
+      # - name: Check MSRV
+      #   run: cargo hack check --rust-version --workspace --all-targets --ignore-private
 
   semver:
     name: Semantic Versioning
