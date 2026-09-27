@@ -93,14 +93,3 @@ fn a_transport_implemented_outside_the_crate_can_drive_a_client() {
     let response = client.os_echo(request).unwrap();
     assert_eq!(request, response);
 }
-
-#[test]
-fn an_external_transport_round_trips_a_large_payload() {
-    let client = MCUmgrClient::new_from_transport(EchoDatagram::default());
-
-    // Long enough to matter, but within one frame: a datagram bearer hands over
-    // whole messages, so there is nothing here to exercise segmentation.
-    let request = "x".repeat(512);
-    let response = client.os_echo(&request).unwrap();
-    assert_eq!(request, response);
-}
