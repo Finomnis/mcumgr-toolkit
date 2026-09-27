@@ -212,6 +212,9 @@ fn cli_main_internal<T: clap::Args>(
 ///
 /// The custom backend must respect the parameters in [`CommonArgs`], like timeout or verbosity.
 ///
+/// The backend-activating CLI arguments should be tagged with `group = "transport"` to make them
+/// mutually exclusive with other backend-activating arguments like `--ble` or `--serial`.
+///
 /// Example:
 ///
 /// ```rust,no_run
