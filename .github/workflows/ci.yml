@@ -248,9 +248,8 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      # TODO: Activate once the first lib version is published
-      # - name: Check MSRV
-      #   run: cargo hack check --rust-version --workspace --all-targets --ignore-private
+      - name: Check MSRV
+        run: cargo hack check --rust-version --workspace --all-targets --ignore-private
 
   semver:
     name: Semantic Versioning
@@ -268,10 +267,11 @@ jobs:
         with:
           manifest-path: mcumgr-toolkit/Cargo.toml
 
-      - name: Check semver for mcumgrctl
-        uses: obi1kenobi/cargo-semver-checks-action@v2
-        with:
-          manifest-path: mcumgrctl/Cargo.toml
+      # TODO: Activate once the first lib version is published
+      # - name: Check semver for mcumgrctl
+      #   uses: obi1kenobi/cargo-semver-checks-action@v2
+      #   with:
+      #     manifest-path: mcumgrctl/Cargo.toml
 
   min-versions:
     name: Minimal Dependency Versions

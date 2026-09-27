@@ -231,6 +231,8 @@ fn cli_main_internal<T: clap::Args>(
 /// Example:
 ///
 /// ```rust,no_run
+/// use mcumgrctl::{BackendInitResult, CommonArgs};
+///
 /// #[derive(Debug, clap::Args)]
 /// pub struct CustomBackends {
 ///     /// Dummy argument for demonstration
@@ -240,8 +242,10 @@ fn cli_main_internal<T: clap::Args>(
 ///
 /// fn custom_backends(
 ///     args: &CustomBackends,
+///     common: &CommonArgs,
 /// ) -> miette::Result<Option<BackendInitResult>> {
 ///     println!("Custom Backend: Foo: {}", args.foo);
+///     println!("Common Args: {common:?}");
 ///     // Create client connected to a custom backend here if `args` commands it
 ///     Ok(None)
 /// }
