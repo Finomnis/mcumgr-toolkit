@@ -8,7 +8,7 @@ const OTHER_SERVICE_UUID: Uuid = Uuid::from_u128(0x11111111_2222_3333_4444_55555
 const OTHER_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0xaaaaaaaa_bbbb_cccc_dddd_eeeeeeeeeeee);
 
 const SMP_HEADER_SIZE: usize = 8;
-const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
+const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize + SMP_HEADER_SIZE;
 
 fn notification(service_uuid: Uuid, uuid: Uuid, value: impl Into<Vec<u8>>) -> ValueNotification {
     ValueNotification {
@@ -550,21 +550,6 @@ async fn short_first_chunk_is_unexpected_response() {
             "length {len} should be rejected"
         );
     }
-}
-
-#[tokio::test(flavor = "current_thread", start_paused = true)]
-async fn declared_frame_larger_than_receive_buffer_is_rejected_immediately() {
-    let declared_payload_len: u16 = (SMP_TRANSFER_BUFFER_SIZE - SMP_HEADER_SIZE + 1)
-        .try_into()
-        .unwrap();
-    let mut notifications = immediate_stream(vec![smp_notification(header_declaring(
-        declared_payload_len,
-    ))]);
-    let mut buffer = [0; SMP_TRANSFER_BUFFER_SIZE];
-
-    let result = receive_smp_frame(&mut notifications, Duration::from_secs(1), &mut buffer).await;
-
-    assert!(matches!(result, Err(ReceiveError::FrameTooBig)));
 }
 
 #[tokio::test(flavor = "current_thread", start_paused = true)]

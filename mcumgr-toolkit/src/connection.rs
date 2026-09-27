@@ -4,7 +4,7 @@ use crate::{
     DEFAULT_RETRIES,
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
     smp_errors::{DeviceError, MCUmgrErr},
-    transport::{ReceiveError, SendError, Transport},
+    transport::{ReceiveError, SMP_BODY_MAX_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport},
 };
 
 use miette::{Diagnostic, IntoDiagnostic};
@@ -14,12 +14,12 @@ use thiserror::Error;
 struct Transceiver {
     transport: Box<dyn Transport + Send>,
     next_seqnum: u8,
-    receive_buffer: Box<[u8; u16::MAX as usize]>,
+    receive_buffer: Box<[u8; SMP_TRANSFER_BUFFER_SIZE]>,
 }
 
 struct Inner {
     transceiver: Transceiver,
-    send_buffer: Box<[u8; u16::MAX as usize]>,
+    send_buffer: Box<[u8; SMP_BODY_MAX_SIZE]>,
     retries: u8,
 }
 
@@ -134,9 +134,9 @@ impl Connection {
                 transceiver: Transceiver {
                     transport: Box::new(transport),
                     next_seqnum: rand::random(),
-                    receive_buffer: Box::new([0; u16::MAX as usize]),
+                    receive_buffer: Box::new([0; SMP_TRANSFER_BUFFER_SIZE]),
                 },
-                send_buffer: Box::new([0; u16::MAX as usize]),
+                send_buffer: Box::new([0; SMP_BODY_MAX_SIZE]),
                 retries: DEFAULT_RETRIES,
             }),
         }

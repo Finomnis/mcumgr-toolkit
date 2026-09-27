@@ -26,7 +26,7 @@ use crate::{
     },
     connection::{Connection, ExecuteError},
     transport::{
-        ReceiveError,
+        ReceiveError, SMP_TRANSFER_BUFFER_SIZE, Transport,
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -337,10 +337,7 @@ impl MCUmgrClient {
     pub fn new_from_serial<T: Send + Read + Write + ConfigurableTimeout + 'static>(
         serial: T,
     ) -> Self {
-        Self {
-            connection: Connection::new(SerialTransport::new(serial)),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        }
+        Self::new_from_transport(SerialTransport::new(serial))
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
@@ -482,10 +479,20 @@ impl MCUmgrClient {
         )?;
 
         let transport = crate::transport::ble::BleTransport::from_connection(connection, timeout)?;
-        Ok(Self {
+        Ok(Self::new_from_transport(transport))
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client from a generic [`Transport`].
+    ///
+    /// # Arguments
+    ///
+    /// * `transport` - The transport the client should communicate over
+    ///
+    pub fn new_from_transport<T: Transport + Send + 'static>(transport: T) -> Self {
+        Self {
             connection: Connection::new(transport),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        })
+        }
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a UDP socket.
@@ -522,10 +529,7 @@ impl MCUmgrClient {
     pub fn new_from_udp(addr: impl Into<SocketAddr>, timeout: Duration) -> Result<Self, UdpError> {
         let addr = addr.into();
         log::debug!("Connecting to {addr} ...");
-        Ok(Self {
-            connection: Connection::new(UdpTransport::new(addr, timeout)?),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        })
+        Ok(Self::new_from_transport(UdpTransport::new(addr, timeout)?))
     }
 
     /// Configures the maximum SMP frame size that we can send to the device.
@@ -545,8 +549,9 @@ impl MCUmgrClient {
             .connection
             .execute_command(&commands::os::MCUmgrParameters)?;
 
-        let frame_size =
-            (mcumgr_params.buf_size as usize).min(self.connection.max_transport_frame_size());
+        let frame_size = (mcumgr_params.buf_size as usize)
+            .min(SMP_TRANSFER_BUFFER_SIZE)
+            .min(self.connection.max_transport_frame_size());
 
         log::debug!("Using frame size {}.", frame_size);
 

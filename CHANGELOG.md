@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.18.0] - xxxx-xx-xx
+
+### Breaking Changes
+
+- Fix incorrect receive buffer size
+    - Was `65535`, which is the max body size,
+      but the buffer also contains the header with `8` extra bytes
+
+### Changes
+
+- Add `MCUmgrClient::new_from_transport`
+    - Creates a client from a custom transport layer
+- Fix incorrect max SMP frame size for serial transport
+- Limit auto-detected frame size to the max SMP frame size
+
+
 ## [0.17.1] - 2026-09-26
 
 ### Changes
@@ -532,6 +548,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.18.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.17.1...0.18.0
 [0.17.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.15.0...0.16.0

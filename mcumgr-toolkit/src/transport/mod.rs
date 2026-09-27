@@ -3,6 +3,8 @@ use std::time::Duration;
 use miette::Diagnostic;
 use thiserror::Error;
 
+use polonius_the_crab::prelude::*;
+
 /// Serial port based transport
 pub mod serial;
 
@@ -52,8 +54,16 @@ impl SmpHeader {
     }
 }
 
-const SMP_HEADER_SIZE: usize = 8;
-const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
+/// Size of the SMP header that precedes every frame's payload
+pub const SMP_HEADER_SIZE: usize = 8;
+
+/// The max size of an SMP body
+///
+/// Limited by the 'size' field in the header, which is a u16
+pub const SMP_BODY_MAX_SIZE: usize = u16::MAX as usize;
+
+/// The max size of a raw SMP frame
+pub const SMP_TRANSFER_BUFFER_SIZE: usize = SMP_HEADER_SIZE + SMP_BODY_MAX_SIZE;
 
 mod smp_op {
     pub(super) const READ: u8 = 0;
@@ -222,20 +232,27 @@ pub trait Transport {
     ///
     fn receive_frame<'a>(
         &mut self,
-        buffer: &'a mut [u8; SMP_TRANSFER_BUFFER_SIZE],
+        mut buffer: &'a mut [u8; SMP_TRANSFER_BUFFER_SIZE],
         write_operation: bool,
         sequence_num: u8,
         group_id: u16,
         command_id: u8,
     ) -> Result<&'a [u8], ReceiveError> {
-        let data_size = loop {
-            let frame = self.recv_raw_frame(buffer)?;
+        polonius_loop!(|buffer| -> Result<&'polonius [u8], ReceiveError> {
+            let frame = polonius_try!(self.recv_raw_frame(buffer));
 
-            let (header_data, data) = frame
-                .split_first_chunk::<SMP_HEADER_SIZE>()
-                .ok_or(ReceiveError::UnexpectedResponse)?;
+            let (header_data, data) = match frame.split_first_chunk::<SMP_HEADER_SIZE>() {
+                Some(parts) => parts,
+                None => polonius_break!(Err(ReceiveError::UnexpectedResponse)),
+            };
 
             let header = SmpHeader::from_bytes(*header_data);
+
+            // Receiving packets with the wrong sequence number is not an error,
+            // they should simply be silently ignored.
+            if header.sequence_num != sequence_num {
+                polonius_continue!();
+            }
 
             let expected_op = if write_operation {
                 smp_op::WRITE_RSP
@@ -243,24 +260,16 @@ pub trait Transport {
                 smp_op::READ_RSP
             };
 
-            // Receiving packets with the wrong sequence number is not an error,
-            // they should simply be silently ignored.
-            if header.sequence_num != sequence_num {
-                continue;
-            }
-
             if (header.group_id != group_id)
                 || (header.command_id != command_id)
                 || (header.op != expected_op)
                 || (usize::from(header.data_length) != data.len())
             {
-                return Err(ReceiveError::UnexpectedResponse);
+                polonius_break!(Err(ReceiveError::UnexpectedResponse));
             }
 
-            break data.len();
-        };
-
-        Ok(&buffer[SMP_HEADER_SIZE..SMP_HEADER_SIZE + data_size])
+            polonius_return!(Ok(data));
+        })
     }
 
     /// Changes the communication timeout.
@@ -272,14 +281,17 @@ pub trait Transport {
         timeout: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
-    /// Returns the maximum SMP frame size this transport can carry in one shot.
+    /// Returns the maximum size of a complete SMP frame supported by this transport.
+    ///
+    /// The size includes the SMP header and body, but excludes transport-specific
+    /// framing and protocol overhead.
+    ///
+    /// `usize::MAX` means that the transport imposes no additional frame-size limit.
     ///
     /// Used by [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size)
     /// to cap the device-reported buffer size at what the transport can still
     /// deliver reliably.
     ///
-    /// The default (`usize::MAX`) means no transport-level cap — suitable for
-    /// stream-based transports like serial that handle large frames via chunking.
     fn max_smp_frame_size(&self) -> usize {
         usize::MAX
     }

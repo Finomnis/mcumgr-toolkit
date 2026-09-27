@@ -275,6 +275,12 @@ where
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         ConfigurableTimeout::set_timeout(&mut self.serial, timeout)
     }
+
+    fn max_smp_frame_size(&self) -> usize {
+        // Despite being chunked, the first chunk carries the
+        // total frame length **including** 2 bytes of CRC as u16.
+        u16::MAX as usize - size_of::<u16>() // CRC16
+    }
 }
 
 /// Specifies that the serial transport has a configurable timeout
