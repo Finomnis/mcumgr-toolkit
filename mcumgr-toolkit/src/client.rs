@@ -337,10 +337,7 @@ impl MCUmgrClient {
     pub fn new_from_serial<T: Send + Read + Write + ConfigurableTimeout + 'static>(
         serial: T,
     ) -> Self {
-        Self {
-            connection: Connection::new(SerialTransport::new(serial)),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        }
+        Self::new_from_transport(SerialTransport::new(serial))
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
@@ -482,27 +479,15 @@ impl MCUmgrClient {
         )?;
 
         let transport = crate::transport::ble::BleTransport::from_connection(connection, timeout)?;
-        Ok(Self {
-            connection: Connection::new(transport),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        })
+        Ok(Self::new_from_transport(transport))
     }
 
-    /// Creates a client over any transport implementing [`Transport`].
+    /// Creates a Zephyr MCUmgr SMP client from a generit [`Transport`].
     ///
-    /// The built-in constructors cover serial, USB serial, BLE and UDP. This one
-    /// exists for transports living outside the crate: SMP over ISO-TP on a CAN
-    /// bus, over a test harness, or over anything else that can carry a raw SMP
-    /// frame. Without it a third-party [`Transport`] implementation cannot be
-    /// used, because [`MCUmgrClient`]'s connection field is private and every
-    /// other constructor is tied to a concrete transport type.
+    /// # Arguments
     ///
-    /// ```no_run
-    /// # use mcumgr_toolkit::{MCUmgrClient, transport::Transport};
-    /// # fn example<T: Transport + Send + 'static>(my_transport: T) {
-    /// let client = MCUmgrClient::new_from_transport(my_transport);
-    /// # }
-    /// ```
+    /// * `transport` - The connection the client should communicate over
+    ///
     pub fn new_from_transport<T: Transport + Send + 'static>(transport: T) -> Self {
         Self {
             connection: Connection::new(transport),
@@ -544,10 +529,7 @@ impl MCUmgrClient {
     pub fn new_from_udp(addr: impl Into<SocketAddr>, timeout: Duration) -> Result<Self, UdpError> {
         let addr = addr.into();
         log::debug!("Connecting to {addr} ...");
-        Ok(Self {
-            connection: Connection::new(UdpTransport::new(addr, timeout)?),
-            smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),
-        })
+        Ok(Self::new_from_transport(UdpTransport::new(addr, timeout)?))
     }
 
     /// Configures the maximum SMP frame size that we can send to the device.
