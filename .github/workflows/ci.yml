@@ -215,15 +215,12 @@ jobs:
           - os: windows
             image: windows-latest
             target: x86_64-pc-windows-msvc
-            extension: ".exe"
           - os: linux
             image: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            extension: ""
           - os: macos
             image: macos-latest
             target: aarch64-apple-darwin
-            extension: ""
     runs-on: ${{ matrix.image }}
 
     env:
@@ -242,7 +239,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --no-default-features --features "${{ matrix.features }}"
+        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --no-default-features
 
   msrv:
     name: Minimum Supported Rust Version
