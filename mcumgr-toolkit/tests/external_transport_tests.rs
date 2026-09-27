@@ -53,8 +53,14 @@ impl Transport for EchoDatagram {
         ciborium::into_writer(&value, &mut payload).unwrap();
 
         let mut response = header;
-        // op: READ(0) -> READ_RSP(1), WRITE(2) -> WRITE_RSP(3).
-        response[0] = (response[0] & !0b111) | ((response[0] & 0b111) + 1);
+        let op = response[0] & 0b111;
+        let response_op = match op {
+            0 => 1, // READ -> READ_RSP
+            2 => 3, // WRITE -> WRITE_RSP
+            _ => panic!("unexpected SMP operation: {op}"),
+        };
+        response[0] = (response[0] & !0b111) | response_op;
+
         // The payload length may have shifted, so restate it rather than
         // trusting the request's.
         let [len_hi, len_lo] = (payload.len() as u16).to_be_bytes();
