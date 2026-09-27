@@ -64,7 +64,7 @@ pub struct CommonArgs {
         .args(["serial", "usb_serial"])
         .multiple(true)
 ))]
-pub struct App {
+pub struct App<CustomTransportArgs: clap::Args> {
     /// Use the given serial port as backend
     ///
     /// If no argument provided, list all available ports and exit.
@@ -100,6 +100,10 @@ pub struct App {
     #[command(flatten)]
     pub common: CommonArgs,
 
+    /// Custom transports
+    #[command(flatten)]
+    pub custom_transports: CustomTransportArgs,
+
     /// Command group
     ///
     /// If missing, run a connection test
@@ -114,7 +118,7 @@ mod tests {
 
     #[test]
     fn generates_valid_man_page() {
-        let man = clap_mangen::Man::new(App::command());
+        let man = clap_mangen::Man::new(App::<()>::command());
 
         let mut buffer = vec![];
         man.render(&mut buffer).unwrap();
@@ -122,6 +126,6 @@ mod tests {
 
     #[test]
     fn check_cli() {
-        App::command().debug_assert();
+        App::<()>::command().debug_assert();
     }
 }

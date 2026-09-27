@@ -296,3 +296,24 @@ pub trait Transport {
         usize::MAX
     }
 }
+
+/// Marks a type to be convertible into a boxed [`Transport`]
+pub trait IntoTransport {
+    /// Converts the object into a generic boxed [`Transport`]
+    fn into_transport(self) -> Box<dyn Transport + Send>;
+}
+
+impl<T> IntoTransport for T
+where
+    T: Transport + Send + 'static,
+{
+    fn into_transport(self) -> Box<dyn Transport + Send> {
+        Box::new(self)
+    }
+}
+
+impl IntoTransport for Box<dyn Transport + Send> {
+    fn into_transport(self) -> Box<dyn Transport + Send> {
+        self
+    }
+}

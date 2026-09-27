@@ -18,12 +18,16 @@ use clap::{CommandFactory as _, Parser};
 use mcumgr_toolkit::{
     MCUmgrClient,
     client::{BleError, UsbSerialError},
+    transport::Transport,
 };
 
 use crate::errors::CliError;
 
-fn cli_main_internal(multiprogress: &MultiProgress) -> Result<(), CliError> {
-    let args = args::App::parse();
+fn cli_main_internal<T: clap::Args>(
+    multiprogress: &MultiProgress,
+    custom_transports: impl FnOnce(&T) -> miette::Result<Option<Box<dyn Transport + Send>>>,
+) -> Result<(), CliError> {
+    let args = args::App::<T>::parse();
 
     let client = if let Some(serial_name) = args.serial {
         if serial_name.is_empty() {
@@ -131,6 +135,10 @@ fn cli_main_internal(multiprogress: &MultiProgress) -> Result<(), CliError> {
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::UdpOpenFailed)?,
         )
+    } else if let Some(custom_transport) = custom_transports(&args.custom_transports)
+        .map_err(|e| CliError::CustomTransportError(e.into()))?
+    {
+        Client::new(MCUmgrClient::new_from_transport(custom_transport))
     } else {
         Client::default()
     };
@@ -163,8 +171,39 @@ fn cli_main_internal(multiprogress: &MultiProgress) -> Result<(), CliError> {
     Ok(())
 }
 
-pub fn cli_main() -> miette::Result<()> {
-    clap_complete::env::CompleteEnv::with_factory(args::App::command).complete();
+/// Runs the mcumgrctl CLI app.
+///
+/// # Arguments
+///
+/// * `custom_transports` - A handler function that can create custom transports.
+///
+/// The handler function takes custom CLI arguments that will be added to the normal CLI.
+///
+/// Example:
+///
+/// ```rust
+// #[derive(Debug, Args)]
+/// pub struct CustomTransports {
+///     /// Dummy argument for testing
+///     #[arg(long)]
+///     foo: String
+/// }
+///
+/// fn custom_transports(args: &CustomTransports) -> miette::Result<Option<Box<dyn Transport + Send>>>{
+///     println!("Custom Transport: Foo: {args.bar}");
+///
+///     // Create custom transport here if `args` commands it
+///
+///     Ok(None)
+/// }
+///
+/// mcumgrctl::cli_main(custom_transports)
+/// ```
+///
+pub fn cli_main<T: clap::Args>(
+    custom_transports: impl FnOnce(&T) -> miette::Result<Option<Box<dyn Transport + Send>>>,
+) -> miette::Result<()> {
+    clap_complete::env::CompleteEnv::with_factory(args::App::<T>::command).complete();
 
     let multiprogress = {
         let logger =
@@ -180,9 +219,14 @@ pub fn cli_main() -> miette::Result<()> {
         multiprogress
     };
 
-    let result = cli_main_internal(&multiprogress).map_err(Into::into);
+    let result = cli_main_internal(&multiprogress, custom_transports).map_err(Into::into);
 
     multiprogress.clear().ok();
 
     result
+}
+
+// Do not add custom transports
+pub fn no_custom_transports(_: &()) -> miette::Result<Option<Box<dyn Transport + Send>>> {
+    Ok(None)
 }
