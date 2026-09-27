@@ -486,7 +486,7 @@ impl MCUmgrClient {
     ///
     /// # Arguments
     ///
-    /// * `transport` - The connection the client should communicate over
+    /// * `transport` - The transport the client should communicate over
     ///
     pub fn new_from_transport<T: Transport + Send + 'static>(transport: T) -> Self {
         Self {
