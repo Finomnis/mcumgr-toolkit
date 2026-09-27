@@ -5,6 +5,7 @@ use mcumgr_toolkit::transport::{
     SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport, serial::SerialTransport,
 };
 use proptest::prelude::*;
+use rand::RngExt;
 
 const CRC16_SIZE: usize = size_of::<u16>();
 const SERIAL_MAX_SMP_FRAME_SIZE: usize = u16::MAX as usize - CRC16_SIZE;
@@ -38,17 +39,29 @@ proptest! {
 #[test]
 fn test_chunking_upper_limit() {
     let mut transport = create_loopback_transport();
+    let mut rng = rand::rng();
 
-    let header = [0xa5; SMP_HEADER_SIZE];
-    let data = vec![0x5a; SERIAL_MAX_SMP_BODY_SIZE];
+    let mut header = [0; SMP_HEADER_SIZE];
+    rng.fill(&mut header);
+    let mut data = vec![0; SERIAL_MAX_SMP_BODY_SIZE];
+    rng.fill(data.as_mut_slice());
 
     transport.send_raw_frame(header, &data).unwrap();
 
     let mut recv_buffer = [0u8; SMP_TRANSFER_BUFFER_SIZE];
     let data_received = transport.recv_raw_frame(&mut recv_buffer).unwrap();
 
-    assert_eq!(header, data_received[..SMP_HEADER_SIZE]);
-    assert_eq!(data, data_received[SMP_HEADER_SIZE..]);
+    assert_eq!(
+        header,
+        &data_received[..SMP_HEADER_SIZE],
+        "Received header did not match!"
+    );
+    assert_eq!(
+        data,
+        &data_received[SMP_HEADER_SIZE..],
+        "Received data did not match! (len: {})",
+        data.len()
+    );
 }
 
 #[test]
