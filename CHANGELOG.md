@@ -20,10 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Creates a client from a custom transport layer
 - Fix incorrect max SMP frame size for serial transport
 - Limit auto-detected frame size to the max SMP frame size
-- Add default feature `ble` to CLI
+- Add default feature `ble` to `mcumgrctl`
     - Allows BLE support to be removed from CLI if not needed
-- Split CLI into library and executable
-    - Allows extending CLI with custom backends
+- Make `mcumgrctl` a library crate
+    - Add `mcumgrctl::cli_main` that runs the CLI, with the ability
+      to add custom transports
 
 
 ## [0.17.1] - 2026-09-26
