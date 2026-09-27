@@ -220,7 +220,6 @@ jobs:
             image: ubuntu-latest
             target: x86_64-unknown-linux-musl
             extension: ""
-            features: "vendored-dbus"
           - os: macos
             image: macos-latest
             target: aarch64-apple-darwin
