@@ -3,6 +3,8 @@ use std::time::Duration;
 use miette::Diagnostic;
 use thiserror::Error;
 
+use polonius_the_crab::prelude::*;
+
 /// Serial port based transport
 pub mod serial;
 
@@ -230,20 +232,27 @@ pub trait Transport {
     ///
     fn receive_frame<'a>(
         &mut self,
-        buffer: &'a mut [u8; SMP_TRANSFER_BUFFER_SIZE],
+        mut buffer: &'a mut [u8; SMP_TRANSFER_BUFFER_SIZE],
         write_operation: bool,
         sequence_num: u8,
         group_id: u16,
         command_id: u8,
     ) -> Result<&'a [u8], ReceiveError> {
-        let data_size = loop {
-            let frame = self.recv_raw_frame(buffer)?;
+        polonius_loop!(|buffer| -> Result<&'polonius [u8], ReceiveError> {
+            let frame = polonius_try!(self.recv_raw_frame(buffer));
 
-            let (header_data, data) = frame
-                .split_first_chunk::<SMP_HEADER_SIZE>()
-                .ok_or(ReceiveError::UnexpectedResponse)?;
+            let (header_data, data) = match frame.split_first_chunk::<SMP_HEADER_SIZE>() {
+                Some(parts) => parts,
+                None => polonius_break!(Err(ReceiveError::UnexpectedResponse)),
+            };
 
             let header = SmpHeader::from_bytes(*header_data);
+
+            // Receiving packets with the wrong sequence number is not an error,
+            // they should simply be silently ignored.
+            if header.sequence_num != sequence_num {
+                polonius_continue!();
+            }
 
             let expected_op = if write_operation {
                 smp_op::WRITE_RSP
@@ -251,24 +260,16 @@ pub trait Transport {
                 smp_op::READ_RSP
             };
 
-            // Receiving packets with the wrong sequence number is not an error,
-            // they should simply be silently ignored.
-            if header.sequence_num != sequence_num {
-                continue;
-            }
-
             if (header.group_id != group_id)
                 || (header.command_id != command_id)
                 || (header.op != expected_op)
                 || (usize::from(header.data_length) != data.len())
             {
-                return Err(ReceiveError::UnexpectedResponse);
+                polonius_break!(Err(ReceiveError::UnexpectedResponse));
             }
 
-            break data.len();
-        };
-
-        Ok(&buffer[SMP_HEADER_SIZE..SMP_HEADER_SIZE + data_size])
+            polonius_return!(Ok(data));
+        })
     }
 
     /// Changes the communication timeout.
