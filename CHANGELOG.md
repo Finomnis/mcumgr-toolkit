@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.0] - xxxx-xx-xx
 
-### Changes
+### Breaking Changes
 
 - Fix incorrect receive buffer size
     - Was `65535`, which is the max body size,
       but the buffer also contains the header with `8` extra bytes
+
+### Changes
+
 - Add `MCUmgrClient::new_from_transport`
     - Creates a client from a custom transport layer
 
