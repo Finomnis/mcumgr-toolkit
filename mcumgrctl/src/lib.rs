@@ -32,9 +32,6 @@ use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 #[cfg(feature = "ble")]
 use mcumgr_toolkit::client::BleError;
 
-// Re-export for convenience
-pub use mcumgr_toolkit::transport::Transport;
-
 pub use crate::args::CommonArgs;
 use crate::errors::CliError;
 
@@ -237,7 +234,7 @@ fn cli_main_internal<T: clap::Args>(
 /// pub struct CustomBackends {
 ///     /// Dummy argument for demonstration
 ///     #[arg(long, group = "transport")]
-///     pub foo: String,
+///     pub foo: Option<String>,
 /// }
 ///
 /// fn custom_backends(
