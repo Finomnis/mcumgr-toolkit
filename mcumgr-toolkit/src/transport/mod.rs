@@ -280,14 +280,17 @@ pub trait Transport {
         timeout: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
-    /// Returns the maximum SMP frame size this transport can carry in one shot.
+    /// Returns the maximum size of a complete SMP frame supported by this transport.
+    ///
+    /// The size includes the SMP header and body, but excludes transport-specific
+    /// framing and protocol overhead.
+    ///
+    /// `usize::MAX` means that the transport imposes no additional frame-size limit.
     ///
     /// Used by [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size)
     /// to cap the device-reported buffer size at what the transport can still
     /// deliver reliably.
     ///
-    /// The default (`usize::MAX`) means no transport-level cap — suitable for
-    /// stream-based transports that handle large frames via chunking.
     fn max_smp_frame_size(&self) -> usize {
         usize::MAX
     }

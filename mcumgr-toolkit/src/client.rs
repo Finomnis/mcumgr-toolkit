@@ -26,7 +26,7 @@ use crate::{
     },
     connection::{Connection, ExecuteError},
     transport::{
-        ReceiveError, Transport,
+        ReceiveError, SMP_TRANSFER_BUFFER_SIZE, Transport,
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -549,8 +549,9 @@ impl MCUmgrClient {
             .connection
             .execute_command(&commands::os::MCUmgrParameters)?;
 
-        let frame_size =
-            (mcumgr_params.buf_size as usize).min(self.connection.max_transport_frame_size());
+        let frame_size = (mcumgr_params.buf_size as usize)
+            .min(SMP_TRANSFER_BUFFER_SIZE)
+            .min(self.connection.max_transport_frame_size());
 
         log::debug!("Using frame size {}.", frame_size);
 

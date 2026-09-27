@@ -1,18 +1,8 @@
-//! A `Transport` implemented from OUTSIDE the crate.
+//! Integration test for implementing `Transport` in a downstream crate.
 //!
-//! This file is the regression test for the two things that made the public
-//! `Transport` trait unreachable from another crate. Integration tests are
-//! compiled as separate crates that link the library as an ordinary dependency,
-//! so they see exactly what a third party sees -- which is what makes this a
-//! real test of the property rather than a restatement of it:
-//!
-//! * the impl below names `SMP_HEADER_SIZE` and `SMP_TRANSFER_BUFFER_SIZE` in
-//!   its method signatures, so it fails to compile if either goes back to being
-//!   private (E0603);
-//! * and it is handed to `MCUmgrClient::new_from_transport`, so it fails to
-//!   compile if that constructor is removed.
-//!
-//! An in-crate unit test could not check either: it can name private items.
+//! Integration tests compile as separate crates, so this verifies that the
+//! public transport constants and `MCUmgrClient::new_from_transport` are
+//! usable by external implementations.
 
 use ciborium::Value;
 use mcumgr_toolkit::MCUmgrClient;
