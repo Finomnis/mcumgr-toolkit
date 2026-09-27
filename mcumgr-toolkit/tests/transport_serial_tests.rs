@@ -1,7 +1,7 @@
 mod common;
 use common::LoopbackSerial;
 
-use mcumgr_toolkit::transport::{Transport, serial::SerialTransport};
+use mcumgr_toolkit::transport::{SMP_TRANSFER_BUFFER_SIZE, Transport, serial::SerialTransport};
 use proptest::prelude::*;
 use rand::RngExt;
 
@@ -21,7 +21,7 @@ proptest! {
 
         transport.send_raw_frame(header, &data).unwrap();
 
-        let mut recv_buffer = [0u8; u16::MAX as usize];
+        let mut recv_buffer = [0u8; SMP_TRANSFER_BUFFER_SIZE];
         let data_received = transport.recv_raw_frame(&mut recv_buffer).unwrap();
 
         assert_eq!(header, &data_received[..8], "Received header did not match!");
@@ -45,7 +45,7 @@ fn test_chunking_upper_limit() {
 
     transport.send_raw_frame(header, &data).unwrap();
 
-    let mut recv_buffer = [0u8; u16::MAX as usize];
+    let mut recv_buffer = [0u8; SMP_TRANSFER_BUFFER_SIZE];
     let data_received = transport.recv_raw_frame(&mut recv_buffer).unwrap();
 
     assert_eq!(

@@ -8,7 +8,7 @@ const OTHER_SERVICE_UUID: Uuid = Uuid::from_u128(0x11111111_2222_3333_4444_55555
 const OTHER_CHARACTERISTIC_UUID: Uuid = Uuid::from_u128(0xaaaaaaaa_bbbb_cccc_dddd_eeeeeeeeeeee);
 
 const SMP_HEADER_SIZE: usize = 8;
-const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize;
+const SMP_TRANSFER_BUFFER_SIZE: usize = u16::MAX as usize + SMP_HEADER_SIZE;
 
 fn notification(service_uuid: Uuid, uuid: Uuid, value: impl Into<Vec<u8>>) -> ValueNotification {
     ValueNotification {
