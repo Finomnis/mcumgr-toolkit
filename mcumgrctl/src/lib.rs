@@ -27,7 +27,12 @@ use crate::errors::CliError;
 
 fn cli_main_internal<T: clap::Args>(
     multiprogress: &MultiProgress,
-    custom_transports: impl FnOnce(&T) -> miette::Result<Option<Box<dyn Transport + Send>>>,
+    custom_transports: impl FnOnce(
+        &T,
+    ) -> Result<
+        Option<Box<dyn Transport + Send>>,
+        Box<dyn std::error::Error + Send + Sync>,
+    >,
 ) -> Result<(), CliError> {
     let args = args::App::<T>::parse();
 
@@ -137,8 +142,8 @@ fn cli_main_internal<T: clap::Args>(
             MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::UdpOpenFailed)?,
         )
-    } else if let Some(custom_transport) = custom_transports(&args.custom_transports)
-        .map_err(|e| CliError::CustomTransportError(e.into()))?
+    } else if let Some(custom_transport) =
+        custom_transports(&args.custom_transports).map_err(CliError::CustomTransportError)?
     {
         Client::new(MCUmgrClient::new_from_transport(custom_transport))
     } else {
@@ -205,7 +210,12 @@ fn cli_main_internal<T: clap::Args>(
 /// ```
 ///
 pub fn cli_main<T: clap::Args>(
-    custom_transports: impl FnOnce(&T) -> miette::Result<Option<Box<dyn Transport + Send>>>,
+    custom_transports: impl FnOnce(
+        &T,
+    ) -> Result<
+        Option<Box<dyn Transport + Send>>,
+        Box<dyn std::error::Error + Send + Sync>,
+    >,
 ) -> miette::Result<()> {
     clap_complete::env::CompleteEnv::with_factory(args::App::<T>::command).complete();
 
@@ -231,6 +241,8 @@ pub fn cli_main<T: clap::Args>(
 }
 
 /// Usable as arguemtn for [`cli_main`] to indicate that no custom transports exist.
-pub fn no_custom_transports(_: &()) -> miette::Result<Option<Box<dyn Transport + Send>>> {
+pub fn no_custom_transports(
+    _: &(),
+) -> Result<Option<Box<dyn Transport + Send>>, Box<dyn std::error::Error + Send + Sync>> {
     Ok(None)
 }

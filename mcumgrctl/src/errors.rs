@@ -54,11 +54,7 @@ pub enum CliError {
     UdpOpenFailed(#[from] UdpError),
     #[error("Failed to create custom transport")]
     #[diagnostic(code(mcumgrctl::custom_transport))]
-    CustomTransportError(
-        #[source]
-        #[diagnostic_source]
-        Box<dyn Diagnostic + Send + Sync>,
-    ),
+    CustomTransportError(#[source] Box<dyn std::error::Error + Send + Sync>),
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(mcumgrctl::image_parse))]
     ImageParseFailed(#[from] ImageParseError),
