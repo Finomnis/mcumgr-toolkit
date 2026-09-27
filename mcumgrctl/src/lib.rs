@@ -228,22 +228,31 @@ fn cli_main_internal<T: clap::Args>(
 /// Example:
 ///
 /// ```rust,no_run
+/// use mcumgr_toolkit::{MCUmgrClient, transport::Transport};
 /// use mcumgrctl::{BackendInitResult, CommonArgs};
 ///
 /// #[derive(Debug, clap::Args)]
 /// pub struct CustomBackends {
-///     /// Dummy argument for demonstration
+///     /// Dummy backend for demonstration
 ///     #[arg(long, group = "transport")]
-///     pub foo: Option<String>,
+///     pub dummy: Option<String>,
 /// }
 ///
 /// fn custom_backends(
 ///     args: &CustomBackends,
 ///     common: &CommonArgs,
 /// ) -> miette::Result<Option<BackendInitResult>> {
-///     println!("Custom Backend: Foo: {}", args.foo);
-///     println!("Common Args: {common:?}");
-///     // Create client connected to a custom backend here if `args` commands it
+///     if let Some(dummy) = &args.dummy {
+///         println!("Custom Backend: Dummy: {dummy}");
+///         println!("Common Args: {common:?}");
+///
+///         // Create client connected to a custom backend here if `args` commands it
+///         let custom_transport: Box<dyn Transport + Send> = todo!();
+///
+///         let client = MCUmgrClient::new_from_transport(custom_transport);
+///         return Ok(Some(BackendInitResult::Connected(client)));
+///     }
+///
 ///     Ok(None)
 /// }
 ///
