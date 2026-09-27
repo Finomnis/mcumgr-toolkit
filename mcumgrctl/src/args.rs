@@ -23,6 +23,7 @@ fn parse_udp_addr(s: &str) -> miette::Result<std::net::SocketAddr> {
     addr.ok_or_else(|| miette::miette!("Failed to resolve address"))
 }
 
+/// Settings relevant for all backends
 #[derive(Debug, Args)]
 pub struct CommonArgs {
     /// Hide progress bar for data transfer commands

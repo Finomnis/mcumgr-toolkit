@@ -1,4 +1,16 @@
+//!
+//! This crate is primarily meant as a cli binary crate.
+//!
+//! It can, however, be used as a library crate to extend
+//! the cli with custom backends.
+//!
+
+#![deny(missing_docs)]
 #![forbid(unsafe_code)]
+#![doc(issue_tracker_base_url = "https://github.com/Finomnis/mcumgr-toolkit/issues")]
+// That's just a bad lint, in many cases I want two ifs for readability
+#![allow(clippy::collapsible_if)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod args;
 mod client;
@@ -23,7 +35,8 @@ use mcumgr_toolkit::client::BleError;
 // Re-export for convenience
 pub use mcumgr_toolkit::transport::Transport;
 
-use crate::{args::CommonArgs, errors::CliError};
+pub use crate::args::CommonArgs;
+use crate::errors::CliError;
 
 /// The result of a backend init function, in case it ran.
 pub enum BackendInitResult {
