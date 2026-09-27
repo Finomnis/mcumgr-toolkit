@@ -18,8 +18,10 @@ use clap::{CommandFactory as _, Parser};
 use mcumgr_toolkit::{
     MCUmgrClient,
     client::{BleError, UsbSerialError},
-    transport::Transport,
 };
+
+/// Re-export for convenience
+pub use mcumgr_toolkit::transport::Transport;
 
 use crate::errors::CliError;
 
@@ -181,23 +183,25 @@ fn cli_main_internal<T: clap::Args>(
 ///
 /// Example:
 ///
-/// ```rust
-// #[derive(Debug, Args)]
+/// ```rust,no_run
+/// #[derive(Debug, clap::Args)]
 /// pub struct CustomTransports {
-///     /// Dummy argument for testing
+///     /// Dummy argument for demonstration
 ///     #[arg(long)]
-///     foo: String
+///     pub foo: String,
 /// }
 ///
-/// fn custom_transports(args: &CustomTransports) -> miette::Result<Option<Box<dyn Transport + Send>>>{
-///     println!("Custom Transport: Foo: {args.bar}");
-///
+/// fn custom_transports(
+///     args: &CustomTransports,
+/// ) -> miette::Result<Option<Box<dyn mcumgrctl::Transport + Send>>> {
+///     println!("Custom Transport: Foo: {}", args.foo);
 ///     // Create custom transport here if `args` commands it
-///
 ///     Ok(None)
 /// }
 ///
-/// mcumgrctl::cli_main(custom_transports)
+/// pub fn main() -> miette::Result<()> {
+///     mcumgrctl::cli_main(custom_transports)
+/// }
 /// ```
 ///
 pub fn cli_main<T: clap::Args>(
@@ -226,7 +230,7 @@ pub fn cli_main<T: clap::Args>(
     result
 }
 
-// Do not add custom transports
+/// Usable as arguemtn for [`cli_main`] to indicate that no custom transports exist.
 pub fn no_custom_transports(_: &()) -> miette::Result<Option<Box<dyn Transport + Send>>> {
     Ok(None)
 }
