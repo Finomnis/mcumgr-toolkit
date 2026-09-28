@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.18.0] - xxxx-xx-xx
+## [0.18.0] - 2026-09-29
 
 ### Breaking Changes
 
@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make `mcumgrctl` a library crate
     - Add `mcumgrctl::cli_main` that runs the CLI, with the ability
       to add custom backends
+- Update dependencies
 
 
 ## [0.17.1] - 2026-09-26
