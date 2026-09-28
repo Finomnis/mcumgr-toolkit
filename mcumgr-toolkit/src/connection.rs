@@ -4,7 +4,10 @@ use crate::{
     DEFAULT_RETRIES,
     commands::{ErrResponse, ErrResponseV2, McuMgrCommand},
     smp_errors::{DeviceError, MCUmgrErr},
-    transport::{ReceiveError, SMP_BODY_MAX_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport},
+    transport::{
+        IntoTransport, ReceiveError, SMP_BODY_MAX_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError,
+        Transport,
+    },
 };
 
 use miette::{Diagnostic, IntoDiagnostic};
@@ -128,11 +131,11 @@ impl Transceiver {
 
 impl Connection {
     /// Creates a new SMP connection
-    pub fn new<T: Transport + Send + 'static>(transport: T) -> Self {
+    pub fn new<T: IntoTransport>(transport: T) -> Self {
         Self {
             inner: Mutex::new(Inner {
                 transceiver: Transceiver {
-                    transport: Box::new(transport),
+                    transport: transport.into_transport(),
                     next_seqnum: rand::random(),
                     receive_buffer: Box::new([0; SMP_TRANSFER_BUFFER_SIZE]),
                 },

@@ -184,7 +184,9 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
+        run: cargo build --release -p mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
+      - name: Test
+        run: cargo test --release -p mcumgrctl --target ${{ matrix.target }} --features "${{ matrix.features }}"
 
       - name: Collect binary
         run: cp target/${{ matrix.target }}/release/mcumgrctl${{ matrix.extension }} mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
@@ -201,6 +203,34 @@ jobs:
         if: github.event_name == 'release'
         with:
           files: mcumgrctl-${{ matrix.os }}${{ matrix.extension }}
+
+  build-cli-without-ble:
+    name: Build CLI without BLE
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows
+          - linux
+          - macos
+        include:
+          - os: windows
+            image: windows-latest
+          - os: linux
+            image: ubuntu-latest
+          - os: macos
+            image: macos-latest
+    runs-on: ${{ matrix.image }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release -p mcumgrctl --no-default-features
+      - name: Test
+        run: cargo test --release -p mcumgrctl --no-default-features
 
   msrv:
     name: Minimum Supported Rust Version
@@ -232,10 +262,16 @@ jobs:
       - name: Install libdbus
         run: sudo apt-get install -y libdbus-1-dev
 
-      - name: Check semver
+      - name: Check semver for mcumgr-toolkit
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
           manifest-path: mcumgr-toolkit/Cargo.toml
+
+      # TODO: Activate once the first lib version is published
+      # - name: Check semver for mcumgrctl
+      #   uses: obi1kenobi/cargo-semver-checks-action@v2
+      #   with:
+      #     manifest-path: mcumgrctl/Cargo.toml
 
   min-versions:
     name: Minimal Dependency Versions
@@ -342,6 +378,7 @@ jobs:
         test_without_ble,
         build-examples,
         build-cli,
+        build-cli-without-ble,
         msrv,
         lints,
         docs,

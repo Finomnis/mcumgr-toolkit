@@ -59,6 +59,8 @@ cargo install mcumgrctl
 
 On Linux, building `mcumgrctl` requires the D-Bus development package (`libdbus-1-dev` and `pkg-config` on Debian/Ubuntu). Alternatively, build with `--features vendored-dbus`.
 
+Alternatively, disable BLE with `--no-default-features`. Then, no dbus library is required.
+
 ### Usage examples
 
 List all available USB serial ports:

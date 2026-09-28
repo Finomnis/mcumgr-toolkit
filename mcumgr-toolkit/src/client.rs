@@ -26,7 +26,7 @@ use crate::{
     },
     connection::{Connection, ExecuteError},
     transport::{
-        ReceiveError, SMP_TRANSFER_BUFFER_SIZE, Transport,
+        IntoTransport, ReceiveError, SMP_TRANSFER_BUFFER_SIZE,
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -482,13 +482,13 @@ impl MCUmgrClient {
         Ok(Self::new_from_transport(transport))
     }
 
-    /// Creates a Zephyr MCUmgr SMP client from a generic [`Transport`].
+    /// Creates a Zephyr MCUmgr SMP client from a generic [`Transport`](crate::transport::Transport).
     ///
     /// # Arguments
     ///
     /// * `transport` - The transport the client should communicate over
     ///
-    pub fn new_from_transport<T: Transport + Send + 'static>(transport: T) -> Self {
+    pub fn new_from_transport<T: IntoTransport>(transport: T) -> Self {
         Self {
             connection: Connection::new(transport),
             smp_frame_size: ZEPHYR_DEFAULT_SMP_FRAME_SIZE.into(),

@@ -3,9 +3,12 @@ use thiserror::Error;
 
 use mcumgr_toolkit::{
     Errno,
-    client::{BleError, FirmwareUpdateError, MCUmgrClientError, UdpError, UsbSerialError},
+    client::{FirmwareUpdateError, MCUmgrClientError, UdpError, UsbSerialError},
     mcuboot::ImageParseError,
 };
+
+#[cfg(feature = "ble")]
+use mcumgr_toolkit::client::BleError;
 
 /// Possible CLI errors.
 #[derive(Error, Debug, Diagnostic)]
@@ -46,12 +49,16 @@ pub enum CliError {
     #[error("Failed to open USB serial port")]
     #[diagnostic(code(mcumgrctl::usb_serial))]
     UsbSerialOpenFailed(#[from] UsbSerialError),
+    #[cfg(feature = "ble")]
     #[error("Failed to connect to BLE device")]
     #[diagnostic(code(mcumgrctl::ble))]
     BleOpenFailed(#[from] BleError),
     #[error("Failed to open UDP socket")]
     #[diagnostic(code(mcumgrctl::udp))]
     UdpOpenFailed(#[from] UdpError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    CustomBackendError(Box<dyn miette::Diagnostic + Send + Sync>),
     #[error("Failed to parse MCUboot image")]
     #[diagnostic(code(mcumgrctl::image_parse))]
     ImageParseFailed(#[from] ImageParseError),

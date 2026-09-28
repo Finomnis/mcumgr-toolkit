@@ -1,8 +1,10 @@
 use std::net::ToSocketAddrs;
 
 use clap::{ArgGroup, Args, Parser};
-use mcumgr_toolkit::transport::ble::BleIdentifier;
 use miette::IntoDiagnostic;
+
+#[cfg(feature = "ble")]
+use mcumgr_toolkit::transport::ble::BleIdentifier;
 
 use crate::groups::Group;
 
@@ -21,6 +23,7 @@ fn parse_udp_addr(s: &str) -> miette::Result<std::net::SocketAddr> {
     addr.ok_or_else(|| miette::miette!("Failed to resolve address"))
 }
 
+/// Settings relevant for all backends
 #[derive(Debug, Args)]
 pub struct CommonArgs {
     /// Hide progress bar for data transfer commands
@@ -57,25 +60,25 @@ pub struct CommonArgs {
 #[command(disable_help_subcommand = true)]
 #[command(group(
     ArgGroup::new("transport")
-        .args(["serial", "usb_serial", "udp", "ble"])
+        .multiple(false)
 ))]
 #[command(group(
     ArgGroup::new("serial_transport")
         .args(["serial", "usb_serial"])
         .multiple(true)
 ))]
-pub struct App {
+pub struct App<CustomBackendArgs: clap::Args> {
     /// Use the given serial port as backend
     ///
     /// If no argument provided, list all available ports and exit.
-    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    #[arg(short, long, verbatim_doc_comment, group="transport", num_args = 0..=1, default_missing_value = "")]
     pub serial: Option<String>,
 
     /// Use the given usb serial port as backend
     ///
     /// Must contain a regex that matches `vid:pid` or `vid:pid:iface`.
     /// If no argument provided, list all available ports and exit.
-    #[arg(short, long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = "")]
+    #[arg(short, long, verbatim_doc_comment, group="transport", num_args = 0..=1, default_missing_value = "")]
     pub usb_serial: Option<String>,
 
     /// Serial port baud rate
@@ -86,19 +89,24 @@ pub struct App {
     ///
     /// Accepts a hostname or IP address with an optional port.
     /// Port defaults to 1337 if omitted (e.g. "mydevice.local" or "192.168.1.1:1337").
-    #[arg(long, verbatim_doc_comment, value_parser = parse_udp_addr, value_name = "ADDR")]
+    #[arg(long, verbatim_doc_comment, group="transport", value_parser = parse_udp_addr, value_name = "ADDR")]
     pub udp: Option<std::net::SocketAddr>,
 
     /// Use the given BLE device as backend
     ///
     /// Accepts an OS dependent BLE device identifier.
     /// If no argument provided, list all available BLE devices and exit.
-    #[arg(long, verbatim_doc_comment, num_args = 0..=1, default_missing_value = None, value_name = BleIdentifier::help_name())]
+    #[cfg(feature = "ble")]
+    #[arg(long, verbatim_doc_comment, group="transport", num_args = 0..=1, default_missing_value = None, value_name = BleIdentifier::help_name())]
     pub ble: Option<Option<BleIdentifier>>,
 
     /// Settings that customize runtime behaviour
     #[command(flatten)]
     pub common: CommonArgs,
+
+    /// Arguments for custom backends
+    #[command(flatten)]
+    pub custom_backends: CustomBackendArgs,
 
     /// Command group
     ///
@@ -114,7 +122,7 @@ mod tests {
 
     #[test]
     fn generates_valid_man_page() {
-        let man = clap_mangen::Man::new(App::command());
+        let man = clap_mangen::Man::new(App::<()>::command());
 
         let mut buffer = vec![];
         man.render(&mut buffer).unwrap();
@@ -122,6 +130,6 @@ mod tests {
 
     #[test]
     fn check_cli() {
-        App::command().debug_assert();
+        App::<()>::command().debug_assert();
     }
 }
