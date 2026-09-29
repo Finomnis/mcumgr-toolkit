@@ -433,6 +433,7 @@ impl MCUmgrClient {
 
         let serial = serialport::new(port_name, baud_rate)
             .timeout(timeout)
+            .dtr_on_open(true) // New MCUBoot USB stack requires this to work properly
             .open()?;
 
         Ok(Self::new_from_serial(serial))
