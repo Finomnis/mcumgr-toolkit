@@ -212,7 +212,7 @@ pub(crate) fn firmware_update(
     };
 
     progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-    let image_state = client
+    let mut image_state = client
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
 
@@ -263,32 +263,44 @@ pub(crate) fn firmware_update(
             }
         })?;
 
-    progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
-    let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
-    if let Err(set_state_error) = set_state_result {
-        let mut image_already_active = false;
+    progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
+    image_state = client
+        .image_get_state()
+        .map_err(FirmwareUpdateError::GetStateFailed)?;
 
-        // Special case: if the command isn't supported, we are most likely in
-        // the MCUmgr recovery shell, which writes directly to the active slot
-        // and does not support swapping.
-        // Sanity check that the image is on the first position already to avoid false
-        // positives of this exception.
-        if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported() {
-            progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-            let image_state = client
-                .image_get_state()
-                .map_err(FirmwareUpdateError::GetStateFailed)?;
-            if image_state.iter().any(|img| {
-                img.image == actual_target_image
-                    && img.slot == 0
-                    && img.hash.as_ref() == Some(&image_id_hash)
-            }) {
-                image_already_active = true;
+    let image_already_active = image_state.iter().any(|img| {
+        img.image == actual_target_image && img.hash.as_ref() == Some(&image_id_hash) && img.active
+    });
+
+    if !image_already_active {
+        progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
+        let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
+        if let Err(set_state_error) = set_state_result {
+            let mut image_already_active = false;
+
+            // Special case: if the command isn't supported, we are most likely in
+            // the MCUmgr recovery shell, which writes directly to the active slot
+            // and does not support swapping.
+            // Sanity check that the image is on the first position already to avoid false
+            // positives of this exception.
+            if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported()
+            {
+                progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
+                let image_state = client
+                    .image_get_state()
+                    .map_err(FirmwareUpdateError::GetStateFailed)?;
+                if image_state.iter().any(|img| {
+                    img.image == actual_target_image
+                        && img.slot == 0
+                        && img.hash.as_ref() == Some(&image_id_hash)
+                }) {
+                    image_already_active = true;
+                }
             }
-        }
 
-        if !image_already_active {
-            return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
+            if !image_already_active {
+                return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
+            }
         }
     }
 
