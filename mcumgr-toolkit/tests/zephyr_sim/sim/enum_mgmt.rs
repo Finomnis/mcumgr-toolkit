@@ -2,7 +2,9 @@
 //! `subsys/mgmt/mcumgr/grp/enum_mgmt/src/enum_mgmt.c`.
 
 use super::Device;
-use super::cbor::{Cbor, Kind};
+use ciborium::Value;
+
+use super::cbor::{Kind, map, text, uint};
 use super::smp::{Ctx, Group, group_id, mgmt_err, read};
 
 const ENUM_MGMT_ID_COUNT: u8 = 0;
@@ -27,18 +29,14 @@ pub fn group(config: &super::Config) -> Group {
 
 /// `enum_mgmt_count`
 fn count(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
-    ctx.put("count", Cbor::Uint(device.groups.len() as u64));
+    ctx.put("count", uint(device.groups.len() as u64));
     Ok(())
 }
 
 /// `enum_mgmt_list`
 fn list(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
-    let groups = device
-        .groups
-        .iter()
-        .map(|g| Cbor::Uint(g.id.into()))
-        .collect();
-    ctx.put("groups", Cbor::List(groups));
+    let groups = device.groups.iter().map(|g| uint(g.id)).collect();
+    ctx.put("groups", Value::Array(groups));
     Ok(())
 }
 
@@ -57,9 +55,9 @@ fn single(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     match device.groups.get(index as usize) {
         None => ctx.add_cmd_err(group_id::ENUM, ENUM_MGMT_ERR_INDEX_TOO_LARGE),
         Some(group) => {
-            ctx.put("group", Cbor::Uint(group.id.into()));
+            ctx.put("group", uint(group.id));
             if index as usize == device.groups.len() - 1 {
-                ctx.put("end", Cbor::Bool(true));
+                ctx.put("end", Value::Bool(true));
             }
         }
     }
@@ -78,16 +76,16 @@ fn details(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         .iter()
         .filter(|g| allowed.is_empty() || allowed.contains(&g.id.into()))
         .map(|g| {
-            let mut entry = vec![("group", Cbor::Uint(g.id.into()))];
+            let mut entry = vec![("group", uint(g.id))];
             if device.config.enum_details_name {
-                entry.push(("name", Cbor::text(g.name)));
+                entry.push(("name", text(g.name)));
             }
             if device.config.enum_details_handlers {
-                entry.push(("handlers", Cbor::Uint(g.handlers.len() as u64)));
+                entry.push(("handlers", uint(g.handlers.len() as u64)));
             }
-            Cbor::map(entry)
+            map(entry)
         })
         .collect();
-    ctx.put("groups", Cbor::List(groups));
+    ctx.put("groups", Value::Array(groups));
     Ok(())
 }

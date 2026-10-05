@@ -1,9 +1,8 @@
 //! CBOR handling with the semantics of Zephyr's `zcbor` usage in MCUmgr.
 //!
-//! Encoding follows `zcbor_encode.c`: integers use the shortest form, and
-//! maps/lists are written with *indefinite* length unless
-//! `CONFIG_ZCBOR_CANONICAL` is enabled (it is disabled by default, so real
-//! devices answer with indefinite-length containers).
+//! Responses are built as [`ciborium::Value`]s. Zephyr writes maps and lists
+//! with *indefinite* length unless `CONFIG_ZCBOR_CANONICAL` is enabled (it is
+//! disabled by default), which [`encode`] reproduces.
 //!
 //! Decoding follows `subsys/mgmt/mcumgr/util/src/zcbor_bulk.c`
 //! (`zcbor_map_decode_bulk`): the payload must be a map with text keys,
@@ -11,107 +10,60 @@
 //! value of the wrong type is an error.
 
 use ciborium::Value;
+use ciborium_ll::{Encoder, Header};
 
-/// A CBOR value as produced by the simulated device.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Cbor {
-    /// `zcbor_uint32_put` / `zcbor_uint64_put` / `zcbor_size_put`
-    Uint(u64),
-    /// `zcbor_int32_put` / `zcbor_int64_put`
-    Int(i64),
-    /// `zcbor_bstr_encode`
-    Bytes(Vec<u8>),
-    /// `zcbor_tstr_encode` / `zcbor_tstr_put_lit` / `zcbor_tstr_put_term`
-    Text(String),
-    /// `zcbor_bool_put`
-    Bool(bool),
-    /// `zcbor_map_start_encode` .. `zcbor_map_end_encode`
-    Map(Vec<(Cbor, Cbor)>),
-    /// `zcbor_list_start_encode` .. `zcbor_list_end_encode`
-    List(Vec<Cbor>),
+/// `zcbor_uint32_put` / `zcbor_uint64_put` / `zcbor_size_put`
+pub fn uint(value: impl Into<u64>) -> Value {
+    Value::Integer(value.into().into())
 }
 
-impl Cbor {
-    pub fn text(s: impl Into<String>) -> Self {
-        Cbor::Text(s.into())
-    }
+/// `zcbor_int32_put` / `zcbor_int64_put`
+pub fn int(value: impl Into<i64>) -> Value {
+    Value::Integer(value.into().into())
+}
 
-    pub fn map<K: Into<String>>(entries: impl IntoIterator<Item = (K, Cbor)>) -> Self {
-        Cbor::Map(
-            entries
-                .into_iter()
-                .map(|(k, v)| (Cbor::Text(k.into()), v))
-                .collect(),
-        )
-    }
+/// `zcbor_tstr_put_lit` / `zcbor_tstr_encode`
+pub fn text(value: impl Into<String>) -> Value {
+    Value::Text(value.into())
+}
 
-    pub fn encode(&self, out: &mut Vec<u8>, canonical: bool) {
-        match self {
-            Cbor::Uint(v) => write_head(out, 0, *v),
-            Cbor::Int(v) => {
-                if *v >= 0 {
-                    write_head(out, 0, *v as u64)
-                } else {
-                    write_head(out, 1, (-1 - *v) as u64)
-                }
-            }
-            Cbor::Bytes(b) => {
-                write_head(out, 2, b.len() as u64);
-                out.extend_from_slice(b);
-            }
-            Cbor::Text(s) => {
-                write_head(out, 3, s.len() as u64);
-                out.extend_from_slice(s.as_bytes());
-            }
-            Cbor::Bool(b) => out.push(if *b { 0xf5 } else { 0xf4 }),
-            Cbor::List(items) => {
-                if canonical {
-                    write_head(out, 4, items.len() as u64);
-                } else {
-                    out.push(0x9f);
-                }
-                for item in items {
-                    item.encode(out, canonical);
-                }
-                if !canonical {
-                    out.push(0xff);
-                }
-            }
-            Cbor::Map(entries) => {
-                if canonical {
-                    write_head(out, 5, entries.len() as u64);
-                } else {
-                    out.push(0xbf);
-                }
+/// A map with text keys
+pub fn map<K: Into<String>>(entries: impl IntoIterator<Item = (K, Value)>) -> Value {
+    Value::Map(entries.into_iter().map(|(k, v)| (text(k), v)).collect())
+}
+
+/// Encodes `value` the way zcbor does: with `canonical`
+/// (`CONFIG_ZCBOR_CANONICAL`) containers have a definite length, otherwise an
+/// indefinite one.
+pub fn encode(value: &Value, canonical: bool) -> Vec<u8> {
+    fn encode_indefinite(value: &Value, out: &mut Vec<u8>) {
+        match value {
+            Value::Map(entries) => {
+                Encoder::from(&mut *out).push(Header::Map(None)).unwrap();
                 for (k, v) in entries {
-                    k.encode(out, canonical);
-                    v.encode(out, canonical);
+                    encode_indefinite(k, out);
+                    encode_indefinite(v, out);
                 }
-                if !canonical {
-                    out.push(0xff);
-                }
+                Encoder::from(&mut *out).push(Header::Break).unwrap();
             }
+            Value::Array(items) => {
+                Encoder::from(&mut *out).push(Header::Array(None)).unwrap();
+                for item in items {
+                    encode_indefinite(item, out);
+                }
+                Encoder::from(&mut *out).push(Header::Break).unwrap();
+            }
+            scalar => ciborium::into_writer(scalar, out).unwrap(),
         }
     }
-}
 
-fn write_head(out: &mut Vec<u8>, major: u8, value: u64) {
-    let major = major << 5;
-    if value < 24 {
-        out.push(major | value as u8);
-    } else if value <= u8::MAX as u64 {
-        out.push(major | 24);
-        out.push(value as u8);
-    } else if value <= u16::MAX as u64 {
-        out.push(major | 25);
-        out.extend_from_slice(&(value as u16).to_be_bytes());
-    } else if value <= u32::MAX as u64 {
-        out.push(major | 26);
-        out.extend_from_slice(&(value as u32).to_be_bytes());
+    let mut out = vec![];
+    if canonical {
+        ciborium::into_writer(value, &mut out).unwrap();
     } else {
-        out.push(major | 27);
-        out.extend_from_slice(&value.to_be_bytes());
+        encode_indefinite(value, &mut out);
     }
+    out
 }
 
 /// The zcbor decoder function used for a key in `zcbor_map_decode_bulk`.

@@ -2,7 +2,9 @@
 //! `subsys/mgmt/mcumgr/grp/stat_mgmt/src/stat_mgmt.c`.
 
 use super::Device;
-use super::cbor::{Cbor, Kind};
+use ciborium::Value;
+
+use super::cbor::{Kind, int, text, uint};
 use super::smp::{Ctx, Group, group_id, mgmt_err, read};
 
 const STAT_MGMT_ID_SHOW: u8 = 0;
@@ -72,17 +74,17 @@ fn show(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     };
 
     if device.config.smp_legacy_rc_behaviour {
-        ctx.put("rc", Cbor::Int(0));
+        ctx.put("rc", int(0));
     }
-    ctx.put("name", Cbor::text(name));
+    ctx.put("name", text(name));
     ctx.put(
         "fields",
-        Cbor::Map(
+        Value::Map(
             group
                 .fields
                 .iter()
                 // stat_mgmt_cb_encode() uses zcbor_uint32_put()
-                .map(|(name, value)| (Cbor::text(name), Cbor::Uint(*value as u32 as u64)))
+                .map(|(name, value)| (text(name), uint(*value as u32 as u64)))
                 .collect(),
         ),
     );
@@ -92,18 +94,11 @@ fn show(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 /// `stat_mgmt_list`
 fn list(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     if device.config.smp_legacy_rc_behaviour {
-        ctx.put("rc", Cbor::Int(0));
+        ctx.put("rc", int(0));
     }
     ctx.put(
         "stat_list",
-        Cbor::List(
-            device
-                .stat
-                .groups
-                .iter()
-                .map(|g| Cbor::text(&g.name))
-                .collect(),
-        ),
+        Value::Array(device.stat.groups.iter().map(|g| text(&g.name)).collect()),
     );
     Ok(())
 }

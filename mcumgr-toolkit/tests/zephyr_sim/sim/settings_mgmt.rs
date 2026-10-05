@@ -5,7 +5,9 @@
 use std::collections::BTreeMap;
 
 use super::Device;
-use super::cbor::{Cbor, Kind};
+use ciborium::Value;
+
+use super::cbor::{Kind, uint};
 use super::smp::{Ctx, Group, group_id, mgmt_err, read_write, write};
 
 const SETTINGS_MGMT_ID_READ_WRITE: u8 = 0;
@@ -206,9 +208,9 @@ fn settings_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 
     match device.settings.runtime_get(name, max_size) {
         Ok(value) => {
-            ctx.put("val", Cbor::Bytes(value));
+            ctx.put("val", Value::Bytes(value));
             if limited_size {
-                ctx.put("max_size", Cbor::Uint(value_len as u64));
+                ctx.put("max_size", uint(value_len as u64));
             }
         }
         Err(rc) => {

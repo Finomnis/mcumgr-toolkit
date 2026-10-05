@@ -3,7 +3,9 @@
 //! on a simulated dummy shell backend.
 
 use super::Device;
-use super::cbor::Cbor;
+use ciborium::Value;
+
+use super::cbor::int;
 use super::smp::{Ctx, Group, group_id, mgmt_err, write};
 
 const SHELL_MGMT_ID_EXEC: u8 = 0;
@@ -90,7 +92,7 @@ fn shell_exec(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     let (ret, output) = execute(&line);
     device.shell.history.push(line);
 
-    ctx.put("o", Cbor::Text(output));
-    ctx.put("ret", Cbor::Int(ret.into()));
+    ctx.put("o", Value::Text(output));
+    ctx.put("ret", int(ret));
     Ok(())
 }

@@ -7,7 +7,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use sha2::{Digest, Sha256};
 
 use super::Device;
-use super::cbor::{Cbor, Kind};
+use ciborium::Value;
+
+use super::cbor::{Kind, int, map, text, uint};
 use super::smp::{Ctx, Group, group_id, mgmt_err, read, read_write, write};
 
 const FS_MGMT_ID_FILE: u8 = 0;
@@ -282,12 +284,12 @@ fn file_download(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     let len = transfer.len;
 
     if device.config.smp_legacy_rc_behaviour {
-        ctx.put("rc", Cbor::Int(0));
+        ctx.put("rc", int(0));
     }
-    ctx.put("off", Cbor::Uint(off));
-    ctx.put("data", Cbor::Bytes(data));
+    ctx.put("off", uint(off));
+    ctx.put("data", Value::Bytes(data));
     if off == 0 {
-        ctx.put("len", Cbor::Uint(len));
+        ctx.put("len", uint(len));
     }
 
     fs.finish_check();
@@ -364,7 +366,7 @@ fn file_upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     if off > 0 && off != expected_off {
         // Offset mismatch, send file length, client needs to handle this
         ctx.add_cmd_err(group_id::FS, err::FILE_OFFSET_NOT_VALID);
-        ctx.put("len", Cbor::Uint(expected_off));
+        ctx.put("len", uint(expected_off));
         fs.cleanup();
         return Ok(());
     }
@@ -382,9 +384,9 @@ fn file_upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     fs.finish_check();
 
     if device.config.smp_legacy_rc_behaviour {
-        ctx.put("rc", Cbor::Int(0));
+        ctx.put("rc", int(0));
     }
-    ctx.put("off", Cbor::Uint(ctxt_off));
+    ctx.put("off", uint(ctxt_off));
     Ok(())
 }
 
@@ -401,9 +403,9 @@ fn file_status(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     match device.fs.filelen(name) {
         Ok(len) => {
             if device.config.smp_legacy_rc_behaviour {
-                ctx.put("rc", Cbor::Int(0));
+                ctx.put("rc", int(0));
             }
-            ctx.put("len", Cbor::Uint(len));
+            ctx.put("len", uint(len));
         }
         Err(rc) => ctx.add_cmd_err(group_id::FS, rc),
     }
@@ -465,17 +467,17 @@ fn file_hash_checksum(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     let data = &file[off as usize..];
     let data = &data[..data.len().min(usize::try_from(len).unwrap_or(usize::MAX))];
 
-    ctx.put("type", Cbor::text(group.name));
+    ctx.put("type", text(group.name));
     if off != 0 {
-        ctx.put("off", Cbor::Uint(off));
+        ctx.put("off", uint(off));
     }
-    ctx.put("len", Cbor::Uint(data.len() as u64));
+    ctx.put("len", uint(data.len() as u64));
     if group.byte_string {
-        ctx.put("output", Cbor::Bytes(Sha256::digest(data).to_vec()));
+        ctx.put("output", Value::Bytes(Sha256::digest(data).to_vec()));
     } else {
         // crc32_ieee_update(0, ...)
         let crc = crc::Crc::<u32>::new(&crc::CRC_32_ISO_HDLC).checksum(data);
-        ctx.put("output", Cbor::Uint(crc.into()));
+        ctx.put("output", uint(crc));
     }
     Ok(())
 }
@@ -487,15 +489,15 @@ fn supported_hash_checksum(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32
         .into_iter()
         .map(|h| {
             (
-                Cbor::text(h.name),
-                Cbor::map([
-                    ("format", Cbor::Uint(h.byte_string.into())),
-                    ("size", Cbor::Uint(h.output_size.into())),
+                text(h.name),
+                map([
+                    ("format", uint(h.byte_string)),
+                    ("size", uint(h.output_size)),
                 ]),
             )
         })
         .collect();
-    ctx.put("types", Cbor::Map(types));
+    ctx.put("types", Value::Map(types));
     Ok(())
 }
 

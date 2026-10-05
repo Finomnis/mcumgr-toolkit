@@ -6,7 +6,9 @@
 use sha2::{Digest, Sha256};
 
 use super::Device;
-use super::cbor::{Cbor, Kind};
+use ciborium::Value;
+
+use super::cbor::{Kind, int, map, uint};
 use super::smp::{Ctx, Group, group_id, mgmt_err, read, read_write, write};
 
 const IMG_MGMT_ID_STATE: u8 = 0;
@@ -524,7 +526,7 @@ impl Device {
     }
 
     /// `img_mgmt_state_encode_slot`
-    fn img_encode_slot(&self, slot: usize, flags: u8) -> Option<Cbor> {
+    fn img_encode_slot(&self, slot: usize, flags: u8) -> Option<Value> {
         const REPORT_SLOT_ACTIVE: u8 = 1 << 0;
         const REPORT_SLOT_PENDING: u8 = 1 << 1;
         const REPORT_SLOT_CONFIRMED: u8 = 1 << 2;
@@ -534,11 +536,11 @@ impl Device {
 
         let mut entries = vec![];
         if self.config.img_updatable_image_number > 1 {
-            entries.push(("image", Cbor::Uint((slot >> 1) as u64)));
+            entries.push(("image", uint((slot >> 1) as u64)));
         }
-        entries.push(("slot", Cbor::Uint((slot % 2) as u64)));
-        entries.push(("version", Cbor::Text(ver_str(info.version))));
-        entries.push(("hash", Cbor::Bytes(info.hash.to_vec())));
+        entries.push(("slot", uint((slot % 2) as u64)));
+        entries.push(("version", Value::Text(ver_str(info.version))));
+        entries.push(("hash", Value::Bytes(info.hash.to_vec())));
 
         let flag_entries = [
             ("bootable", info.flags & IMAGE_F_NON_BOOTABLE == 0),
@@ -550,11 +552,11 @@ impl Device {
         for (label, value) in flag_entries {
             // In "frugal" lists flags are only added when they are true
             if value || !self.config.img_frugal_list {
-                entries.push((label, Cbor::Bool(value)));
+                entries.push((label, Value::Bool(value)));
             }
         }
 
-        Some(Cbor::map(entries))
+        Some(map(entries))
     }
 
     /// The body of `img_mgmt_state_read`
@@ -588,9 +590,9 @@ impl Device {
             images.extend(self.img_encode_slot(slot_o, flags_o));
         }
 
-        ctx.put("images", Cbor::List(images));
+        ctx.put("images", Value::Array(images));
         if !self.config.img_frugal_list {
-            ctx.put("splitStatus", Cbor::Int(0));
+            ctx.put("splitStatus", int(0));
         }
     }
 }
@@ -664,7 +666,7 @@ fn erase(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     }
 
     if device.config.smp_legacy_rc_behaviour {
-        ctx.put("rc", Cbor::Int(0));
+        ctx.put("rc", int(0));
     }
     Ok(())
 }
@@ -676,18 +678,18 @@ fn slot_info(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         let mut slots = vec![];
         for i in [image * 2, image * 2 + 1] {
             let mut entry = vec![
-                ("slot", Cbor::Uint((i % 2) as u64)),
-                ("size", Cbor::Uint(device.img.slots[i].flash.len() as u64)),
+                ("slot", uint((i % 2) as u64)),
+                ("size", uint(device.img.slots[i].flash.len() as u64)),
             ];
             if device.img_active_slot(image) != i {
-                entry.push(("upload_image_id", Cbor::Uint(image as u64)));
+                entry.push(("upload_image_id", uint(image as u64)));
             }
-            slots.push(Cbor::map(entry));
+            slots.push(map(entry));
         }
 
         let mut entry = vec![
-            ("image", Cbor::Uint(image as u64)),
-            ("slots", Cbor::List(slots)),
+            ("image", uint(image as u64)),
+            ("slots", Value::Array(slots)),
         ];
         if let Some(footer) = device.config.img_too_large_sysbuild_footer {
             // img_mgmt_slot_max_size(), CONFIG_MCUMGR_GRP_IMG_TOO_LARGE_SYSBUILD
@@ -696,12 +698,12 @@ fn slot_info(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
                 device.img.slots[image * 2 + 1].flash.len() as u64,
             ];
             if sizes[0] > 0 && sizes[1] > 0 && footer >= sizes[0].abs_diff(sizes[1]) {
-                entry.push(("max_image_size", Cbor::Uint(sizes[0] - footer)));
+                entry.push(("max_image_size", uint(sizes[0] - footer)));
             }
         }
-        images.push(Cbor::map(entry));
+        images.push(map(entry));
     }
-    ctx.put("images", Cbor::List(images));
+    ctx.put("images", Value::Array(images));
     Ok(())
 }
 
@@ -800,9 +802,9 @@ fn upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 
     let good_rsp = |device: &Device, ctx: &mut Ctx| {
         if device.config.smp_legacy_rc_behaviour {
-            ctx.put("rc", Cbor::Int(0));
+            ctx.put("rc", int(0));
         }
-        ctx.put("off", Cbor::Uint(device.img.upload.off));
+        ctx.put("off", uint(device.img.upload.off));
     };
 
     let action = match inspect(device) {
@@ -878,7 +880,7 @@ fn upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 
     good_rsp(device, ctx);
     if device.config.img_enable_image_check && last {
-        ctx.put("match", Cbor::Bool(data_match));
+        ctx.put("match", Value::Bool(data_match));
     }
     if reset {
         device.img.reset_upload();

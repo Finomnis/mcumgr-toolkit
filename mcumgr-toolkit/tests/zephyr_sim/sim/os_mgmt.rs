@@ -3,7 +3,9 @@
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime, Timelike};
 
-use super::cbor::{Cbor, Kind};
+use ciborium::Value;
+
+use super::cbor::{Kind, int, map, text, uint};
 use super::smp::{Ctx, Group, group_id, mgmt_err, read, read_write, write};
 use super::{Bootloader, Device, TaskstatName};
 
@@ -144,7 +146,7 @@ fn echo(_: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         return Err(mgmt_err::EINVAL);
     }
     let data = decoded.str("d").unwrap().to_string();
-    ctx.put("r", Cbor::Text(data));
+    ctx.put("r", Value::Text(data));
     Ok(())
 }
 
@@ -164,33 +166,33 @@ fn taskstat_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         entry.push((
             "prio",
             if config.os_taskstat_signed_priority {
-                Cbor::Int(thread.prio.into())
+                int(thread.prio)
             } else {
-                Cbor::Uint((thread.prio as u8).into())
+                uint(thread.prio as u8)
             },
         ));
-        entry.push(("tid", Cbor::Uint(idx as u64)));
-        entry.push(("state", Cbor::Uint(thread.state.into())));
+        entry.push(("tid", uint(idx as u64)));
+        entry.push(("state", uint(thread.state)));
         if config.os_taskstat_stack_info {
             // Zephyr reports the stack in units of 4 byte words
-            entry.push(("stksiz", Cbor::Uint((thread.stack_size / 4).into())));
-            entry.push(("stkuse", Cbor::Uint((thread.stack_used / 4).into())));
+            entry.push(("stksiz", uint(thread.stack_size / 4)));
+            entry.push(("stkuse", uint(thread.stack_used / 4)));
         }
         if config.sched_thread_usage {
-            entry.push(("runtime", Cbor::Uint(thread.execution_cycles)));
+            entry.push(("runtime", uint(thread.execution_cycles)));
         } else if !config.os_taskstat_only_supported_stats {
-            entry.push(("runtime", Cbor::Uint(0)));
+            entry.push(("runtime", uint(0u32)));
         }
         if !config.os_taskstat_only_supported_stats {
-            entry.push(("cswcnt", Cbor::Uint(0)));
-            entry.push(("last_checkin", Cbor::Uint(0)));
-            entry.push(("next_checkin", Cbor::Uint(0)));
+            entry.push(("cswcnt", uint(0u32)));
+            entry.push(("last_checkin", uint(0u32)));
+            entry.push(("next_checkin", uint(0u32)));
         }
 
-        tasks.push((Cbor::Text(name), Cbor::map(entry)));
+        tasks.push((Value::Text(name), map(entry)));
     }
 
-    ctx.put("tasks", Cbor::Map(tasks));
+    ctx.put("tasks", Value::Map(tasks));
     Ok(())
 }
 
@@ -201,14 +203,14 @@ fn mpstat_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         let total = heap.allocated_bytes + heap.free_bytes;
         let mut entry = vec![];
         if !device.config.os_mpstat_only_supported_stats {
-            entry.push(("blksiz", Cbor::Uint(1)));
+            entry.push(("blksiz", uint(1u32)));
         }
-        entry.push(("nblks", Cbor::Uint(total.into())));
-        entry.push(("nfree", Cbor::Uint(heap.free_bytes.into())));
-        entry.push(("min", Cbor::Uint((total - heap.max_allocated_bytes).into())));
-        pools.push((Cbor::Text(i.to_string()), Cbor::map(entry)));
+        entry.push(("nblks", uint(total)));
+        entry.push(("nfree", uint(heap.free_bytes)));
+        entry.push(("min", uint(total - heap.max_allocated_bytes)));
+        pools.push((Value::Text(i.to_string()), map(entry)));
     }
-    ctx.put("mpools", Cbor::Map(pools));
+    ctx.put("mpools", Value::Map(pools));
     Ok(())
 }
 
@@ -252,11 +254,11 @@ fn reset(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 fn mcumgr_params(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     ctx.put(
         "buf_size",
-        Cbor::Uint(device.config.mcumgr_transport_netbuf_size as u64),
+        uint(device.config.mcumgr_transport_netbuf_size as u64),
     );
     ctx.put(
         "buf_count",
-        Cbor::Uint(device.config.mcumgr_transport_netbuf_count.into()),
+        uint(device.config.mcumgr_transport_netbuf_count),
     );
     Ok(())
 }
@@ -270,12 +272,12 @@ fn bootloader_info(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     let mut has_output = false;
     if let Bootloader::Mcuboot { mode, no_downgrade } = device.config.bootloader {
         if decoded.matched() == 0 {
-            ctx.put("bootloader", Cbor::text("MCUboot"));
+            ctx.put("bootloader", text("MCUboot"));
             has_output = true;
         } else if decoded.str("query") == Some("mode") {
-            ctx.put("mode", Cbor::Int(mode.into()));
+            ctx.put("mode", int(mode));
             if no_downgrade {
-                ctx.put("no-downgrade", Cbor::Bool(true));
+                ctx.put("no-downgrade", Value::Bool(true));
             }
             has_output = true;
         }
@@ -375,7 +377,7 @@ fn info(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         return Err(mgmt_err::EMSGSIZE);
     }
 
-    ctx.put("output", Cbor::Text(output));
+    ctx.put("output", Value::Text(output));
     Ok(())
 }
 
@@ -406,7 +408,7 @@ fn datetime_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         text += &format!(".{:03}", time.nanosecond() / 1_000_000);
     }
 
-    ctx.put("datetime", Cbor::Text(text));
+    ctx.put("datetime", Value::Text(text));
     Ok(())
 }
 

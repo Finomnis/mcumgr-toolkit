@@ -3,7 +3,7 @@
 use ciborium::Value;
 
 use super::Device;
-use super::cbor::{BulkError, Cbor, Decoded, Kind, map_decode_bulk};
+use super::cbor::{BulkError, Decoded, Kind, encode, int, map, map_decode_bulk, text, uint};
 
 pub const MGMT_HDR_SIZE: usize = 8;
 
@@ -113,7 +113,7 @@ impl SmpHdr {
 pub struct Ctx<'a> {
     pub hdr: SmpHdr,
     req: Option<&'a Value>,
-    rsp: Vec<(Cbor, Cbor)>,
+    rsp: Vec<(Value, Value)>,
 }
 
 impl Ctx<'_> {
@@ -127,20 +127,14 @@ impl Ctx<'_> {
         self.req
     }
 
-    pub fn put(&mut self, key: &str, value: Cbor) {
-        self.rsp.push((Cbor::text(key), value));
+    pub fn put(&mut self, key: &str, value: Value) {
+        self.rsp.push((text(key), value));
     }
 
     /// `smp_add_cmd_err`
     pub fn add_cmd_err(&mut self, group: u16, ret: u16) {
         if ret != 0 {
-            self.put(
-                "err",
-                Cbor::map([
-                    ("group", Cbor::Uint(group.into())),
-                    ("rc", Cbor::Uint(ret.into())),
-                ]),
-            );
+            self.put("err", map([("group", uint(group)), ("rc", uint(ret))]));
         }
     }
 }
@@ -259,8 +253,7 @@ impl Device {
 
         self.handle_single_payload(&mut ctx)?;
 
-        let mut body = vec![];
-        Cbor::Map(ctx.rsp).encode(&mut body, self.config.zcbor_canonical);
+        let body = encode(&Value::Map(ctx.rsp), self.config.zcbor_canonical);
 
         // The response is encoded into a net_buf of
         // CONFIG_MCUMGR_TRANSPORT_NETBUF_SIZE bytes; zcbor fails when it
@@ -298,9 +291,7 @@ impl Device {
 
     /// `smp_build_err_rsp`
     fn build_err_rsp(&self, req_hdr: &SmpHdr, status: i32) -> Vec<u8> {
-        let mut body = vec![];
-        Cbor::map([("rc", Cbor::Int(status.into()))])
-            .encode(&mut body, self.config.zcbor_canonical);
+        let body = encode(&map([("rc", int(status))]), self.config.zcbor_canonical);
 
         let mut frame = req_hdr.make_rsp(body.len()).to_bytes().to_vec();
         frame.extend_from_slice(&body);
