@@ -399,3 +399,38 @@ fn bootloader_info_not_enabled() {
     let err = client.os_bootloader_info().unwrap_err();
     assert!(err.command_not_supported());
 }
+
+#[test]
+fn statistics_of_a_device_without_threads_and_heaps() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    device.lock().os.threads.clear();
+    device.lock().os.heaps.clear();
+
+    assert!(client.os_task_statistics().unwrap().is_empty());
+    assert!(client.os_memory_pool_statistics().unwrap().is_empty());
+}
+
+#[test]
+fn datetime_limits() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    for (y, mo, d, h, mi, s) in [(1900, 1, 1, 0, 0, 0), (9999, 12, 31, 23, 59, 59)] {
+        let time = NaiveDate::from_ymd_opt(y, mo, d)
+            .unwrap()
+            .and_hms_opt(h, mi, s)
+            .unwrap();
+        client.os_set_datetime(time).unwrap();
+        assert_eq!(client.os_get_datetime().unwrap(), time);
+    }
+}
+
+#[test]
+fn echo_of_control_characters() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    let text = "line1\nline2\r\n\t\0end";
+    assert_eq!(client.os_echo(text).unwrap(), text);
+}

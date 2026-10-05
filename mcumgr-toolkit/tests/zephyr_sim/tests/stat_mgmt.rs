@@ -67,3 +67,17 @@ fn group_data_errors() {
     let err = client.stats_get_group_data("").unwrap_err();
     assert_eq!(device_error(err), smp_error(mgmt_err::EINVAL));
 }
+
+#[test]
+fn group_name_length_limit() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // 31 bytes is the longest name that is looked up
+    let name = "g".repeat(31);
+    device.lock().stat.groups.push(StatGroup {
+        name: name.clone(),
+        fields: vec![("f".into(), 1)],
+    });
+    assert_eq!(client.stats_get_group_data(&name).unwrap()["f"], 1);
+}

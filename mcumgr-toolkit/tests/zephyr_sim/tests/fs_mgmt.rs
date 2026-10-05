@@ -479,3 +479,205 @@ fn close() {
     client.fs_file_close().unwrap();
     assert!(!device.lock().fs.file_open());
 }
+
+#[test]
+fn upload_an_empty_file() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    client
+        .fs_file_upload("/lfs1/empty.txt", &b""[..], 0, None)
+        .unwrap();
+
+    // The file has to exist afterwards, just like after uploading any other
+    // file. fs_mgmt creates it for an upload request with `len` 0.
+    assert_eq!(client.fs_file_status("/lfs1/empty.txt").unwrap().len, 0);
+}
+
+#[test]
+fn upload_sizes_around_the_chunk_size() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // The client uses the same chunk size for every request of an upload
+    let name = "/lfs1/chunks.bin";
+    client
+        .fs_file_upload(name, &test_data(5000)[..], 5000, None)
+        .unwrap();
+    let chunk = device.requests_for(group_id::FS, FILE)[0]
+        .field("data")
+        .unwrap()
+        .as_bytes()
+        .unwrap()
+        .len();
+    assert!(chunk > 300);
+
+    for len in [
+        1,
+        chunk - 1,
+        chunk,
+        chunk + 1,
+        2 * chunk - 1,
+        2 * chunk,
+        2 * chunk + 1,
+    ] {
+        device.clear_requests();
+        let data = test_data(len);
+        client
+            .fs_file_upload(name, &data[..], len as u64, None)
+            .unwrap();
+
+        assert_eq!(device.lock().fs.files[name], data, "length {len}");
+        assert_eq!(
+            device.requests_for(group_id::FS, FILE).len(),
+            len.div_ceil(chunk),
+            "length {len}"
+        );
+        // The device closes the file once `len` bytes arrived
+        assert!(!device.lock().fs.file_open(), "length {len}");
+    }
+}
+
+#[test]
+fn download_sizes_around_the_chunk_size() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    // MCUMGR_GRP_FS_DL_CHUNK_SIZE
+    let chunk = 340;
+
+    for len in [
+        1,
+        chunk - 1,
+        chunk,
+        chunk + 1,
+        2 * chunk - 1,
+        2 * chunk,
+        2 * chunk + 1,
+        3 * chunk,
+    ] {
+        let data = test_data(len);
+        device
+            .lock()
+            .fs
+            .files
+            .insert("/lfs1/dl.bin".into(), data.clone());
+        device.clear_requests();
+
+        let mut downloaded = vec![];
+        client
+            .fs_file_download("/lfs1/dl.bin", &mut downloaded, None)
+            .unwrap();
+
+        assert_eq!(downloaded, data, "length {len}");
+        assert_eq!(
+            device.requests_for(group_id::FS, FILE).len(),
+            len.div_ceil(chunk),
+            "length {len}"
+        );
+        assert!(!device.lock().fs.file_open(), "length {len}");
+    }
+}
+
+#[test]
+fn download_of_a_file_that_shrinks_during_the_transfer() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    device
+        .lock()
+        .fs
+        .files
+        .insert("/lfs1/rotating.log".into(), test_data(1000));
+
+    // After the first chunk, the application truncates the file. The device
+    // answers the following requests with empty data at the requested offset.
+    let mut calls = 0;
+    let mut truncate_after_first_chunk = |current: u64, _: u64| {
+        calls += 1;
+        if current > 0 {
+            if let Some(file) = device.lock().fs.files.get_mut("/lfs1/rotating.log") {
+                file.truncate(100);
+            }
+        }
+        // Guards this test against hanging
+        calls < 50
+    };
+    let mut downloaded = vec![];
+    let err = client
+        .fs_file_download(
+            "/lfs1/rotating.log",
+            &mut downloaded,
+            Some(&mut truncate_after_first_chunk),
+        )
+        .unwrap_err();
+
+    // The client has to give up instead of requesting the same offset forever
+    assert!(
+        matches!(err, MCUmgrClientError::SizeMismatch),
+        "expected SizeMismatch, got {err:?}"
+    );
+    assert!(device.requests_for(group_id::FS, FILE).len() < 5);
+}
+
+#[test]
+fn upload_reads_only_the_given_size_from_the_reader() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let data = test_data(1000);
+
+    client
+        .fs_file_upload("/lfs1/part.bin", &data[..], 700, None)
+        .unwrap();
+    assert_eq!(device.lock().fs.files["/lfs1/part.bin"], data[..700]);
+}
+
+#[test]
+fn file_names_at_the_length_limit_and_with_unicode() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // CONFIG_MCUMGR_GRP_FS_PATH_LEN bytes exactly
+    let longest = format!("/lfs1/{}", "n".repeat(58));
+    assert_eq!(longest.len(), 64);
+    // Multi byte characters count as bytes
+    let unicode = "/lfs1/größe-日本.txt";
+
+    for name in [longest.as_str(), unicode] {
+        let data = test_data(500);
+        client.fs_file_upload(name, &data[..], 500, None).unwrap();
+        assert_eq!(client.fs_file_status(name).unwrap().len, 500);
+        let mut downloaded = vec![];
+        client
+            .fs_file_download(name, &mut downloaded, None)
+            .unwrap();
+        assert_eq!(downloaded, data);
+        client
+            .fs_file_checksum(name, Some("sha256"), 0, None)
+            .unwrap();
+    }
+
+    let unicode_too_long = format!("/lfs1/{}", "ü".repeat(30));
+    assert_eq!(unicode_too_long.len(), 66);
+    let err = client.fs_file_status(&unicode_too_long).unwrap_err();
+    assert_eq!(device_error(err), smp_error(mgmt_err::EINVAL));
+}
+
+#[test]
+fn checksum_of_the_last_byte() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let data = test_data(1000);
+    device
+        .lock()
+        .fs
+        .files
+        .insert("/lfs1/sum.bin".into(), data.clone());
+
+    let response = client
+        .fs_file_checksum("/lfs1/sum.bin", Some("sha256"), 999, None)
+        .unwrap();
+    assert_eq!((response.off, response.len), (999, 1));
+    assert_eq!(
+        response.output,
+        FileChecksumData::Hash(Sha256::digest(&data[999..]).to_vec().into())
+    );
+}

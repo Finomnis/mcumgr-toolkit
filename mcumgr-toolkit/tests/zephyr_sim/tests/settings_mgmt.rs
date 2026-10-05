@@ -178,3 +178,29 @@ fn commit() {
             .all(|h| h.commits == 2)
     );
 }
+
+#[test]
+fn name_and_value_length_limits() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // 31 bytes is the longest name; it gets looked up
+    let longest = format!("app/{}", "k".repeat(27));
+    assert_eq!(longest.len(), 31);
+    let err = client.settings_read(&longest).unwrap_err();
+    assert_settings_error(err, settings_mgmt_err::KEY_NOT_FOUND);
+
+    // A value of exactly CONFIG_MCUMGR_GRP_SETTINGS_VALUE_LEN bytes
+    client.settings_write("app/name", &[0x61; 32]).unwrap();
+    let response = client.settings_read_ext("app/name", None).unwrap();
+    assert_eq!(response.val, [0x61; 32]);
+    assert_eq!(response.max_size, None);
+
+    let response = client.settings_read_ext("app/name", Some(32)).unwrap();
+    assert_eq!(response.max_size, None);
+    let response = client.settings_read_ext("app/name", Some(33)).unwrap();
+    assert_eq!(response.max_size, Some(32));
+
+    let response = client.settings_read_ext("app/name", Some(0)).unwrap();
+    assert_eq!(response.val, b"");
+}

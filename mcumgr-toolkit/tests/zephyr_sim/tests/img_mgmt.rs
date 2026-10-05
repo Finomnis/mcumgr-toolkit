@@ -700,3 +700,173 @@ fn multiple_images() {
         .unwrap_err();
     assert_image_error(err, img_mgmt_err::NO_FREE_SLOT);
 }
+
+#[test]
+fn uploading_an_empty_image_fails() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // An empty image can not be valid; Zephyr rejects anything shorter than
+    // an image header with IMG_MGMT_ERR_INVALID_IMAGE_HEADER.
+    let result = client.image_upload(Vec::<u8>::new(), None, None, false, None);
+    assert!(result.is_err(), "uploading 0 bytes reported success");
+}
+
+/// Data starting with a valid image header, of exactly `len` bytes
+fn upload_data(len: usize) -> Vec<u8> {
+    let mut data = ImageBuilder::new((2, 0, 0, 0))
+        .body(vec![0x3c; len])
+        .build();
+    data.truncate(len);
+    data.iter_mut()
+        .enumerate()
+        .skip(32)
+        .for_each(|(i, b)| *b = (i % 253) as u8);
+    data
+}
+
+#[test]
+fn upload_sizes_around_the_chunk_sizes() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    client
+        .image_upload(upload_data(5000), None, None, false, None)
+        .unwrap();
+    let requests = device.requests_for(group_id::IMAGE, IMAGE_UPLOAD);
+    let chunk_len = |i: usize| requests[i].field("data").unwrap().as_bytes().unwrap().len();
+    let (first, other) = (chunk_len(0), chunk_len(1));
+    assert!(first < other);
+
+    for len in [
+        32,
+        first - 1,
+        first,
+        first + 1,
+        first + other - 1,
+        first + other,
+        first + other + 1,
+        first + 5 * other,
+    ] {
+        client.image_erase(None).unwrap();
+        device.clear_requests();
+        let data = upload_data(len);
+
+        let mut progress = vec![];
+        let mut callback = |current: u64, _: u64| {
+            progress.push(current);
+            true
+        };
+        client
+            .image_upload(&data, None, None, false, Some(&mut callback))
+            .unwrap();
+
+        assert_eq!(
+            device.lock().img.slots[1].flash[..len],
+            data[..],
+            "length {len}"
+        );
+        let expected_requests = 1 + (len.saturating_sub(first)).div_ceil(other);
+        assert_eq!(
+            device.requests_for(group_id::IMAGE, IMAGE_UPLOAD).len(),
+            expected_requests,
+            "length {len}"
+        );
+        assert_eq!(progress.last(), Some(&(len as u64)), "length {len}");
+    }
+}
+
+#[test]
+fn upload_an_image_that_fills_the_slot_exactly() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    client
+        .image_upload(upload_data(65536), None, None, false, None)
+        .unwrap();
+    client.image_erase(None).unwrap();
+
+    let err = client
+        .image_upload(upload_data(65537), None, None, false, None)
+        .unwrap_err();
+    assert_image_error(err, img_mgmt_err::INVALID_IMAGE_TOO_LARGE);
+}
+
+#[test]
+fn upload_restarts_when_the_device_reboots_in_between() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let image = v2().build();
+
+    // The device loses its upload state in the middle of the transfer and
+    // answers the next chunk with offset 0.
+    let mut rebooted = false;
+    let mut reboot_midway = |current: u64, _: u64| {
+        if current > 4000 && !rebooted {
+            device.lock().reboot();
+            rebooted = true;
+        }
+        true
+    };
+    client
+        .image_upload(&image, None, None, false, Some(&mut reboot_midway))
+        .unwrap();
+
+    assert!(rebooted);
+    assert_eq!(device.lock().img.slots[1].flash[..image.len()], image[..]);
+    let first_chunks = device
+        .requests_for(group_id::IMAGE, IMAGE_UPLOAD)
+        .iter()
+        .filter(|r| r.field("len").is_some())
+        .count();
+    assert_eq!(first_chunks, 2);
+}
+
+#[test]
+fn set_state_with_an_empty_hash() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // Zephyr treats an empty hash like a missing one
+    client.image_set_state(Some(&[]), true).unwrap();
+    let err = client.image_set_state(Some(&[]), false).unwrap_err();
+    assert_image_error(err, img_mgmt_err::INVALID_HASH);
+}
+
+#[test]
+fn erase_while_an_upload_is_in_progress() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let image = v2().build();
+
+    let mut abort = |current: u64, _: u64| current < 3000;
+    client
+        .image_upload(&image, None, None, false, Some(&mut abort))
+        .unwrap_err();
+
+    // Erasing also forgets the upload, so the next upload starts over
+    client.image_erase(None).unwrap();
+    device.clear_requests();
+    client
+        .image_upload(&image, None, None, false, None)
+        .unwrap();
+    let requests = device.requests_for(group_id::IMAGE, IMAGE_UPLOAD);
+    assert!(
+        requests[1..]
+            .iter()
+            .all(|r| r.field("off").unwrap().as_integer() != Some(0.into()))
+    );
+    assert_eq!(
+        requests[1].field("off").unwrap().as_integer(),
+        Some(
+            requests[0]
+                .field("data")
+                .unwrap()
+                .as_bytes()
+                .unwrap()
+                .len()
+                .into()
+        )
+    );
+    assert_eq!(device.lock().img.slots[1].flash[..image.len()], image[..]);
+}

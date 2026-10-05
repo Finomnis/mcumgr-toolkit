@@ -323,3 +323,36 @@ fn update_over_a_serial_port() {
     assert_eq!(state[0].version, "2.1.0.7");
     assert_eq!(state[0].hash.as_deref(), Some(&firmware.hash()[..]));
 }
+
+#[test]
+fn update_with_an_image_that_was_already_uploaded() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let firmware = new_firmware();
+
+    client
+        .image_upload(firmware.build(), None, None, false, None)
+        .unwrap();
+    device.clear_requests();
+
+    client
+        .firmware_update(firmware.build(), None, Default::default(), None)
+        .unwrap();
+    // The device recognizes the data in the slot and skips the transfer
+    assert_eq!(device.requests_for(group_id::IMAGE, 1).len(), 1);
+    assert_eq!(client.image_get_state().unwrap()[0].version, "2.1.0.7");
+}
+
+#[test]
+fn update_of_an_empty_firmware_file() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    let err = client
+        .firmware_update(Vec::<u8>::new(), None, Default::default(), None)
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        FirmwareUpdateError::InvalidMcuBootFirmwareImage(_)
+    ));
+}
