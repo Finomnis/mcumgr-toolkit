@@ -1262,7 +1262,6 @@ dependencies = [
  "btleplug",
  "chrono",
  "ciborium",
- "ciborium-ll",
  "crc",
  "dbus",
  "futures",

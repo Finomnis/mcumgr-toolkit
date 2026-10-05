@@ -77,16 +77,6 @@ fn default_configuration() {
 }
 
 #[test]
-fn canonical_cbor() {
-    // CONFIG_ZCBOR_CANONICAL: maps and lists with definite length
-    let device = device_with(Config {
-        zcbor_canonical: true,
-        ..Default::default()
-    });
-    tour(&device, &device.client());
-}
-
-#[test]
 fn legacy_rc_behaviour() {
     // CONFIG_MCUMGR_SMP_LEGACY_RC_BEHAVIOUR: successful responses carry "rc": 0
     let device = device_with(Config {

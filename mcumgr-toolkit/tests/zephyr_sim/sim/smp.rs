@@ -253,7 +253,7 @@ impl Device {
 
         self.handle_single_payload(&mut ctx)?;
 
-        let body = encode(&Value::Map(ctx.rsp), self.config.zcbor_canonical);
+        let body = encode(&Value::Map(ctx.rsp));
 
         // The response is encoded into a net_buf of
         // CONFIG_MCUMGR_TRANSPORT_NETBUF_SIZE bytes; zcbor fails when it
@@ -291,7 +291,7 @@ impl Device {
 
     /// `smp_build_err_rsp`
     fn build_err_rsp(&self, req_hdr: &SmpHdr, status: i32) -> Vec<u8> {
-        let body = encode(&map([("rc", int(status))]), self.config.zcbor_canonical);
+        let body = encode(&map([("rc", int(status))]));
 
         let mut frame = req_hdr.make_rsp(body.len()).to_bytes().to_vec();
         frame.extend_from_slice(&body);

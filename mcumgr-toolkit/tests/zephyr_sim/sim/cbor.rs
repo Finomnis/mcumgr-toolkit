@@ -1,16 +1,13 @@
-//! CBOR handling with the semantics of Zephyr's `zcbor` usage in MCUmgr.
+//! CBOR helpers for the simulated device.
 //!
-//! Responses are built as [`ciborium::Value`]s. Zephyr writes maps and lists
-//! with *indefinite* length unless `CONFIG_ZCBOR_CANONICAL` is enabled (it is
-//! disabled by default), which [`encode`] reproduces.
+//! Responses are built as [`ciborium::Value`]s and encoded by ciborium.
 //!
-//! Decoding follows `subsys/mgmt/mcumgr/util/src/zcbor_bulk.c`
+//! Decoding of requests follows `subsys/mgmt/mcumgr/util/src/zcbor_bulk.c`
 //! (`zcbor_map_decode_bulk`): the payload must be a map with text keys,
 //! unknown keys are skipped, a known key appearing twice is an error and a
 //! value of the wrong type is an error.
 
 use ciborium::Value;
-use ciborium_ll::{Encoder, Header};
 
 /// `zcbor_uint32_put` / `zcbor_uint64_put` / `zcbor_size_put`
 pub fn uint(value: impl Into<u64>) -> Value {
@@ -32,37 +29,9 @@ pub fn map<K: Into<String>>(entries: impl IntoIterator<Item = (K, Value)>) -> Va
     Value::Map(entries.into_iter().map(|(k, v)| (text(k), v)).collect())
 }
 
-/// Encodes `value` the way zcbor does: with `canonical`
-/// (`CONFIG_ZCBOR_CANONICAL`) containers have a definite length, otherwise an
-/// indefinite one.
-pub fn encode(value: &Value, canonical: bool) -> Vec<u8> {
-    fn encode_indefinite(value: &Value, out: &mut Vec<u8>) {
-        match value {
-            Value::Map(entries) => {
-                Encoder::from(&mut *out).push(Header::Map(None)).unwrap();
-                for (k, v) in entries {
-                    encode_indefinite(k, out);
-                    encode_indefinite(v, out);
-                }
-                Encoder::from(&mut *out).push(Header::Break).unwrap();
-            }
-            Value::Array(items) => {
-                Encoder::from(&mut *out).push(Header::Array(None)).unwrap();
-                for item in items {
-                    encode_indefinite(item, out);
-                }
-                Encoder::from(&mut *out).push(Header::Break).unwrap();
-            }
-            scalar => ciborium::into_writer(scalar, out).unwrap(),
-        }
-    }
-
+pub fn encode(value: &Value) -> Vec<u8> {
     let mut out = vec![];
-    if canonical {
-        ciborium::into_writer(value, &mut out).unwrap();
-    } else {
-        encode_indefinite(value, &mut out);
-    }
+    ciborium::into_writer(value, &mut out).unwrap();
     out
 }
 

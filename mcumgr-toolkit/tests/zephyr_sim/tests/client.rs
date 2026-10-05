@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{assert_timeout, device_error, smp_error};
 use crate::sim::image::ImageBuilder;
+use crate::sim::os_mgmt::Thread;
 use crate::sim::smp::{group_id, mgmt_err, op};
 use crate::sim::{Config, SimDevice};
 
@@ -106,17 +107,30 @@ fn responses_that_do_not_fit_the_device_buffer_are_reported_as_emsgsize() {
     let client = device.client();
     client.set_retries(0);
 
-    // The request map is definite-length, the response map indefinite-length
-    // (one byte longer), so a request that just fits produces a response that
-    // does not fit into CONFIG_MCUMGR_TRANSPORT_NETBUF_SIZE (384).
-    let fits = "x".repeat(369);
+    // The task list of a device with many threads does not fit into
+    // CONFIG_MCUMGR_TRANSPORT_NETBUF_SIZE (384)
+    let thread = device.lock().os.threads[0].clone();
+    device.lock().os.threads = (0..20)
+        .map(|i| Thread {
+            name: format!("worker_{i}"),
+            ..thread.clone()
+        })
+        .collect();
+    let err = client.os_task_statistics().unwrap_err();
+    assert_eq!(device_error(err), smp_error(mgmt_err::EMSGSIZE));
+}
+
+#[test]
+fn requests_that_do_not_fit_the_device_buffer_are_dropped() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    client.set_retries(0);
+
+    // 370 characters make a request of exactly 384 bytes
+    let fits = "x".repeat(370);
     assert_eq!(client.os_echo(&fits).unwrap(), fits);
 
-    let err = client.os_echo("x".repeat(370)).unwrap_err();
-    assert_eq!(device_error(err), smp_error(mgmt_err::EMSGSIZE));
-
-    // A request larger than the buffer is dropped by the device
-    let err = client.os_echo("x".repeat(400)).unwrap_err();
+    let err = client.os_echo("x".repeat(371)).unwrap_err();
     assert_timeout(err);
     assert_eq!(device.lock().link.dropped_oversized, 1);
 }

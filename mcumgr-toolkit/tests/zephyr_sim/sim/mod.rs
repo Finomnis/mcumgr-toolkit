@@ -87,7 +87,6 @@ pub struct Config {
     pub mcumgr_transport_netbuf_count: u32,
     pub smp_support_original_protocol: bool,
     pub smp_legacy_rc_behaviour: bool,
-    pub zcbor_canonical: bool,
 
     pub mcumgr_grp_os: bool,
     pub mcumgr_grp_img: bool,
@@ -159,7 +158,6 @@ impl Default for Config {
             mcumgr_transport_netbuf_count: 4,
             smp_support_original_protocol: true,
             smp_legacy_rc_behaviour: false,
-            zcbor_canonical: false,
 
             mcumgr_grp_os: true,
             mcumgr_grp_img: true,

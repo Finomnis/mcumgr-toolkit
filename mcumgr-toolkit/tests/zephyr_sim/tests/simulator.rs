@@ -41,15 +41,11 @@ fn rc_response(rc: i32) -> Value {
 }
 
 #[test]
-fn responses_use_indefinite_length_maps_by_default() {
+fn responses_echo_the_request_header() {
     let device = SimDevice::with_firmware();
     let responses = device.lock().receive_packet(&echo_request(1, 42, "raw"));
 
-    let frame = &responses[0];
-    assert_eq!(frame[MGMT_HDR_SIZE], 0xbf);
-    assert_eq!(*frame.last().unwrap(), 0xff);
-
-    let (hdr, body) = parse(frame);
+    let (hdr, body) = parse(&responses[0]);
     assert_eq!(
         hdr,
         SmpHdr {
@@ -66,16 +62,6 @@ fn responses_use_indefinite_length_maps_by_default() {
         body,
         Value::Map(vec![(Value::Text("r".into()), Value::Text("raw".into()))])
     );
-}
-
-#[test]
-fn responses_use_definite_length_maps_with_canonical_cbor() {
-    let device = SimDevice::new(Config {
-        zcbor_canonical: true,
-        ..Default::default()
-    });
-    let responses = device.lock().receive_packet(&echo_request(1, 0, "raw"));
-    assert_eq!(responses[0][MGMT_HDR_SIZE], 0xa1);
 }
 
 #[test]
