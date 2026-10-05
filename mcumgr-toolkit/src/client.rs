@@ -850,7 +850,7 @@ impl MCUmgrClient {
 
         let mut checksum_matched = None;
 
-        while offset < size {
+        loop {
             let upload_response = if offset == 0 {
                 let current_chunk_size = (size - offset).min(first_chunk_size_max);
                 let chunk_data = &data[offset..offset + current_chunk_size];
@@ -905,6 +905,10 @@ impl MCUmgrClient {
 
             if let Some(is_match) = upload_response.r#match {
                 checksum_matched = Some(is_match);
+            }
+
+            if offset >= size {
+                break;
             }
         }
 
@@ -1128,6 +1132,10 @@ impl MCUmgrClient {
                 .connection
                 .execute_command(&commands::fs::FileDownload { name, off: offset })?;
 
+            if response.data.is_empty() {
+                return Err(MCUmgrClientError::SizeMismatch);
+            }
+
             if response.off != offset {
                 return Err(MCUmgrClientError::UnexpectedOffset);
             }
@@ -1185,7 +1193,7 @@ impl MCUmgrClient {
 
         let mut offset = 0;
 
-        while offset < size {
+        loop {
             let current_chunk_size = (size - offset).min(data_buffer.len() as u64) as usize;
 
             let chunk_buffer = &mut data_buffer[..current_chunk_size];
@@ -1193,7 +1201,7 @@ impl MCUmgrClient {
                 .read_exact(chunk_buffer)
                 .map_err(MCUmgrClientError::ReaderError)?;
 
-            self.connection.execute_command(&commands::fs::FileUpload {
+            let upload_response = self.connection.execute_command(&commands::fs::FileUpload {
                 off: offset,
                 data: chunk_buffer,
                 name,
@@ -1202,10 +1210,18 @@ impl MCUmgrClient {
 
             offset += chunk_buffer.len() as u64;
 
+            if offset != upload_response.off {
+                return Err(MCUmgrClientError::UnexpectedOffset);
+            }
+
             if let Some(progress) = &mut progress {
                 if !progress(offset, size) {
                     return Err(MCUmgrClientError::ProgressCallbackError);
                 };
+            }
+
+            if offset >= size {
+                break;
             }
         }
 
