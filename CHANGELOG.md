@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.18.1] - xxxx-xx-xx
+
+### Changes
+
+- Fix: uploading an empty image was incorrectly successful
+- Fix: Uploading empty files created no file
+- Fix: Deadlock when downloading a file that changes size during
+  download
+
+
 ## [0.18.0] - 2026-09-29
 
 ### Breaking Changes
@@ -554,6 +564,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.18.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.18.0...0.18.1
 [0.18.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.17.1...0.18.0
 [0.17.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.16.0...0.17.0

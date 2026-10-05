@@ -1132,12 +1132,12 @@ impl MCUmgrClient {
                 .connection
                 .execute_command(&commands::fs::FileDownload { name, off: offset })?;
 
-            if response.data.is_empty() {
-                return Err(MCUmgrClientError::SizeMismatch);
-            }
-
             if response.off != offset {
                 return Err(MCUmgrClientError::UnexpectedOffset);
+            }
+
+            if response.data.is_empty() {
+                return Err(MCUmgrClientError::SizeMismatch);
             }
 
             writer
