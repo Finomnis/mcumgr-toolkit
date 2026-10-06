@@ -3,7 +3,15 @@ use std::fmt::Display;
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::{MCUmgrClient, bootloader::BootloaderType, client::MCUmgrClientError, mcuboot};
+use crate::{
+    MCUmgrClient,
+    bootloader::BootloaderType,
+    client::{
+        MCUmgrClientError,
+        image_run_state::{self, ImageRunState},
+    },
+    mcuboot,
+};
 
 /// Possible error values of [`MCUmgrClient::firmware_update`].
 #[derive(Error, Debug, Diagnostic)]
@@ -172,8 +180,7 @@ pub(crate) fn firmware_update(
     mut progress: Option<&mut FirmwareUpdateProgressCallback>,
 ) -> Result<(), FirmwareUpdateError> {
     // Might become a params member in the future
-    let target_image: Option<u32> = Default::default();
-    let actual_target_image = target_image.unwrap_or(0);
+    let target_image: u32 = 0;
 
     let firmware = firmware.as_ref();
 
@@ -216,14 +223,13 @@ pub(crate) fn firmware_update(
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
 
-    let active_image = image_state
-        .iter()
-        .find(|img| img.image == actual_target_image && img.active)
-        .or_else(|| {
-            image_state
-                .iter()
-                .find(|img| img.image == actual_target_image && img.slot == 0)
-        });
+    let mut run_state = image_run_state::analyze(&image_state, target_image);
+    let active_image = match run_state {
+        ImageRunState::Stable(image_state) => Some(image_state),
+        ImageRunState::Pending { current, .. } => current,
+        ImageRunState::Testing { current, .. } => Some(current),
+        ImageRunState::Unknown(image_state) => image_state,
+    };
 
     progress(
         FirmwareUpdateStep::UpdateInfo {
@@ -233,8 +239,10 @@ pub(crate) fn firmware_update(
         None,
     )?;
 
-    if active_image.and_then(|img| img.hash.as_ref()) == Some(&image_id_hash) {
-        return Err(FirmwareUpdateError::AlreadyInstalled);
+    if let ImageRunState::Stable(stable_image) = run_state {
+        if stable_image.hash.as_ref() == Some(&image_id_hash) {
+            return Err(FirmwareUpdateError::AlreadyInstalled);
+        }
     }
 
     progress(FirmwareUpdateStep::UploadingFirmware, None)?;
@@ -249,7 +257,7 @@ pub(crate) fn firmware_update(
     client
         .image_upload(
             firmware,
-            target_image,
+            Some(target_image),
             checksum,
             params.upgrade_only,
             has_progress.then_some(&mut upload_progress_cb),
@@ -267,38 +275,59 @@ pub(crate) fn firmware_update(
     image_state = client
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
+    run_state = image_run_state::analyze(&image_state, target_image);
 
-    let image_already_active = image_state.iter().any(|img| {
-        img.image == actual_target_image && img.hash.as_ref() == Some(&image_id_hash) && img.active
-    });
+    let needs_set_state = match run_state {
+        ImageRunState::Stable(current) => {
+            // Issue set-state if another image is currently running;
+            // this is probably the most common case.
+            current.hash.as_ref() != Some(&image_id_hash)
+        }
 
-    if !image_already_active {
+        ImageRunState::Pending { next, .. } => {
+            // If the pending image is not the image we want to boot into,
+            // attempt to overwrite the pending image.
+            // Be aware that his is very implementation dependent
+            // and mit not work, but that's the best we can do.
+            next.hash.as_ref() != Some(&image_id_hash)
+        }
+
+        ImageRunState::Testing { current, .. } => {
+            // Already running in test mode.
+            // Do **not** mark as confirmed, as MCUboot/Zephyr behavior is somewhat wild
+            // around how the image behaves when set-state is issued while testing.
+
+            current.hash.as_ref() != Some(&image_id_hash)
+        }
+
+        ImageRunState::Unknown(Some(guessed)) => {
+            // There's a good chance we are currently in MCUboot without image info
+            // enabled. Do not set-state there, otherwise weird stuff happens.
+
+            // See https://github.com/mcu-tools/mcuboot/issues/2882.
+
+            guessed.hash.as_ref() != Some(&image_id_hash)
+        }
+
+        ImageRunState::Unknown(None) => {
+            // The heck do I know what to do here, maybe set-state and pray?
+            // Let's do it until somebody files a bug report that this breaks stuff
+
+            true
+        }
+    };
+
+    if needs_set_state {
         progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
         let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
         if let Err(set_state_error) = set_state_result {
-            let mut image_already_active = false;
-
             // Special case: if the command isn't supported, we are most likely in
             // the MCUmgr recovery shell, which writes directly to the active slot
             // and does not support swapping.
-            // Sanity check that the image is on the first position already to avoid false
-            // positives of this exception.
             if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported()
             {
-                progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-                let image_state = client
-                    .image_get_state()
-                    .map_err(FirmwareUpdateError::GetStateFailed)?;
-                if image_state.iter().any(|img| {
-                    img.image == actual_target_image
-                        && img.slot == 0
-                        && img.hash.as_ref() == Some(&image_id_hash)
-                }) {
-                    image_already_active = true;
-                }
-            }
-
-            if !image_already_active {
+                log::info!("Set-state not supported, assume that firmware update works without.");
+            } else {
                 return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
             }
         }
