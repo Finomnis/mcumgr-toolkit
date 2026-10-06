@@ -53,6 +53,15 @@ pub enum FirmwareUpdateError {
     #[error("The device is already running the given firmware")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::already_installed))]
     AlreadyInstalled,
+    /// The system is currently in a state where triggering an update
+    /// would cause ambiguous behavior
+    #[error("The system is already busy and is not ready for an update")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::system_not_ready))]
+    SystemNotReady,
+    /// The device state is inconsistent
+    #[error("The device state is inconsistent")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::inconsistent_device_state))]
+    InconsistentDeviceState,
 }
 
 /// Configurable parameters for [`MCUmgrClient::firmware_update`].
@@ -289,7 +298,12 @@ pub(crate) fn firmware_update(
             // attempt to overwrite the pending image.
             // Be aware that his is very implementation dependent
             // and mit not work, but that's the best we can do.
-            next.hash.as_ref() != Some(&image_id_hash)
+            if next.hash.as_ref() != Some(&image_id_hash) {
+                return Err(FirmwareUpdateError::SystemNotReady);
+            }
+
+            // The current image is already pending
+            false
         }
 
         ImageRunState::Testing { current, .. } => {
@@ -297,23 +311,37 @@ pub(crate) fn firmware_update(
             // Do **not** mark as confirmed, as MCUboot/Zephyr behavior is somewhat wild
             // around how the image behaves when set-state is issued while testing.
 
-            current.hash.as_ref() != Some(&image_id_hash)
+            if current.hash.as_ref() != Some(&image_id_hash) {
+                return Err(FirmwareUpdateError::SystemNotReady);
+            }
+
+            // The current image is already queued for testing
+            false
         }
 
         ImageRunState::Unknown(Some(guessed)) => {
             // There's a good chance we are currently in MCUboot without image info
-            // enabled. Do not set-state there, otherwise weird stuff happens.
+            // enabled. Attempt to set-state only when our heuristic thinks
+            // we aren't already active.
 
-            // See https://github.com/mcu-tools/mcuboot/issues/2882.
+            // We need to be careful with calling set-state in MCUboot, see
+            // https://github.com/mcu-tools/mcuboot/issues/2882.
 
-            guessed.hash.as_ref() != Some(&image_id_hash)
+            if guessed.hash.as_ref() != Some(&image_id_hash) {
+                return Err(FirmwareUpdateError::InconsistentDeviceState);
+            }
+
+            // We guess the image is already active;
+            // set-state could make the situation worse in MCUboot.
+
+            false
         }
 
         ImageRunState::Unknown(None) => {
             // The heck do I know what to do here, maybe set-state and pray?
             // Let's do it until somebody files a bug report that this breaks stuff
 
-            true
+            return Err(FirmwareUpdateError::InconsistentDeviceState);
         }
     };
 
