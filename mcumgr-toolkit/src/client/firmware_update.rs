@@ -311,7 +311,14 @@ pub(crate) fn firmware_update(
         ImageRunState::Stable(current) => {
             // Issue set-state if another image is currently running;
             // this is probably the most common case.
-            current.hash.as_ref() != Some(&image_id_hash)
+            if let Some(hash) = &current.hash {
+                hash != &image_id_hash
+            } else {
+                // We are most likely in MCUboot with hashes disabled;
+                // it's highly likely we uploaded to the active image
+                // and will break the system if we set-state now.
+                false
+            }
         }
 
         ImageRunState::Pending { next, .. } => {
