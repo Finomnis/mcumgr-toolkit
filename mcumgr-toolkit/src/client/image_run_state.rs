@@ -36,10 +36,14 @@ pub enum ImageRunState<'a> {
 /// Analyze the flags of the image slots with the given image ID and determine the most likely run state.
 pub fn analyze(image_state: &[ImageState], image_id: u32) -> ImageRunState<'_> {
     fn find_unique(
+        image_id: u32,
         image_state: &[ImageState],
         predicate: impl Fn(&ImageState) -> bool,
     ) -> Option<Option<&'_ ImageState>> {
-        let mut matches = image_state.iter().filter(|img| predicate(img));
+        let mut matches = image_state
+            .iter()
+            .filter(|img| img.image == image_id)
+            .filter(|img| predicate(img));
 
         let first = matches.next();
 
@@ -49,17 +53,17 @@ pub fn analyze(image_state: &[ImageState], image_id: u32) -> ImageRunState<'_> {
         }
     }
 
-    let active = match find_unique(image_state, |img| img.active) {
+    let active = match find_unique(image_id, image_state, |img| img.active) {
         Some(value) => value,
         None => return ImageRunState::Unknown(None),
     };
 
-    let confirmed = match find_unique(image_state, |img| img.confirmed) {
+    let confirmed = match find_unique(image_id, image_state, |img| img.confirmed) {
         Some(value) => value,
         None => return ImageRunState::Unknown(None),
     };
 
-    let pending = match find_unique(image_state, |img| img.pending) {
+    let pending = match find_unique(image_id, image_state, |img| img.pending) {
         Some(value) => value,
         None => return ImageRunState::Unknown(None),
     };
