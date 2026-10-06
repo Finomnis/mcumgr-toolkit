@@ -25,9 +25,9 @@ pub enum CliError {
     // #[error("Setting the timeout failed")]
     // #[diagnostic(code(mcumgrctl::set_timeout_failed))]
     // SetTimeoutFailed(#[source] Box<dyn miette::Diagnostic + Send + Sync + 'static>),
-    #[error("Command execution failed")]
-    #[diagnostic(code(mcumgrctl::execution_failed))]
-    CommandExecutionFailed(#[from] MCUmgrClientError),
+    #[error("MCUmgr client error")]
+    #[diagnostic(code(mcumgrctl::client_error))]
+    MCUmgrClientError(#[from] MCUmgrClientError),
     #[error("Json encode failed")]
     #[diagnostic(code(mcumgrctl::json_encode))]
     JsonEncodeError(#[source] serde_json::Error),
