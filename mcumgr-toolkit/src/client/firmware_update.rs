@@ -189,7 +189,10 @@ pub(crate) fn firmware_update(
     mut progress: Option<&mut FirmwareUpdateProgressCallback>,
 ) -> Result<(), FirmwareUpdateError> {
     // Might become a params member in the future
-    let target_image: u32 = 0;
+    let maybe_target_image: Option<u32> = Default::default();
+
+    // We asume that the upload command uploads to image 0 when parameter is missing.
+    let target_image: u32 = maybe_target_image.unwrap_or(0);
 
     let firmware = firmware.as_ref();
 
@@ -283,7 +286,7 @@ pub(crate) fn firmware_update(
     client
         .image_upload(
             firmware,
-            Some(target_image),
+            maybe_target_image,
             checksum,
             params.upgrade_only,
             has_progress.then_some(&mut upload_progress_cb),
