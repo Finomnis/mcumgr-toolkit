@@ -311,10 +311,9 @@ pub(crate) fn firmware_update(
         }
 
         ImageRunState::Pending { next, .. } => {
-            // If the pending image is not the image we want to boot into,
-            // attempt to overwrite the pending image.
-            // Be aware that his is very implementation dependent
-            // and mit not work, but that's the best we can do.
+            // This should never happen, we alread checked earlier that
+            // we are not pending, so if we now pend for an image that
+            // is not our target image something went horribly wrong
             if next.hash.as_ref() != Some(&image_id_hash) {
                 return Err(FirmwareUpdateError::SystemNotReady);
             }
