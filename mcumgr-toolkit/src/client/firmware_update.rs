@@ -317,7 +317,9 @@ pub(crate) fn firmware_update(
             // This should never happen, we alread checked earlier that
             // we are not pending, so if we now pend for an image that
             // is not our target image something went horribly wrong
-            if next.hash.as_ref() != Some(&image_id_hash) {
+            if let Some(hash) = &next.hash
+                && hash != &image_id_hash
+            {
                 return Err(FirmwareUpdateError::SystemNotReady);
             }
 
@@ -330,7 +332,9 @@ pub(crate) fn firmware_update(
             // Do **not** mark as confirmed, as MCUboot/Zephyr behavior is somewhat wild
             // around how the image behaves when set-state is issued while testing.
 
-            if current.hash.as_ref() != Some(&image_id_hash) {
+            if let Some(hash) = &current.hash
+                && hash != &image_id_hash
+            {
                 return Err(FirmwareUpdateError::SystemNotReady);
             }
 
@@ -346,7 +350,9 @@ pub(crate) fn firmware_update(
             // We need to be careful with calling set-state in MCUboot, see
             // https://github.com/mcu-tools/mcuboot/issues/2882.
 
-            if guessed.hash.as_ref() != Some(&image_id_hash) {
+            if let Some(hash) = &guessed.hash
+                && hash != &image_id_hash
+            {
                 return Err(FirmwareUpdateError::InconsistentDeviceState);
             }
 
