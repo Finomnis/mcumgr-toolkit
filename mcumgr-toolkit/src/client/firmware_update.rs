@@ -14,6 +14,7 @@ use crate::{
 };
 
 /// Possible error values of [`MCUmgrClient::firmware_update`].
+#[non_exhaustive]
 #[derive(Error, Debug, Diagnostic)]
 pub enum FirmwareUpdateError {
     /// The progress callback returned an error.
