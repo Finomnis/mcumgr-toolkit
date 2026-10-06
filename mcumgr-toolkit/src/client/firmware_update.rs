@@ -248,9 +248,26 @@ pub(crate) fn firmware_update(
         None,
     )?;
 
-    if let ImageRunState::Stable(stable_image) = run_state {
-        if stable_image.hash.as_ref() == Some(&image_id_hash) {
-            return Err(FirmwareUpdateError::AlreadyInstalled);
+    match run_state {
+        ImageRunState::Stable(current) => {
+            if current.hash.as_ref() == Some(&image_id_hash) {
+                return Err(FirmwareUpdateError::AlreadyInstalled);
+            }
+        }
+
+        ImageRunState::Pending { .. } | ImageRunState::Testing { .. } => {
+            return Err(FirmwareUpdateError::SystemNotReady);
+        }
+
+        ImageRunState::Unknown(None) => {
+            // Might be in MCUboot recovery mode with no
+            // images installed on the system, continue
+            // and try the update anyway
+        }
+
+        ImageRunState::Unknown(Some(_)) => {
+            // Might be in MCUboot recovery mode, continue
+            // and try the update anyway
         }
     }
 
@@ -347,18 +364,9 @@ pub(crate) fn firmware_update(
 
     if needs_set_state {
         progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
-        let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
-        if let Err(set_state_error) = set_state_result {
-            // Special case: if the command isn't supported, we are most likely in
-            // the MCUmgr recovery shell, which writes directly to the active slot
-            // and does not support swapping.
-            if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported()
-            {
-                log::info!("Set-state not supported, assume that firmware update works without.");
-            } else {
-                return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
-            }
-        }
+        client
+            .image_set_state(Some(&image_id_hash), params.force_confirm)
+            .map_err(FirmwareUpdateError::SetStateFailed)?;
     }
 
     if !params.skip_reboot {
