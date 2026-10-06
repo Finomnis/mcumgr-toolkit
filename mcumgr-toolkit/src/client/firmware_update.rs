@@ -346,7 +346,7 @@ pub(crate) fn firmware_update(
                 return Err(FirmwareUpdateError::SystemNotReady);
             }
 
-            // The current image is already queued for testing
+            // The target image is already running in test mode
             false
         }
 
@@ -371,9 +371,8 @@ pub(crate) fn firmware_update(
         }
 
         ImageRunState::Unknown(None) => {
-            // The heck do I know what to do here, maybe set-state and pray?
-            // Let's do it until somebody files a bug report that this breaks stuff
-
+            // We just uploaded an image, if we still get not even a guess
+            // something is seriously wrong
             return Err(FirmwareUpdateError::InconsistentDeviceState);
         }
     };
