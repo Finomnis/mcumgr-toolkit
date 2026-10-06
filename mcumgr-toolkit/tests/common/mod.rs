@@ -6,6 +6,8 @@ use std::{
     io::{Read, Write},
 };
 
+pub mod firmware_update_helpers;
+
 use mcumgr_toolkit::transport::serial::ConfigurableTimeout;
 
 #[derive(Default)]
