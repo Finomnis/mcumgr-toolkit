@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] - 2026-10-06
+
+### Changes
+
+- Rework firmware updater behaviour
+    - Increase compatibility with MCUboot recovery mode
+- Rust: Add `client::image_run_state::analyze` do determine current image run state from the image flags
+
 
 ## [0.18.0] - 2026-09-29
 
@@ -554,6 +562,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.18.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.18.0...0.18.1
 [0.18.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.17.1...0.18.0
 [0.17.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.16.0...0.17.0

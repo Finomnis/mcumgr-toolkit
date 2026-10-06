@@ -1,38 +1,39 @@
 use crate::commands::image::ImageState;
 
-/// The current run state of the given image
+/// The current run state of the given image.
 pub enum ImageRunState<'a> {
     /// The given slot is likely the current and future
-    /// image on the system
+    /// image on the system.
     Stable(&'a ImageState),
-    /// The image will change at next boot
+    /// The image will change at next boot.
     Pending {
         /// Currently running/active image, if known.
         current: Option<&'a ImageState>,
-        /// The slot that will run after next boot
+        /// The slot that will run after next boot.
         ///
-        /// Examine next.permanent to see whether
+        /// Examine `next.permanent` to see whether
         /// the image will boot in testing or permanent
-        /// mode
+        /// mode.
         next: &'a ImageState,
     },
-    /// We are currently testing a new image and
-    /// unless it gets confirmed, it will be
-    /// rolled back at next boot
+    /// A new image is currently being tested.
+    ///
+    /// Unless it gets confirmed, it will be
+    /// rolled back at next boot.
     Testing {
-        /// The currently tested image
+        /// The currently tested image.
         current: &'a ImageState,
-        /// The image that will get rolled back to
+        /// The image that will get rolled back to.
         fallback: &'a ImageState,
     },
-    /// The current state is not easily determinable
+    /// The current state is not easily determinable.
     ///
     /// Will contain an educated guess if possible,
-    /// but by no means this guess should be relied upon
+    /// but by no means this guess should be relied upon.
     Unknown(Option<&'a ImageState>),
 }
 
-/// Analyze the flags of a given image ID and determine the most likely run state
+/// Analyze the flags of the image slots with the given image ID and determine the most likely run state.
 pub fn analyze(image_state: &[ImageState], image_id: u32) -> ImageRunState<'_> {
     fn find_unique(
         image_state: &[ImageState],
