@@ -54,11 +54,20 @@ pub enum FirmwareUpdateError {
     #[error("The device is already running the given firmware")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::already_installed))]
     AlreadyInstalled,
-    /// The system is currently in a state where triggering an update
-    /// would cause ambiguous behavior
-    #[error("The system is already busy and is not ready for an update")]
-    #[diagnostic(code(mcumgr_toolkit::firmware_update::system_not_ready))]
-    SystemNotReady,
+    /// There is already a pending image on the system
+    #[error("A different image is already pending")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::image_already_pending))]
+    #[diagnostic(help(
+        "Please reboot the system to reach a stable state before retrying the update."
+    ))]
+    ImageAlreadyPending,
+    /// The system is currently test-booting an image
+    #[error("An image is currently being tested")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::image_currently_tested))]
+    #[diagnostic(help(
+        "Please reboot the system to reach a stable state before retrying the update."
+    ))]
+    ImageCurrentlyTested,
     /// The device state is inconsistent
     #[error("The device state is inconsistent")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::inconsistent_device_state))]
@@ -80,6 +89,9 @@ pub struct FirmwareUpdateParams {
     /// Default: `false`
     ///
     /// Skip test boot and confirm directly.
+    ///
+    /// Be aware that this is best effort and might not work
+    /// in all circumstances.
     pub force_confirm: bool,
     /// Default: `false`
     ///
@@ -260,8 +272,12 @@ pub(crate) fn firmware_update(
             }
         }
 
-        ImageRunState::Pending { .. } | ImageRunState::Testing { .. } => {
-            return Err(FirmwareUpdateError::SystemNotReady);
+        ImageRunState::Pending { .. } => {
+            return Err(FirmwareUpdateError::ImageAlreadyPending);
+        }
+
+        ImageRunState::Testing { .. } => {
+            return Err(FirmwareUpdateError::ImageCurrentlyTested);
         }
 
         ImageRunState::Unknown(None) => {
@@ -333,7 +349,7 @@ pub(crate) fn firmware_update(
             if let Some(hash) = &next.hash
                 && hash != &image_id_hash
             {
-                return Err(FirmwareUpdateError::SystemNotReady);
+                return Err(FirmwareUpdateError::ImageAlreadyPending);
             }
 
             // The target image is already pending
@@ -348,7 +364,7 @@ pub(crate) fn firmware_update(
             if let Some(hash) = &current.hash
                 && hash != &image_id_hash
             {
-                return Err(FirmwareUpdateError::SystemNotReady);
+                return Err(FirmwareUpdateError::ImageCurrentlyTested);
             }
 
             // The target image is already running in test mode

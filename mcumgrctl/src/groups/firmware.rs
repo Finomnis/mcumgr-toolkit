@@ -47,6 +47,8 @@ pub enum FirmwareCommand {
         #[arg(long)]
         skip_reboot: bool,
         /// Skip test boot and confirm directly
+        ///
+        /// Best effort; may not work in all circumstances.
         #[arg(long)]
         force_confirm: bool,
         /// Prevent firmware downgrades
