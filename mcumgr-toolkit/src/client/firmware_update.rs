@@ -3,9 +3,18 @@ use std::fmt::Display;
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::{MCUmgrClient, bootloader::BootloaderType, client::MCUmgrClientError, mcuboot};
+use crate::{
+    MCUmgrClient,
+    bootloader::BootloaderType,
+    client::{
+        MCUmgrClientError,
+        image_run_state::{self, ImageRunState},
+    },
+    mcuboot,
+};
 
 /// Possible error values of [`MCUmgrClient::firmware_update`].
+#[non_exhaustive]
 #[derive(Error, Debug, Diagnostic)]
 pub enum FirmwareUpdateError {
     /// The progress callback returned an error.
@@ -45,6 +54,22 @@ pub enum FirmwareUpdateError {
     #[error("The device is already running the given firmware")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::already_installed))]
     AlreadyInstalled,
+    /// There is already a pending image on the system
+    #[error("An image is already pending")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::image_already_pending))]
+    #[diagnostic(help(
+        "Please reboot the system to reach a stable state before retrying the update."
+    ))]
+    ImageAlreadyPending,
+    /// The system is currently test-booting an image
+    #[error("An image is currently being tested")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::image_currently_tested))]
+    #[diagnostic(help("Please bring the system to a stable state before attempting an update."))]
+    ImageCurrentlyTested,
+    /// The device state is inconsistent
+    #[error("The device state is inconsistent")]
+    #[diagnostic(code(mcumgr_toolkit::firmware_update::inconsistent_device_state))]
+    InconsistentDeviceState,
 }
 
 /// Configurable parameters for [`MCUmgrClient::firmware_update`].
@@ -62,6 +87,9 @@ pub struct FirmwareUpdateParams {
     /// Default: `false`
     ///
     /// Skip test boot and confirm directly.
+    ///
+    /// Be aware that this is best effort and might not work
+    /// in all circumstances.
     pub force_confirm: bool,
     /// Default: `false`
     ///
@@ -172,8 +200,10 @@ pub(crate) fn firmware_update(
     mut progress: Option<&mut FirmwareUpdateProgressCallback>,
 ) -> Result<(), FirmwareUpdateError> {
     // Might become a params member in the future
-    let target_image: Option<u32> = Default::default();
-    let actual_target_image = target_image.unwrap_or(0);
+    let maybe_target_image: Option<u32> = Default::default();
+
+    // We assume that the upload command uploads to image 0 when parameter is missing.
+    let target_image: u32 = maybe_target_image.unwrap_or(0);
 
     let firmware = firmware.as_ref();
 
@@ -212,18 +242,18 @@ pub(crate) fn firmware_update(
     };
 
     progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-    let image_state = client
+    let mut image_state = client
         .image_get_state()
         .map_err(FirmwareUpdateError::GetStateFailed)?;
 
-    let active_image = image_state
-        .iter()
-        .find(|img| img.image == actual_target_image && img.active)
-        .or_else(|| {
-            image_state
-                .iter()
-                .find(|img| img.image == actual_target_image && img.slot == 0)
-        });
+    let mut run_state = image_run_state::analyze(&image_state, target_image);
+    let active_image = match run_state {
+        ImageRunState::Stable(image_state) => Some(image_state),
+        ImageRunState::Pending { current, .. } => current,
+        ImageRunState::Testing { current, .. } => Some(current),
+        ImageRunState::Unknown(image_state) => image_state,
+        ImageRunState::Inconsistent => return Err(FirmwareUpdateError::InconsistentDeviceState),
+    };
 
     progress(
         FirmwareUpdateStep::UpdateInfo {
@@ -233,8 +263,35 @@ pub(crate) fn firmware_update(
         None,
     )?;
 
-    if active_image.and_then(|img| img.hash.as_ref()) == Some(&image_id_hash) {
-        return Err(FirmwareUpdateError::AlreadyInstalled);
+    match run_state {
+        ImageRunState::Stable(current) => {
+            if current.hash.as_ref() == Some(&image_id_hash) {
+                return Err(FirmwareUpdateError::AlreadyInstalled);
+            }
+        }
+
+        ImageRunState::Pending { .. } => {
+            return Err(FirmwareUpdateError::ImageAlreadyPending);
+        }
+
+        ImageRunState::Testing { .. } => {
+            return Err(FirmwareUpdateError::ImageCurrentlyTested);
+        }
+
+        ImageRunState::Unknown(None) => {
+            // Might be in MCUboot recovery mode with no
+            // images installed on the system, continue
+            // and try the update anyway
+        }
+
+        ImageRunState::Unknown(Some(_)) => {
+            // Might be in MCUboot recovery mode, continue
+            // and try the update anyway
+        }
+
+        ImageRunState::Inconsistent => {
+            return Err(FirmwareUpdateError::InconsistentDeviceState);
+        }
     }
 
     progress(FirmwareUpdateStep::UploadingFirmware, None)?;
@@ -249,7 +306,7 @@ pub(crate) fn firmware_update(
     client
         .image_upload(
             firmware,
-            target_image,
+            maybe_target_image,
             checksum,
             params.upgrade_only,
             has_progress.then_some(&mut upload_progress_cb),
@@ -263,33 +320,90 @@ pub(crate) fn firmware_update(
             }
         })?;
 
-    progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
-    let set_state_result = client.image_set_state(Some(&image_id_hash), params.force_confirm);
-    if let Err(set_state_error) = set_state_result {
-        let mut image_already_active = false;
+    progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
+    image_state = client
+        .image_get_state()
+        .map_err(FirmwareUpdateError::GetStateFailed)?;
+    run_state = image_run_state::analyze(&image_state, target_image);
 
-        // Special case: if the command isn't supported, we are most likely in
-        // the MCUmgr recovery shell, which writes directly to the active slot
-        // and does not support swapping.
-        // Sanity check that the image is on the first position already to avoid false
-        // positives of this exception.
-        if bootloader_type == BootloaderType::MCUboot && set_state_error.command_not_supported() {
-            progress(FirmwareUpdateStep::QueryingDeviceState, None)?;
-            let image_state = client
-                .image_get_state()
-                .map_err(FirmwareUpdateError::GetStateFailed)?;
-            if image_state.iter().any(|img| {
-                img.image == actual_target_image
-                    && img.slot == 0
-                    && img.hash.as_ref() == Some(&image_id_hash)
-            }) {
-                image_already_active = true;
+    let needs_set_state = match run_state {
+        ImageRunState::Stable(current) => {
+            // Issue set-state if another image is currently running;
+            // this is probably the most common case.
+            if let Some(hash) = &current.hash {
+                hash != &image_id_hash
+            } else {
+                // We are most likely in MCUboot with hashes disabled;
+                // it's highly likely we uploaded to the active image
+                // and will break the system if we set-state now.
+                false
             }
         }
 
-        if !image_already_active {
-            return Err(FirmwareUpdateError::SetStateFailed(set_state_error));
+        ImageRunState::Pending { next, .. } => {
+            // This should never happen, we already checked earlier that
+            // we are not pending, so if we now pend for an image that
+            // is not our target image something went horribly wrong
+            if let Some(hash) = &next.hash
+                && hash != &image_id_hash
+            {
+                return Err(FirmwareUpdateError::ImageAlreadyPending);
+            }
+
+            // The target image is already pending
+            false
         }
+
+        ImageRunState::Testing { .. } => {
+            // Already running in test mode.
+            // Do **not** mark as confirmed, as MCUboot/Zephyr behavior is somewhat wild
+            // around how the image behaves when set-state is issued while testing.
+
+            // Whatever is currently being tested, we cannot `set-state` because of MCUboot quirks,
+            // and we also cannot reboot because that would interrupt the testing and revert
+            // to the previous image.
+            //
+            // So the only possible way to react here is to error out.
+
+            return Err(FirmwareUpdateError::ImageCurrentlyTested);
+        }
+
+        ImageRunState::Unknown(Some(guessed)) => {
+            // There's a good chance we are currently in MCUboot without image info
+            // enabled. Attempt to set-state only when our heuristic thinks
+            // we aren't already active.
+
+            // We need to be careful with calling set-state in MCUboot, see
+            // https://github.com/mcu-tools/mcuboot/issues/2882.
+
+            if let Some(hash) = &guessed.hash
+                && hash != &image_id_hash
+            {
+                return Err(FirmwareUpdateError::InconsistentDeviceState);
+            }
+
+            // We guess the image is already active;
+            // set-state could make the situation worse in MCUboot.
+
+            false
+        }
+
+        ImageRunState::Unknown(None) => {
+            // We just uploaded an image, if we still get not even a guess
+            // something is seriously wrong
+            return Err(FirmwareUpdateError::InconsistentDeviceState);
+        }
+
+        ImageRunState::Inconsistent => {
+            return Err(FirmwareUpdateError::InconsistentDeviceState);
+        }
+    };
+
+    if needs_set_state {
+        progress(FirmwareUpdateStep::ActivatingFirmware, None)?;
+        client
+            .image_set_state(Some(&image_id_hash), params.force_confirm)
+            .map_err(FirmwareUpdateError::SetStateFailed)?;
     }
 
     if !params.skip_reboot {

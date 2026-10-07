@@ -262,6 +262,8 @@ class MCUmgrClient:
         * `force_confirm` - Skip test boot and confirm directly.
         * `upgrade_only` - Prevent firmware downgrades.
         * `progress` - A callback that receives progress updates.
+        
+        Note that `force_confirm` is best effort and may not work in all circumstances.
         """
     def os_echo(self, msg: builtins.str) -> builtins.str:
         r"""

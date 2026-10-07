@@ -232,6 +232,8 @@ impl MCUmgrClient {
     /// * `upgrade_only` - Prevent firmware downgrades.
     /// * `progress` - A callback that receives progress updates.
     ///
+    /// Note that `force_confirm` is best effort and may not work in all circumstances.
+    ///
     #[pyo3(signature = (firmware, checksum=None, bootloader_type=None, skip_reboot=false, force_confirm=false, upgrade_only=false, progress=None))]
     pub fn firmware_update<'py>(
         &self,
