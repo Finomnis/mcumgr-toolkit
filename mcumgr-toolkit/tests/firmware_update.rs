@@ -306,23 +306,23 @@ fn post_upload_pending_other_image_fails_without_reset() {
 }
 
 #[test]
-fn post_upload_testing_target_is_accepted_without_confirmation() {
+fn post_upload_testing_target_fails_without_reset() {
     let before = vec![image_state(0, 0, Some(&OLD_HASH), STABLE)];
     let after = vec![
         image_state(0, 0, Some(&TARGET_HASH), ACTIVE),
         image_state(0, 1, Some(&OLD_HASH), CONFIRMED),
     ];
     let (client, device) = scripted_client(before, after);
-    let mut update_params = params();
-    update_params.force_confirm = true;
 
-    client
-        .firmware_update(test_firmware(), None, update_params, None)
-        .unwrap();
+    let result = client.firmware_update(test_firmware(), None, params(), None);
 
-    // Even with force_confirm, do not issue set-state for an already-active test image.
+    assert!(matches!(
+        result,
+        Err(FirmwareUpdateError::ImageCurrentlyTested)
+    ));
+    assert_eq!(device.upload_count(), 1);
     assert!(device.set_state_calls().is_empty());
-    assert_eq!(device.reset_count(), 1);
+    assert_eq!(device.reset_count(), 0);
 }
 
 #[test]

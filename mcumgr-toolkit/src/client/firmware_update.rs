@@ -341,7 +341,7 @@ pub(crate) fn firmware_update(
         }
 
         ImageRunState::Pending { next, .. } => {
-            // This should never happen, we alread checked earlier that
+            // This should never happen, we already checked earlier that
             // we are not pending, so if we now pend for an image that
             // is not our target image something went horribly wrong
             if let Some(hash) = &next.hash
@@ -354,19 +354,18 @@ pub(crate) fn firmware_update(
             false
         }
 
-        ImageRunState::Testing { current, .. } => {
+        ImageRunState::Testing { .. } => {
             // Already running in test mode.
             // Do **not** mark as confirmed, as MCUboot/Zephyr behavior is somewhat wild
             // around how the image behaves when set-state is issued while testing.
 
-            if let Some(hash) = &current.hash
-                && hash != &image_id_hash
-            {
-                return Err(FirmwareUpdateError::ImageCurrentlyTested);
-            }
+            // Whatever is currently being tested, we cannot `set-state` because of MCUboot quirks,
+            // and we also cannot reboot because that would interrupt the testing and revert
+            // to the previous image.
+            //
+            // So the only possible way to react here is to error out.
 
-            // The target image is already running in test mode
-            false
+            return Err(FirmwareUpdateError::ImageCurrentlyTested);
         }
 
         ImageRunState::Unknown(Some(guessed)) => {
