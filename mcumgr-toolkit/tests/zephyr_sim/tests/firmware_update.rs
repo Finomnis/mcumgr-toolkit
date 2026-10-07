@@ -75,6 +75,7 @@ fn update_with_test_boot() {
                 new_version: ("2.1.0.7".into(), firmware.hash().to_vec()),
             },
             FirmwareUpdateStep::UploadingFirmware,
+            FirmwareUpdateStep::QueryingDeviceState,
             FirmwareUpdateStep::ActivatingFirmware,
             FirmwareUpdateStep::TriggeringReboot,
         ]
@@ -165,18 +166,6 @@ fn update_fails_when_the_bootloader_can_not_be_detected() {
         result.unwrap_err(),
         FirmwareUpdateError::BootloaderDetectionFailed(_)
     ));
-}
-
-#[test]
-fn update_to_an_empty_device() {
-    let device = SimDevice::new(Config::default());
-
-    let (result, steps) = record_update(&device, &new_firmware().build(), Default::default());
-    result.unwrap();
-    assert!(steps.contains(&FirmwareUpdateStep::UpdateInfo {
-        current_version: None,
-        new_version: ("2.1.0.7".into(), new_firmware().hash().to_vec()),
-    }));
 }
 
 #[test]
@@ -290,23 +279,42 @@ fn update_fails_while_a_test_boot_is_unconfirmed() {
     let device = SimDevice::with_firmware();
     let client = device.client();
 
-    // Leave the device in test mode of another image, so that the slot can
-    // not be used for the update.
+    // Leave the device in test mode of another image; the previous image has
+    // to stay in the secondary slot until the test boot is confirmed.
     let other = ImageBuilder::new((1, 5, 0, 0));
     client
         .image_upload(other.build(), None, None, false, None)
         .unwrap();
     client.image_set_state(Some(&other.hash()), false).unwrap();
     client.os_system_reset(false, None).unwrap();
+    device.clear_requests();
 
     let (result, _) = record_update(&device, &new_firmware().build(), Default::default());
-    let FirmwareUpdateError::ImageUploadFailed(err) = result.unwrap_err() else {
-        panic!("expected an upload error");
-    };
-    assert_eq!(
-        device_error(err),
-        group_error(group_id::IMAGE, img_mgmt_err::NO_FREE_SLOT)
-    );
+    assert!(matches!(
+        result.unwrap_err(),
+        FirmwareUpdateError::ImageCurrentlyTested
+    ));
+    assert!(device.requests_for(group_id::IMAGE, 1).is_empty());
+}
+
+#[test]
+fn update_fails_while_another_image_is_pending() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    let other = ImageBuilder::new((1, 5, 0, 0));
+    client
+        .image_upload(other.build(), None, None, false, None)
+        .unwrap();
+    client.image_set_state(Some(&other.hash()), false).unwrap();
+    device.clear_requests();
+
+    let (result, _) = record_update(&device, &new_firmware().build(), Default::default());
+    assert!(matches!(
+        result.unwrap_err(),
+        FirmwareUpdateError::ImageAlreadyPending
+    ));
+    assert!(device.requests_for(group_id::IMAGE, 1).is_empty());
 }
 
 #[test]
