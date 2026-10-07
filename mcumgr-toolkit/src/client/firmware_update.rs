@@ -55,7 +55,7 @@ pub enum FirmwareUpdateError {
     #[diagnostic(code(mcumgr_toolkit::firmware_update::already_installed))]
     AlreadyInstalled,
     /// There is already a pending image on the system
-    #[error("A different image is already pending")]
+    #[error("An image is already pending")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::image_already_pending))]
     #[diagnostic(help(
         "Please reboot the system to reach a stable state before retrying the update."
