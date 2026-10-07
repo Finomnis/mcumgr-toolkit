@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rework firmware updater behaviour
     - Increase compatibility with MCUboot recovery mode
-- Rust: Add `client::image_run_state::analyze` do determine current image run state from the image flags
+- Rust: Add `client::image_run_state::analyze` to determine current image run state from the image flags
 - Fix: uploading an empty image was incorrectly successful
 - Fix: Uploading empty files created no file
 - Fix: Deadlock when downloading a file that changes size during

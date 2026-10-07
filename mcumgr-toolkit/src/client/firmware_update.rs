@@ -192,7 +192,7 @@ pub(crate) fn firmware_update(
     // Might become a params member in the future
     let maybe_target_image: Option<u32> = Default::default();
 
-    // We asume that the upload command uploads to image 0 when parameter is missing.
+    // We assume that the upload command uploads to image 0 when parameter is missing.
     let target_image: u32 = maybe_target_image.unwrap_or(0);
 
     let firmware = firmware.as_ref();
@@ -242,6 +242,7 @@ pub(crate) fn firmware_update(
         ImageRunState::Pending { current, .. } => current,
         ImageRunState::Testing { current, .. } => Some(current),
         ImageRunState::Unknown(image_state) => image_state,
+        ImageRunState::Inconsistent => return Err(FirmwareUpdateError::InconsistentDeviceState),
     };
 
     progress(
@@ -272,6 +273,10 @@ pub(crate) fn firmware_update(
         ImageRunState::Unknown(Some(_)) => {
             // Might be in MCUboot recovery mode, continue
             // and try the update anyway
+        }
+
+        ImageRunState::Inconsistent => {
+            return Err(FirmwareUpdateError::InconsistentDeviceState);
         }
     }
 
@@ -331,7 +336,7 @@ pub(crate) fn firmware_update(
                 return Err(FirmwareUpdateError::SystemNotReady);
             }
 
-            // The current image is already pending
+            // The target image is already pending
             false
         }
 
@@ -373,6 +378,10 @@ pub(crate) fn firmware_update(
         ImageRunState::Unknown(None) => {
             // We just uploaded an image, if we still get not even a guess
             // something is seriously wrong
+            return Err(FirmwareUpdateError::InconsistentDeviceState);
+        }
+
+        ImageRunState::Inconsistent => {
             return Err(FirmwareUpdateError::InconsistentDeviceState);
         }
     };

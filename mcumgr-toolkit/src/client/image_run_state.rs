@@ -1,6 +1,7 @@
 use crate::commands::image::ImageState;
 
 /// The current run state of the given image.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ImageRunState<'a> {
     /// The given slot is likely the current and future
     /// image on the system.
@@ -31,6 +32,10 @@ pub enum ImageRunState<'a> {
     /// Will contain an educated guess if possible,
     /// but by no means this guess should be relied upon.
     Unknown(Option<&'a ImageState>),
+    /// The image state is inconsistent.
+    ///
+    /// Example: The image has multiple slots that are marked 'active'.
+    Inconsistent,
 }
 
 /// Analyze the flags of the image slots with the given image ID and determine the most likely run state.
@@ -55,17 +60,17 @@ pub fn analyze(image_state: &[ImageState], image_id: u32) -> ImageRunState<'_> {
 
     let active = match find_unique(image_id, image_state, |img| img.active) {
         Some(value) => value,
-        None => return ImageRunState::Unknown(None),
+        None => return ImageRunState::Inconsistent,
     };
 
     let confirmed = match find_unique(image_id, image_state, |img| img.confirmed) {
         Some(value) => value,
-        None => return ImageRunState::Unknown(None),
+        None => return ImageRunState::Inconsistent,
     };
 
     let pending = match find_unique(image_id, image_state, |img| img.pending) {
         Some(value) => value,
-        None => return ImageRunState::Unknown(None),
+        None => return ImageRunState::Inconsistent,
     };
 
     if let Some(pending) = pending {

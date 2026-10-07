@@ -6,9 +6,7 @@ use std::{
 use mcumgr_toolkit::{
     MCUmgrClient,
     commands::image::ImageState,
-    transport::{
-        ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport,
-    },
+    transport::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport},
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -68,12 +66,7 @@ pub const PENDING_PERMANENT: Flags = Flags {
     permanent: true,
 };
 
-pub fn image_state(
-    image: u32,
-    slot: u32,
-    hash: Option<&[u8]>,
-    flags: Flags,
-) -> ImageState {
+pub fn image_state(image: u32, slot: u32, hash: Option<&[u8]>, flags: Flags) -> ImageState {
     ImageState {
         image,
         slot,
