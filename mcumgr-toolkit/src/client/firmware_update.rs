@@ -64,9 +64,7 @@ pub enum FirmwareUpdateError {
     /// The system is currently test-booting an image
     #[error("An image is currently being tested")]
     #[diagnostic(code(mcumgr_toolkit::firmware_update::image_currently_tested))]
-    #[diagnostic(help(
-        "Please reboot the system to reach a stable state before retrying the update."
-    ))]
+    #[diagnostic(help("Please bring the system to a stable state before attempting an update."))]
     ImageCurrentlyTested,
     /// The device state is inconsistent
     #[error("The device state is inconsistent")]
