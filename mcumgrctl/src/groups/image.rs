@@ -65,9 +65,9 @@ fn print_current_image_state(images: &[ImageState], args: CommonArgs) -> Result<
                     s.key_value("version", image.version.as_str());
                     s.key_value_maybe("hash", image.hash.as_ref().map(hex::encode));
                     s.key_value("bootable", image.bootable);
-                    s.key_value("pending", image.pending);
-                    s.key_value("confirmed", image.confirmed);
                     s.key_value("active", image.active);
+                    s.key_value("confirmed", image.confirmed);
+                    s.key_value("pending", image.pending);
                     s.key_value("permanent", image.permanent);
                 });
             }

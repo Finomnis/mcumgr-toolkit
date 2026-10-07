@@ -1,9 +1,11 @@
 /// High-level firmware update routine
 mod firmware_update;
-
 pub use firmware_update::{
     FirmwareUpdateError, FirmwareUpdateParams, FirmwareUpdateProgressCallback, FirmwareUpdateStep,
 };
+
+/// High-level image run state derived from the image state flags
+pub mod image_run_state;
 
 use std::{
     collections::HashMap,
