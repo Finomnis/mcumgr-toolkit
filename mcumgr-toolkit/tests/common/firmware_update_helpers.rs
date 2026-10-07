@@ -27,6 +27,11 @@ pub const TARGET_HASH: [u8; 32] = [0xA5; 32];
 pub const OLD_HASH: [u8; 32] = [0x11; 32];
 pub const OTHER_HASH: [u8; 32] = [0x22; 32];
 
+/// `MGMT_ERR_ENOTSUP`
+pub const RC_NOT_SUPPORTED: i32 = 8;
+/// `MGMT_ERR_EBADSTATE`
+pub const RC_BAD_STATE: i32 = 6;
+
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Flags {
     pub active: bool,
@@ -125,6 +130,7 @@ pub enum Event {
     GetState,
     Upload {
         image: Option<u32>,
+        upgrade: Option<bool>,
         off: u64,
         len: usize,
     },
@@ -137,6 +143,8 @@ struct DeviceModel {
     before_upload: Vec<ImageState>,
     after_upload: Vec<ImageState>,
     upload_started: bool,
+    upload_error: Option<i32>,
+    set_state_error: Option<i32>,
     events: Vec<Event>,
 }
 
@@ -146,8 +154,26 @@ pub struct DeviceHandle {
 }
 
 impl DeviceHandle {
+    /// Make every upload request fail with the given SMP return code.
+    pub fn fail_upload_with(&self, rc: i32) {
+        self.inner.lock().unwrap().upload_error = Some(rc);
+    }
+
+    /// Make every set-state request fail with the given SMP return code.
+    pub fn fail_set_state_with(&self, rc: i32) {
+        self.inner.lock().unwrap().set_state_error = Some(rc);
+    }
+
     pub fn events(&self) -> Vec<Event> {
         self.inner.lock().unwrap().events.clone()
+    }
+
+    /// All events that modify the device, i.e. everything except state queries.
+    pub fn writes(&self) -> Vec<Event> {
+        self.events()
+            .into_iter()
+            .filter(|event| !matches!(event, Event::GetState))
+            .collect()
     }
 
     pub fn upload_count(&self) -> usize {
@@ -183,6 +209,8 @@ pub fn scripted_client(
         before_upload,
         after_upload,
         upload_started: false,
+        upload_error: None,
+        set_state_error: None,
         events: Vec::new(),
     }));
 
@@ -206,6 +234,8 @@ struct ScriptedTransport {
 struct UploadRequest {
     #[serde(default)]
     image: Option<u32>,
+    #[serde(default)]
+    upgrade: Option<bool>,
     off: u64,
     data: ByteBuf,
 }
@@ -266,6 +296,10 @@ impl ScriptedTransport {
         out
     }
 
+    fn error_response(rc: i32) -> Vec<u8> {
+        Self::encode(&std::collections::BTreeMap::from([("rc", rc)]))
+    }
+
     fn state_response(model: &DeviceModel) -> Vec<u8> {
         let images = if model.upload_started {
             &model.after_upload
@@ -322,14 +356,19 @@ impl Transport for ScriptedTransport {
                     let request: UploadRequest = ciborium::from_reader(data).unwrap();
                     model.events.push(Event::Upload {
                         image: request.image,
+                        upgrade: request.upgrade,
                         off: request.off,
                         len: request.data.len(),
                     });
-                    model.upload_started = true;
-                    Self::encode(&UploadResponse {
-                        off: request.off + request.data.len() as u64,
-                        matches: true,
-                    })
+                    if let Some(rc) = model.upload_error {
+                        Self::error_response(rc)
+                    } else {
+                        model.upload_started = true;
+                        Self::encode(&UploadResponse {
+                            off: request.off + request.data.len() as u64,
+                            matches: true,
+                        })
+                    }
                 }
                 (GROUP_IMAGE, CMD_IMAGE_STATE, true) => {
                     let request: SetStateRequest = ciborium::from_reader(data).unwrap();
@@ -337,7 +376,11 @@ impl Transport for ScriptedTransport {
                         hash: request.hash.map(ByteBuf::into_vec),
                         confirm: request.confirm,
                     }));
-                    Self::state_response(&model)
+                    if let Some(rc) = model.set_state_error {
+                        Self::error_response(rc)
+                    } else {
+                        Self::state_response(&model)
+                    }
                 }
                 (GROUP_OS, CMD_OS_RESET, true) => {
                     model.events.push(Event::Reset);
