@@ -526,12 +526,32 @@ fn restart_an_unfinished_upload() {
     // The device keeps the file open, waiting for the rest of the upload
     assert!(device.lock().fs.file_open());
 
-    // Uploading the file again starts over at offset 0
+    // Closing it allows uploading the file again from the start
+    client.fs_file_close().unwrap();
     client
         .fs_file_upload("/lfs1/r.bin", &data[..], 3000, None)
         .unwrap();
     assert_eq!(device.lock().fs.files["/lfs1/r.bin"], data);
     assert!(!device.lock().fs.file_open());
+}
+
+#[test]
+fn restart_an_unfinished_upload_without_closing_it() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let data = test_data(3000);
+
+    let mut stop = |current: u64, _: u64| current < 1000;
+    client
+        .fs_file_upload("/lfs1/r.bin", &data[..], 3000, Some(&mut stop))
+        .unwrap_err();
+
+    // The open upload continues at its old offset, which the device reports
+    // after the first chunk of the new upload
+    let err = client
+        .fs_file_upload("/lfs1/r.bin", &data[..], 3000, None)
+        .unwrap_err();
+    assert!(matches!(err, MCUmgrClientError::UnexpectedOffset));
 }
 
 #[test]

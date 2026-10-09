@@ -345,7 +345,6 @@ fn file_upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     if off == 0 {
         let transfer = fs.transfer.as_mut().unwrap();
         transfer.len = len;
-        transfer.off = 0;
         match fs.filelen(name) {
             Ok(size) => existing_file_size = size,
             Err(rc) => {
@@ -376,8 +375,6 @@ fn file_upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 
     if !data.is_empty() || off == 0 {
         let file = fs.files.get_mut(name).unwrap();
-        // Upstream also checks fs_tell() here, as the size of a file that is
-        // still open can be stale; the simulated file system has no such lag
         if off == 0 && existing_file_size != 0 {
             file.clear();
         }
