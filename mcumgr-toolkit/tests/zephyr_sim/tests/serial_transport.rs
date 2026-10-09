@@ -79,8 +79,11 @@ fn image_upload_with_auto_frame_size() {
         .unwrap();
     assert_eq!(device.lock().img.slots[1].flash[..image.len()], image[..]);
 
+    // Zephyr's receive buffer also holds the length prefix and the CRC16, so
+    // frames may use all but 4 bytes of it
     let requests = device.requests_for(group_id::IMAGE, 1);
-    assert!(requests.iter().any(|r| r.frame_len > 1500));
+    assert!(requests.iter().all(|r| r.frame_len <= 2048 - 4));
+    assert!(requests.iter().any(|r| r.frame_len > 2000));
 }
 
 #[test]
@@ -112,6 +115,10 @@ fn file_transfer_with_auto_frame_size() {
     client
         .fs_file_upload("/lfs1/serial.bin", &data[..], data.len() as u64, None)
         .unwrap();
+    let requests = device.requests_for(group_id::FS, 0);
+    assert!(requests.iter().all(|r| r.frame_len <= 4096 - 4));
+    assert!(requests.iter().any(|r| r.frame_len > 4000));
+
     let mut downloaded = vec![];
     client
         .fs_file_download("/lfs1/serial.bin", &mut downloaded, None)
