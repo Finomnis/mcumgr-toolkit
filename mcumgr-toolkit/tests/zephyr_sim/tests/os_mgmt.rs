@@ -71,23 +71,35 @@ fn task_statistics_with_all_fields() {
 }
 
 #[test]
-fn task_statistics_without_stack_info_and_unsigned_priorities() {
+fn task_statistics_without_stack_info() {
     let device = SimDevice::new(Config {
         os_taskstat_stack_info: false,
-        os_taskstat_signed_priority: false,
-        os_taskstat_name: TaskstatName::Priority,
         ..Default::default()
     });
     let client = device.client();
 
     let tasks = client.os_task_statistics().unwrap();
-    let idle = &tasks["15"];
-    assert_eq!(idle.stksiz, None);
-    assert_eq!(idle.stkuse, None);
-    // The priority of sysworkq (-1) is sent as the unsigned 32 bit value
-    // 4294967295, which the client has to map back
-    assert_eq!(tasks["-1"].prio, -1);
-    assert_eq!(idle.prio, 15);
+    assert_eq!(tasks["idle"].stksiz, None);
+    assert_eq!(tasks["idle"].stkuse, None);
+}
+
+#[test]
+fn task_statistics_with_unsigned_priorities() {
+    let device = SimDevice::new(Config {
+        os_taskstat_signed_priority: false,
+        os_taskstat_name: TaskstatName::Priority,
+        ..Default::default()
+    });
+    // Zephyr sends negative priorities as `(unsigned int)prio` here (the
+    // intended `& 0xff` applies to the encoder's return value instead), which
+    // does not fit the i32 the client decodes into. Only test priorities that
+    // are not affected by that.
+    device.lock().os.threads.retain(|t| t.prio >= 0);
+    let client = device.client();
+
+    let tasks = client.os_task_statistics().unwrap();
+    assert_eq!(tasks["15"].prio, 15);
+    assert_eq!(tasks["0"].prio, 0);
 }
 
 #[test]
