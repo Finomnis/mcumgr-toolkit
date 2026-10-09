@@ -62,7 +62,8 @@ enum TransferState {
 struct Transfer {
     state: TransferState,
     off: u64,
-    len: u64,
+    /// `len`, if `len_known`
+    len: Option<u64>,
     path: String,
 }
 
@@ -170,7 +171,7 @@ impl FsState {
     /// `fs_mgmt_upload_download_finish_check`
     fn finish_check(&mut self) {
         if let Some(t) = &self.transfer {
-            if t.len > 0 && t.off >= t.len {
+            if t.len.is_some_and(|len| t.off >= len) {
                 self.cleanup();
             }
         }
@@ -266,7 +267,7 @@ fn file_download(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         fs.transfer = Some(Transfer {
             state: TransferState::Download,
             off: 0,
-            len,
+            len: Some(len),
             path: name.to_string(),
         });
     }
@@ -281,7 +282,7 @@ fn file_download(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     let start = (off as usize).min(file.len());
     let data = file[start..(start + chunk_size).min(file.len())].to_vec();
     transfer.off += data.len() as u64;
-    let len = transfer.len;
+    let len = transfer.len.unwrap();
 
     if device.config.smp_legacy_rc_behaviour {
         ctx.put("rc", int(0));
@@ -335,7 +336,7 @@ fn file_upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         fs.transfer = Some(Transfer {
             state: TransferState::Upload,
             off: 0,
-            len: 0,
+            len: None,
             path: name.to_string(),
         });
     }
@@ -343,7 +344,7 @@ fn file_upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     let mut existing_file_size = 0;
     if off == 0 {
         let transfer = fs.transfer.as_mut().unwrap();
-        transfer.len = len.unwrap();
+        transfer.len = len;
         transfer.off = 0;
         match fs.filelen(name) {
             Ok(size) => existing_file_size = size,

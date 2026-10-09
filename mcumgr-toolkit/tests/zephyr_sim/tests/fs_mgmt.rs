@@ -284,6 +284,7 @@ fn download_an_empty_file() {
         .fs_file_download("/lfs1/empty", &mut data, None)
         .unwrap();
     assert!(data.is_empty());
+    assert!(!device.lock().fs.file_open());
 }
 
 #[test]
@@ -492,6 +493,7 @@ fn upload_an_empty_file() {
     // The file has to exist afterwards, just like after uploading any other
     // file. fs_mgmt creates it for an upload request with `len` 0.
     assert_eq!(client.fs_file_status("/lfs1/empty.txt").unwrap().len, 0);
+    assert!(!device.lock().fs.file_open());
 }
 
 #[test]
@@ -508,6 +510,7 @@ fn upload_an_empty_file_over_an_existing_one() {
         .fs_file_upload("/lfs1/e.txt", &b""[..], 0, None)
         .unwrap();
     assert_eq!(client.fs_file_status("/lfs1/e.txt").unwrap().len, 0);
+    assert!(!device.lock().fs.file_open());
 }
 
 #[test]

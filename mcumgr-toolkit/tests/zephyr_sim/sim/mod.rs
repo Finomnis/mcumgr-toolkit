@@ -8,7 +8,7 @@
 //! Reference revisions: zephyrproject-rtos/zephyr@8f62a4ab82b5 (2026-10-04)
 //! and mcu-tools/mcuboot@ba2099fa7da4 (2026-10-05), plus the fixes of
 //! zephyrproject-rtos/zephyr#121704 (fs_mgmt uploads at offset 0, unsigned
-//! taskstat priorities, 64-bit statistics).
+//! taskstat priorities, 64-bit statistics, closing empty files).
 //!
 //! The device is configured through [`Config`], whose fields correspond to the
 //! Zephyr Kconfig options of the same name and default to the upstream
