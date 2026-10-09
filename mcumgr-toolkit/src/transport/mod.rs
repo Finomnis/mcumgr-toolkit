@@ -295,6 +295,21 @@ pub trait Transport {
     fn max_smp_frame_size(&self) -> usize {
         usize::MAX
     }
+
+    /// Returns how many bytes the device needs in its receive buffer in addition
+    /// to the SMP frame itself.
+    ///
+    /// The device's receive buffer has the size of
+    /// [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
+    /// Some transports store additional data in it, like a length prefix or a checksum.
+    ///
+    /// Subtracted from the frame size configured through
+    /// [`MCUmgrClient::set_frame_size`](crate::MCUmgrClient::set_frame_size) or
+    /// [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size).
+    ///
+    fn device_rx_buffer_overhead(&self) -> usize {
+        0
+    }
 }
 
 /// Marks a type to be convertible into a boxed [`Transport`]

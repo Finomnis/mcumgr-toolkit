@@ -156,6 +156,17 @@ impl Connection {
             .max_smp_frame_size()
     }
 
+    /// Returns how many bytes the device needs in its receive buffer
+    /// in addition to the SMP frame itself.
+    pub fn device_rx_buffer_overhead(&self) -> usize {
+        self.inner
+            .lock()
+            .unwrap()
+            .transceiver
+            .transport
+            .device_rx_buffer_overhead()
+    }
+
     /// Changes the communication timeout.
     ///
     /// When the device does not respond to packets within the set

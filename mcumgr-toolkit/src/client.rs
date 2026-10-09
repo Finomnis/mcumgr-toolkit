@@ -563,6 +563,14 @@ impl MCUmgrClient {
         Ok(())
     }
 
+    /// Returns the configured frame size, reduced by the space the
+    /// transport additionally occupies in the device's receive buffer.
+    fn usable_frame_size(&self) -> usize {
+        self.smp_frame_size
+            .load(std::sync::atomic::Ordering::SeqCst)
+            .saturating_sub(self.connection.device_rx_buffer_overhead())
+    }
+
     /// Changes the communication timeout.
     ///
     /// When the device does not respond to packets within the set
@@ -824,18 +832,11 @@ impl MCUmgrClient {
         upgrade_only: bool,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), MCUmgrClientError> {
-        let first_chunk_size_max = image_upload_max_data_chunk_size(
-            self.smp_frame_size
-                .load(std::sync::atomic::Ordering::SeqCst),
-            true,
-        )
-        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
-        let other_chunk_size_max = image_upload_max_data_chunk_size(
-            self.smp_frame_size
-                .load(std::sync::atomic::Ordering::SeqCst),
-            false,
-        )
-        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let first_chunk_size_max = image_upload_max_data_chunk_size(self.usable_frame_size(), true)
+            .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let other_chunk_size_max =
+            image_upload_max_data_chunk_size(self.usable_frame_size(), false)
+                .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
         log::debug!("Max chunk size: {first_chunk_size_max}, {other_chunk_size_max}");
 
         let data = data.as_ref();
@@ -1185,12 +1186,8 @@ impl MCUmgrClient {
     ) -> Result<(), MCUmgrClientError> {
         let name = name.as_ref();
 
-        let chunk_size_max = file_upload_max_data_chunk_size(
-            self.smp_frame_size
-                .load(std::sync::atomic::Ordering::SeqCst),
-            name,
-        )
-        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let chunk_size_max = file_upload_max_data_chunk_size(self.usable_frame_size(), name)
+            .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
         let mut data_buffer = vec![0u8; chunk_size_max].into_boxed_slice();
 
         let mut offset = 0;
