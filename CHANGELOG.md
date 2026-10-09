@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Changes
+
+- Add `Transport::device_rx_buffer_overhead`
+    - Bytes the device needs in its receive buffer in addition to the SMP frame
+- Fix: `use_auto_frame_size` did not account for the 4 bytes of length and
+  checksum that Zephyr stores alongside the frame for the serial transport
+    - Previously only worked because upload chunk sizes are estimated
+      with a worst-case offset size
+
+
 ## [0.19.0] - 2026-10-07
 
 ### Breaking Changes
