@@ -220,9 +220,6 @@ class MCUmgrClient:
         
         Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
         otherwise we might crash the device.
-        
-        For the serial transport, it must not exceed `MCUMGR_TRANSPORT_NETBUF_SIZE - 4`,
-        as the device additionally stores the frame length and checksum in the buffer.
         """
     def use_auto_frame_size(self) -> None:
         r"""

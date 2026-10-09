@@ -303,8 +303,9 @@ pub trait Transport {
     /// [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40).
     /// Some transports store additional data in it, like a length prefix or a checksum.
     ///
-    /// Used by [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size)
-    /// to compute the maximum SMP frame size from the device-reported buffer size.
+    /// Subtracted from the frame size configured through
+    /// [`MCUmgrClient::set_frame_size`](crate::MCUmgrClient::set_frame_size) or
+    /// [`MCUmgrClient::use_auto_frame_size`](crate::MCUmgrClient::use_auto_frame_size).
     ///
     fn device_rx_buffer_overhead(&self) -> usize {
         0

@@ -538,9 +538,6 @@ impl MCUmgrClient {
     ///
     /// Must not exceed [`MCUMGR_TRANSPORT_NETBUF_SIZE`](https://github.com/zephyrproject-rtos/zephyr/blob/v4.2.1/subsys/mgmt/mcumgr/transport/Kconfig#L40),
     /// otherwise we might crash the device.
-    ///
-    /// For the serial transport, it must not exceed `MCUMGR_TRANSPORT_NETBUF_SIZE - 4`,
-    /// as the device additionally stores the frame length and checksum in the buffer.
     pub fn set_frame_size(&self, smp_frame_size: usize) {
         self.smp_frame_size
             .store(smp_frame_size, std::sync::atomic::Ordering::SeqCst);
@@ -555,7 +552,6 @@ impl MCUmgrClient {
             .execute_command(&commands::os::MCUmgrParameters)?;
 
         let frame_size = (mcumgr_params.buf_size as usize)
-            .saturating_sub(self.connection.device_rx_buffer_overhead())
             .min(SMP_TRANSFER_BUFFER_SIZE)
             .min(self.connection.max_transport_frame_size());
 
@@ -565,6 +561,14 @@ impl MCUmgrClient {
             .store(frame_size, std::sync::atomic::Ordering::SeqCst);
 
         Ok(())
+    }
+
+    /// Returns the configured frame size, reduced by the space the
+    /// transport additionally occupies in the device's receive buffer.
+    fn usable_frame_size(&self) -> usize {
+        self.smp_frame_size
+            .load(std::sync::atomic::Ordering::SeqCst)
+            .saturating_sub(self.connection.device_rx_buffer_overhead())
     }
 
     /// Changes the communication timeout.
@@ -828,18 +832,11 @@ impl MCUmgrClient {
         upgrade_only: bool,
         mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
     ) -> Result<(), MCUmgrClientError> {
-        let first_chunk_size_max = image_upload_max_data_chunk_size(
-            self.smp_frame_size
-                .load(std::sync::atomic::Ordering::SeqCst),
-            true,
-        )
-        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
-        let other_chunk_size_max = image_upload_max_data_chunk_size(
-            self.smp_frame_size
-                .load(std::sync::atomic::Ordering::SeqCst),
-            false,
-        )
-        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let first_chunk_size_max = image_upload_max_data_chunk_size(self.usable_frame_size(), true)
+            .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let other_chunk_size_max =
+            image_upload_max_data_chunk_size(self.usable_frame_size(), false)
+                .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
         log::debug!("Max chunk size: {first_chunk_size_max}, {other_chunk_size_max}");
 
         let data = data.as_ref();
@@ -1189,12 +1186,8 @@ impl MCUmgrClient {
     ) -> Result<(), MCUmgrClientError> {
         let name = name.as_ref();
 
-        let chunk_size_max = file_upload_max_data_chunk_size(
-            self.smp_frame_size
-                .load(std::sync::atomic::Ordering::SeqCst),
-            name,
-        )
-        .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let chunk_size_max = file_upload_max_data_chunk_size(self.usable_frame_size(), name)
+            .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
         let mut data_buffer = vec![0u8; chunk_size_max].into_boxed_slice();
 
         let mut offset = 0;

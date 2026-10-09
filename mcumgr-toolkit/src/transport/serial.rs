@@ -285,7 +285,7 @@ where
     fn device_rx_buffer_overhead(&self) -> usize {
         // Zephyr reassembles the frame in its receive buffer together with
         // the u16 length prefix and the trailing CRC16.
-        size_of::<u16>() + size_of::<u16>()
+        4
     }
 }
 
