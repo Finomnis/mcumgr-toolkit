@@ -370,8 +370,7 @@ pub(crate) fn firmware_update(
 
         ImageRunState::Unknown(Some(guessed)) => {
             // There's a good chance we are currently in MCUboot without image info
-            // enabled. Attempt to set-state only when our heuristic thinks
-            // we aren't already active.
+            // enabled.
 
             // We need to be careful with calling set-state in MCUboot, see
             // https://github.com/mcu-tools/mcuboot/issues/2882.

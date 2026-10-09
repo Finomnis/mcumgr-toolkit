@@ -82,3 +82,11 @@ fn test_max_frame_size_is_reported_correctly() {
 
     assert_eq!(transport.max_smp_frame_size(), SERIAL_MAX_SMP_FRAME_SIZE);
 }
+
+#[test]
+fn test_device_rx_buffer_overhead_is_reported_correctly() {
+    let transport = create_loopback_transport();
+
+    // u16 length prefix + CRC16
+    assert_eq!(transport.device_rx_buffer_overhead(), 4);
+}

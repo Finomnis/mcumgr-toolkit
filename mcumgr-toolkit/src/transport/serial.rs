@@ -281,6 +281,12 @@ where
         // total frame length **including** 2 bytes of CRC as u16.
         u16::MAX as usize - size_of::<u16>() // CRC16
     }
+
+    fn device_rx_buffer_overhead(&self) -> usize {
+        // Zephyr reassembles the frame in its receive buffer together with
+        // the u16 length prefix and the trailing CRC16.
+        4
+    }
 }
 
 /// Specifies that the serial transport has a configurable timeout
