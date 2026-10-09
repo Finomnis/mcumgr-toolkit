@@ -146,6 +146,9 @@ pub struct Config {
     pub enum_details: bool,
     pub enum_details_name: bool,
     pub enum_details_handlers: bool,
+    /// `CONFIG_MCUMGR_GRP_ENUM_DETAILS_BUFFER_TYPE_STACK_ENTRIES`; `None` for
+    /// `CONFIG_MCUMGR_GRP_ENUM_DETAILS_BUFFER_TYPE_HEAP`
+    pub enum_details_buffer_stack_entries: Option<usize>,
 
     /// Size of `storage_partition`, `None` if there is none
     pub storage_partition_size: Option<usize>,
@@ -222,6 +225,7 @@ impl Default for Config {
             enum_details: true,
             enum_details_name: true,
             enum_details_handlers: true,
+            enum_details_buffer_stack_entries: Some(16),
 
             storage_partition_size: Some(8 * 1024),
         }

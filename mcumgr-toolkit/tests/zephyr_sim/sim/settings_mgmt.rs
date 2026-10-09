@@ -153,6 +153,15 @@ impl SettingsState {
                 }
             }
         }
+        // settings_load_subtree() commits after loading
+        self.commit();
+    }
+
+    /// `settings_commit`
+    pub fn commit(&mut self) {
+        for handler in &mut self.handlers {
+            handler.commits += 1;
+        }
     }
 
     /// What happens to the runtime values on a reboot: the application
@@ -275,9 +284,7 @@ fn settings_delete(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
 
 /// `settings_mgmt_commit`
 fn settings_commit(device: &mut Device, _: &mut Ctx) -> Result<(), i32> {
-    for handler in &mut device.settings.handlers {
-        handler.commits += 1;
-    }
+    device.settings.commit();
     Ok(())
 }
 

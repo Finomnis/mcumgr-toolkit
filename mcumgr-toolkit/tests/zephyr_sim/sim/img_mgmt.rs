@@ -759,8 +759,28 @@ fn upload(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
             }
 
             let area = device.img_unused_slot(req_image).ok_or(err::NO_FREE_SLOT)?;
-            if size > device.img.slots[area].flash.len() as u64 {
+            let slot_size = device.img.slots[area].flash.len() as u64;
+            if size > slot_size {
                 return Err(err::INVALID_IMAGE_TOO_LARGE);
+            }
+
+            // CONFIG_MCUMGR_GRP_IMG_TOO_LARGE_SYSBUILD: the update footer has
+            // to fit, unless the primary slot is larger by at least its size
+            // (upstream looks the current slot up with
+            // img_mgmt_flash_area_id(req->image))
+            if let Some(footer) = device.config.img_too_large_sysbuild_footer {
+                let current_size = usize::try_from(req_image)
+                    .ok()
+                    .and_then(|slot| device.img.slots.get(slot))
+                    .map(|slot| slot.flash.len() as u64);
+                if let Some(current_size) = current_size {
+                    if footer > 0
+                        && current_size < slot_size + footer
+                        && size > slot_size.saturating_sub(footer)
+                    {
+                        return Err(err::INVALID_IMAGE_TOO_LARGE);
+                    }
+                }
             }
 
             if req_upgrade {

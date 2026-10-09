@@ -12,6 +12,9 @@ const ENUM_MGMT_ID_LIST: u8 = 1;
 const ENUM_MGMT_ID_SINGLE: u8 = 2;
 const ENUM_MGMT_ID_DETAILS: u8 = 3;
 
+/// `ENUM_MGMT_ERR_TOO_MANY_GROUP_ENTRIES`
+pub const ENUM_MGMT_ERR_TOO_MANY_GROUP_ENTRIES: u16 = 2;
+
 /// `ENUM_MGMT_ERR_INDEX_TOO_LARGE`
 pub const ENUM_MGMT_ERR_INDEX_TOO_LARGE: u16 = 4;
 
@@ -70,6 +73,15 @@ fn details(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         .decode(&[("groups", Kind::U32List)])
         .map_err(|_| mgmt_err::EINVAL)?;
     let allowed = decoded.list("groups").unwrap_or_default();
+
+    if device
+        .config
+        .enum_details_buffer_stack_entries
+        .is_some_and(|max| allowed.len() > max)
+    {
+        ctx.add_cmd_err(group_id::ENUM, ENUM_MGMT_ERR_TOO_MANY_GROUP_ENTRIES);
+        return Ok(());
+    }
 
     let groups = device
         .groups

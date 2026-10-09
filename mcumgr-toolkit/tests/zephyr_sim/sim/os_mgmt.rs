@@ -168,7 +168,10 @@ fn taskstat_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
             if config.os_taskstat_signed_priority {
                 int(thread.prio)
             } else {
-                uint(thread.prio as u8)
+                // `(unsigned int)thread->base.prio`; the `& 0xff` in
+                // os_mgmt_taskstat_encode_priority() applies to the return
+                // value of zcbor_uint32_put(), not to the priority
+                uint(i32::from(thread.prio) as u32)
             },
         ));
         entry.push(("tid", uint(idx as u64)));

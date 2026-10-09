@@ -84,8 +84,10 @@ fn task_statistics_without_stack_info_and_unsigned_priorities() {
     let idle = &tasks["15"];
     assert_eq!(idle.stksiz, None);
     assert_eq!(idle.stkuse, None);
-    // The priority of sysworkq (-1) is sent as unsigned 8 bit value
-    assert_eq!(tasks["-1"].prio, 255);
+    // The priority of sysworkq (-1) is sent as the unsigned 32 bit value
+    // 4294967295, which the client has to map back
+    assert_eq!(tasks["-1"].prio, -1);
+    assert_eq!(idle.prio, 15);
 }
 
 #[test]

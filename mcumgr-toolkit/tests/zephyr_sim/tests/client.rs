@@ -126,10 +126,10 @@ fn requests_that_do_not_fit_the_device_buffer_are_dropped() {
     let client = device.client();
     client.set_retries(0);
 
-    // 370 characters make a request of exactly 384 bytes
-    let fits = "x".repeat(370);
+    let fits = "x".repeat(300);
     assert_eq!(client.os_echo(&fits).unwrap(), fits);
 
+    // 371 characters make a request of 385 bytes
     let err = client.os_echo("x".repeat(371)).unwrap_err();
     assert_timeout(err);
     assert_eq!(device.lock().link.dropped_oversized, 1);

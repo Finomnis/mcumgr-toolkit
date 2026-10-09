@@ -870,3 +870,24 @@ fn erase_while_an_upload_is_in_progress() {
     );
     assert_eq!(device.lock().img.slots[1].flash[..image.len()], image[..]);
 }
+
+#[test]
+fn upload_leaves_room_for_the_update_footer() {
+    // CONFIG_MCUMGR_GRP_IMG_TOO_LARGE_SYSBUILD with equally sized slots
+    let device = SimDevice::new(Config {
+        img_too_large_sysbuild_footer: Some(0x1000),
+        ..Default::default()
+    });
+    device.lock().flash_image(0, &v1().build());
+    let client = device.client();
+
+    client
+        .image_upload(upload_data(65536 - 0x1000), None, None, false, None)
+        .unwrap();
+    client.image_erase(None).unwrap();
+
+    let err = client
+        .image_upload(upload_data(65536 - 0x1000 + 1), None, None, false, None)
+        .unwrap_err();
+    assert_image_error(err, img_mgmt_err::INVALID_IMAGE_TOO_LARGE);
+}

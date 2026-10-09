@@ -204,3 +204,20 @@ fn name_and_value_length_limits() {
     let response = client.settings_read_ext("app/name", Some(0)).unwrap();
     assert_eq!(response.val, b"");
 }
+
+#[test]
+fn load_commits_the_loaded_settings() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // settings_load() ends with settings_commit()
+    client.settings_load().unwrap();
+    assert!(
+        device
+            .lock()
+            .settings
+            .handlers
+            .iter()
+            .all(|h| h.commits == 1)
+    );
+}

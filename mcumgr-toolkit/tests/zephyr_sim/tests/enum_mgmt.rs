@@ -4,7 +4,7 @@ use mcumgr_toolkit::MCUmgrGroup;
 use mcumgr_toolkit::commands::r#enum::GroupDetailsEntry;
 
 use super::{device_error, group_error};
-use crate::sim::enum_mgmt::ENUM_MGMT_ERR_INDEX_TOO_LARGE;
+use crate::sim::enum_mgmt::{ENUM_MGMT_ERR_INDEX_TOO_LARGE, ENUM_MGMT_ERR_TOO_MANY_GROUP_ENTRIES};
 use crate::sim::smp::group_id;
 use crate::sim::{Config, SimDevice};
 
@@ -154,4 +154,32 @@ fn group_details_not_enabled() {
     let err = client.enum_get_group_details(None).unwrap_err();
     assert!(err.command_not_supported());
     assert_eq!(client.enum_get_group_count().unwrap(), 8);
+}
+
+#[test]
+fn group_details_filter_size_limit() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // CONFIG_MCUMGR_GRP_ENUM_DETAILS_BUFFER_TYPE_STACK_ENTRIES (16)
+    let details = client.enum_get_group_details(Some(&[0; 16])).unwrap();
+    assert_eq!(details.len(), 1);
+
+    let err = client.enum_get_group_details(Some(&[0; 17])).unwrap_err();
+    assert_eq!(
+        device_error(err),
+        group_error(group_id::ENUM, ENUM_MGMT_ERR_TOO_MANY_GROUP_ENTRIES)
+    );
+}
+
+#[test]
+fn group_details_filter_on_the_heap() {
+    let device = SimDevice::new(Config {
+        enum_details_buffer_stack_entries: None,
+        ..Default::default()
+    });
+    let client = device.client();
+
+    let details = client.enum_get_group_details(Some(&[0; 100])).unwrap();
+    assert_eq!(details.len(), 1);
 }
