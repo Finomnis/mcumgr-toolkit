@@ -495,6 +495,43 @@ fn upload_an_empty_file() {
 }
 
 #[test]
+fn upload_an_empty_file_over_an_existing_one() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    device
+        .lock()
+        .fs
+        .files
+        .insert("/lfs1/e.txt".into(), test_data(500));
+
+    client
+        .fs_file_upload("/lfs1/e.txt", &b""[..], 0, None)
+        .unwrap();
+    assert_eq!(client.fs_file_status("/lfs1/e.txt").unwrap().len, 0);
+}
+
+#[test]
+fn restart_an_unfinished_upload() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+    let data = test_data(3000);
+
+    let mut stop = |current: u64, _: u64| current < 1000;
+    client
+        .fs_file_upload("/lfs1/r.bin", &data[..], 3000, Some(&mut stop))
+        .unwrap_err();
+    // The device keeps the file open, waiting for the rest of the upload
+    assert!(device.lock().fs.file_open());
+
+    // Uploading the file again starts over at offset 0
+    client
+        .fs_file_upload("/lfs1/r.bin", &data[..], 3000, None)
+        .unwrap();
+    assert_eq!(device.lock().fs.files["/lfs1/r.bin"], data);
+    assert!(!device.lock().fs.file_open());
+}
+
+#[test]
 fn upload_sizes_around_the_chunk_size() {
     let device = SimDevice::with_firmware();
     let client = device.client();

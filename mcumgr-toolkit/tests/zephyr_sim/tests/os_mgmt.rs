@@ -90,16 +90,13 @@ fn task_statistics_with_unsigned_priorities() {
         os_taskstat_name: TaskstatName::Priority,
         ..Default::default()
     });
-    // Zephyr sends negative priorities as `(unsigned int)prio` here (the
-    // intended `& 0xff` applies to the encoder's return value instead), which
-    // does not fit the i32 the client decodes into. Only test priorities that
-    // are not affected by that.
-    device.lock().os.threads.retain(|t| t.prio >= 0);
     let client = device.client();
 
+    // Negative priorities are sent as `prio & 0xff`
     let tasks = client.os_task_statistics().unwrap();
     assert_eq!(tasks["15"].prio, 15);
     assert_eq!(tasks["0"].prio, 0);
+    assert_eq!(tasks["-1"].prio, 255);
 }
 
 #[test]

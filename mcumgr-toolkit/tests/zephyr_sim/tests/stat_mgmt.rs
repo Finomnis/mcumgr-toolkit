@@ -46,6 +46,13 @@ fn group_data() {
         client.stats_get_group_data("smp_svr_stats").unwrap()["ticks"],
         u64::from(u32::MAX)
     );
+
+    // 64-bit statistics (`STATS_SIZE_64`)
+    device.lock().stat.groups[0].fields[0].1 = u64::MAX;
+    assert_eq!(
+        client.stats_get_group_data("smp_svr_stats").unwrap()["ticks"],
+        u64::MAX
+    );
 }
 
 #[test]

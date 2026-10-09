@@ -83,8 +83,7 @@ fn show(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
             group
                 .fields
                 .iter()
-                // stat_mgmt_cb_encode() uses zcbor_uint32_put()
-                .map(|(name, value)| (text(name), uint(*value as u32 as u64)))
+                .map(|(name, value)| (text(name), uint(*value)))
                 .collect(),
         ),
     );
