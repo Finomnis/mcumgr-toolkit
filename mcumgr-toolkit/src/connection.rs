@@ -77,10 +77,8 @@ impl Transceiver {
         group_id: u16,
         command_id: u8,
         data: &[u8],
+        sequence_num: u8,
     ) -> Result<&'_ [u8], ExecuteError> {
-        let sequence_num = self.next_seqnum;
-        self.next_seqnum = self.next_seqnum.wrapping_add(1);
-
         self.transport
             .send_frame(write_operation, sequence_num, group_id, command_id, data)?;
 
@@ -107,8 +105,20 @@ impl Transceiver {
 
         let mut counter = 0;
 
+        // This is a deliberate deviation from the SMP spec:
+        // The spec specifies that every sequence number is different.
+        // However, reusing the sequence number for retries
+        // has the advantage that responses that would just slightly
+        // time out can be matched to the next retry.
+        //
+        // Both Zephyr and MCUboot impls are compatible with this;
+        // they simply echo the sequence number back in the response.
+        let sequence_num = this.next_seqnum;
+        this.next_seqnum = this.next_seqnum.wrapping_add(1);
+
         polonius_loop!(|this| -> Result<&'polonius [u8], ExecuteError> {
-            let result = this.transceive_command(write_operation, group_id, command_id, data);
+            let result =
+                this.transceive_command(write_operation, group_id, command_id, data, sequence_num);
 
             if counter >= num_retries {
                 polonius_return!(result)

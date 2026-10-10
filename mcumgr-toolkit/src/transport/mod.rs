@@ -182,7 +182,7 @@ pub trait Transport {
     /// # Arguments
     ///
     /// * `write_operation` - If the frame contains a write or read operation.
-    /// * `sequence_num` - A sequence number. Must be different every time this function is called.
+    /// * `sequence_num` - A sequence number.
     /// * `group_id` - The group ID of the command.
     /// * `command_id` - The command ID.
     /// * `data` - The payload data of the command, most likely CBOR encoded.
