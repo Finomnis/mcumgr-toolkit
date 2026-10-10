@@ -1,0 +1,176 @@
+{
+  "zephyr": {
+    "branch": "main",
+    "commit": "6f1ab6c070f29bb7657a43cd1e59767bfe497ab1",
+    "files": [
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/enum_mgmt/enum_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/enum_mgmt/enum_mgmt.h",
+        "sha256": "19873905a09579165e1ed65d834a8cd297bdc21a5a3df90b4966c888211799f7"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/fs_mgmt/fs_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/fs_mgmt/fs_mgmt.h",
+        "sha256": "cec0c14b0e32b534b61199abfdbf61d08be924b83ca43889239d1ffd2a7310db"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/img_mgmt/img_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/img_mgmt/img_mgmt.h",
+        "sha256": "2bae2be28897d3821fc13308cd6d5f57fade81533813edefc11ec050e5f3baa0"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/os_mgmt/os_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/os_mgmt/os_mgmt.h",
+        "sha256": "265211599cc7748eea23fca96a267f729c582feecebd33abf0ee27dfcc75cf00"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/settings_mgmt/settings_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/settings_mgmt/settings_mgmt.h",
+        "sha256": "6595482f0d291a57237e88bc6b419547e90f4de5363fd9d377841bf610f95f8f"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/shell_mgmt/shell_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/shell_mgmt/shell_mgmt.h",
+        "sha256": "1acf2164b0922ba1cd5b7671d31b239b3dd0cdf1522f18459b5839bb06df0d23"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/grp/stat_mgmt/stat_mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/grp/stat_mgmt/stat_mgmt.h",
+        "sha256": "af216aac66811c5c41bbb288a9caf14ba161eac72548b106aa210b1c654ba6e0"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/mgmt/callbacks.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/mgmt/callbacks.h",
+        "sha256": "5143e70d2e3b880f139a9e1d0824aa3ca2a4ec4940a92695a40d2ead51fb23c7"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/mgmt/handlers.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/mgmt/handlers.h",
+        "sha256": "340091c78810625fe7a580f985023016788572efac540c26442532a59b70cf61"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/mgmt/mgmt.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/mgmt/mgmt.h",
+        "sha256": "1cf215edaf6f40b292638850088d053d8799f4a2d14767cdc39de986f525aca6"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/mgmt/mgmt_defines.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/mgmt/mgmt_defines.h",
+        "sha256": "1040ab73768f2fa03b2cf59c908524d51cf1d4ea2ab7f2a3bcb4893503b574cf"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/smp/smp.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/smp/smp.h",
+        "sha256": "96111a85b0df0dbc6053f13d8de6394b64360a7a8164aa740e9c5fbde64b9ec8"
+      },
+      {
+        "path": "include/zephyr/mgmt/mcumgr/smp/smp_client.h",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/include/zephyr/mgmt/mcumgr/smp/smp_client.h",
+        "sha256": "e9192744ca824b0636f5052e85145d7680ef74ed0f8dd7536f9c21468717fc8a"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/enum_mgmt/src/enum_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/enum_mgmt/src/enum_mgmt.c",
+        "sha256": "e8b988b3866ea1c6893453fd6a582c84d3a0e512cda13c0f5e3ac1c8a1bc3d5d"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt.c",
+        "sha256": "acfcfad1ac676126dee857968427363240e9b49fe28419f8d6edf06dad1075d2"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt_hash_checksum.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt_hash_checksum.c",
+        "sha256": "16af47b4ab9209aafd1a22ac44c0205d5ee5431efe4bc768d3bfcd4ad512c047"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt_hash_checksum_crc32.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt_hash_checksum_crc32.c",
+        "sha256": "024dcd6d2c40a8d1697c4db8ad2a4aea0576252f18327eb997df5286f5ab4881"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt_hash_checksum_sha256.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/fs_mgmt/src/fs_mgmt_hash_checksum_sha256.c",
+        "sha256": "b1689dd2bd60252bf055bdebc9411e0f598cbb4ab81b149cc37b960e16dbc0f1"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/img_mgmt/src/img_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/img_mgmt/src/img_mgmt.c",
+        "sha256": "6461479f5ce0f0dbca3fe6e6222c1a82b5d1b81ffcd2cb4494405c1c482124a2"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/img_mgmt/src/img_mgmt_state.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/img_mgmt/src/img_mgmt_state.c",
+        "sha256": "7bb71fa673e18635fdc941d0aeb62e27cf59a7043f3292dfc2ff7ad38bbcda23"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/img_mgmt/src/img_mgmt_util.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/img_mgmt/src/img_mgmt_util.c",
+        "sha256": "b66d77049985a59773901cbf73f9a5d5edf09c3651d102034997e132ea08ba8b"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/img_mgmt/src/zephyr_img_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/img_mgmt/src/zephyr_img_mgmt.c",
+        "sha256": "52394ad942ada923d028ecbb33e2b0133214a2bf670299e00c04602b08ab0f03"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/os_mgmt/Kconfig",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/os_mgmt/Kconfig",
+        "sha256": "39c444aa7fe6ffc0a906fe020e585906d372de55e6e0f722eaef9c9bee6fc5f4"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/os_mgmt/src/os_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/os_mgmt/src/os_mgmt.c",
+        "sha256": "fa21ded7f405838cbe9d9b3ebe2bc82270bbf05147f6f0e218931e6d14b8d694"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/settings_mgmt/src/settings_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/settings_mgmt/src/settings_mgmt.c",
+        "sha256": "af4b62fa219d4bb971d68b5636c49f016aeeeaa16a33e0624fbe5164437b7cba"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/shell_mgmt/Kconfig",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/shell_mgmt/Kconfig",
+        "sha256": "7cf3840821f03265de223b2bf21d029b818551760b47d14bd2f1283ea02634ff"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/shell_mgmt/src/shell_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/shell_mgmt/src/shell_mgmt.c",
+        "sha256": "382a34e213d259c6b3d4423da64d705716db8298f0566b37e2c41ca5301c2bc5"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/stat_mgmt/src/stat_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/stat_mgmt/src/stat_mgmt.c",
+        "sha256": "645c1b203db045a46cd7a7846e18cc833a8d09276b145090986794b7b72fed94"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/grp/zephyr_basic/src/basic_mgmt.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/grp/zephyr_basic/src/basic_mgmt.c",
+        "sha256": "b2fa094ae56b95f94332ef1a2a8879e50b622f78754f77ed33cbfc87b8c4af5c"
+      },
+      {
+        "path": "subsys/mgmt/mcumgr/smp/src/smp.c",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/subsys/mgmt/mcumgr/smp/src/smp.c",
+        "sha256": "2784381700efcdc1d77ffdf5f3d5e96bd5c32ea829c2ef4d29c169ec57889d1c"
+      },
+      {
+        "path": "west.yml",
+        "url": "https://github.com/zephyrproject-rtos/zephyr/blob/6f1ab6c070f29bb7657a43cd1e59767bfe497ab1/west.yml",
+        "sha256": "b798e67140ad99dc22e47e2b0f21e4d33b0aad3bad4d63136cb5237956be3a9f"
+      }
+    ]
+  },
+  "mcuboot": {
+    "commit": "aa32eaaad41cc345e6f6e6633368a4766fe23c25",
+    "selected_by": "Zephyr west.yml",
+    "path": "boot/bootutil/include/bootutil/image.h",
+    "url": "https://github.com/mcu-tools/mcuboot/blob/aa32eaaad41cc345e6f6e6633368a4766fe23c25/boot/bootutil/include/bootutil/image.h",
+    "sha256": "bce005d19bd10a32fbbc18c002bb97f398af5fd9a506fa02e5f57e12c9464bf5"
+  },
+  "crate": {
+    "branch": "main",
+    "commit": "40713d88731362b903f085f7a8be64bd23ce4205",
+    "version": "0.17.1",
+    "use": "Public API signatures and contracts only; not the protocol oracle"
+  }
+}
