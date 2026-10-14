@@ -8,6 +8,13 @@ use polonius_the_crab::prelude::*;
 /// Serial port based transport
 pub mod serial;
 
+/// Serial port based transport without encoding
+/// or framing markers
+///
+/// Only suitable for serial backends that already
+/// implement reliability mechanisms, like USB CDC ACM.
+pub mod raw_serial;
+
 /// BLE based transport
 #[cfg(feature = "ble")]
 pub mod ble;
