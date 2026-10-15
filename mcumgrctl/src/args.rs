@@ -85,6 +85,10 @@ pub struct App<CustomBackendArgs: clap::Args> {
     #[arg(short, long, default_value_t = 115200, requires = "serial_transport")]
     pub baud: u32,
 
+    /// Use serial port raw mode
+    #[arg(long, requires = "serial_transport")]
+    pub raw: bool,
+
     /// Use the given UDP endpoint as backend
     ///
     /// Accepts a hostname or IP address with an optional port.
