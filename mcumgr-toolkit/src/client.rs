@@ -29,6 +29,7 @@ use crate::{
     connection::{Connection, ExecuteError},
     transport::{
         IntoTransport, ReceiveError, SMP_TRANSFER_BUFFER_SIZE,
+        raw_serial::RawSerialTransport,
         serial::{ConfigurableTimeout, SerialTransport},
         udp::UdpTransport,
     },
@@ -342,28 +343,34 @@ impl MCUmgrClient {
         Self::new_from_transport(SerialTransport::new(serial))
     }
 
-    /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
+    /// Creates a Zephyr MCUmgr SMP client in raw mode, based on a configured and opened serial port.
     ///
-    /// Useful for programming many devices in rapid succession, as Windows usually
-    /// gives each one a different COMxx identifier.
+    /// Requires the device to also be configured in raw serial mode.
     ///
-    /// # Arguments
+    /// Only suitable for reliable serial connections like USB CDC ACM,
+    /// because raw mode has no framing, encoding or error detection.
     ///
-    /// * `identifier` - A regex that identifies the device.
-    /// * `baud_rate` - The baud rate the port should operate at.
-    /// * `timeout` - The communication timeout.
+    /// ```no_run
+    /// # use mcumgr_toolkit::MCUmgrClient;
+    /// # fn main() {
+    /// let serial = serialport::new("COM42", 115200)
+    ///     .open()
+    ///     .unwrap();
     ///
-    /// # Identifier examples
-    ///
-    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
-    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
-    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
-    ///
-    pub fn new_from_usb_serial(
+    /// let mut client = MCUmgrClient::new_from_raw_serial(serial);
+    /// # }
+    /// ```
+    pub fn new_from_raw_serial<T: Send + Read + Write + ConfigurableTimeout + 'static>(
+        serial: T,
+    ) -> Self {
+        Self::new_from_transport(RawSerialTransport::new(serial))
+    }
+
+    fn open_usb_serial(
         identifier: impl AsRef<str>,
         baud_rate: u32,
         timeout: Duration,
-    ) -> Result<Self, UsbSerialError> {
+    ) -> Result<Box<dyn serialport::SerialPort>, UsbSerialError> {
         let identifier = identifier.as_ref();
 
         let ports = serialport::available_ports()?
@@ -437,7 +444,59 @@ impl MCUmgrClient {
             .timeout(timeout)
             .open()?;
 
-        Ok(Self::new_from_serial(serial))
+        Ok(serial)
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
+    ///
+    /// Useful for programming many devices in rapid succession, as Windows usually
+    /// gives each one a different COMxx identifier.
+    ///
+    /// # Arguments
+    ///
+    /// * `identifier` - A regex that identifies the device.
+    /// * `baud_rate` - The baud rate the port should operate at.
+    /// * `timeout` - The communication timeout.
+    ///
+    /// # Identifier examples
+    ///
+    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+    ///
+    pub fn new_from_usb_serial(
+        identifier: impl AsRef<str>,
+        baud_rate: u32,
+        timeout: Duration,
+    ) -> Result<Self, UsbSerialError> {
+        Self::open_usb_serial(identifier, baud_rate, timeout).map(Self::new_from_serial)
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client in raw mode based on a USB serial port identified by VID:PID.
+    ///
+    /// Requires the device to also be configured in raw serial mode.
+    ///
+    /// Useful for programming many devices in rapid succession, as Windows usually
+    /// gives each one a different COMxx identifier.
+    ///
+    /// # Arguments
+    ///
+    /// * `identifier` - A regex that identifies the device.
+    /// * `baud_rate` - The baud rate the port should operate at.
+    /// * `timeout` - The communication timeout.
+    ///
+    /// # Identifier examples
+    ///
+    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+    ///
+    pub fn new_from_raw_usb_serial(
+        identifier: impl AsRef<str>,
+        baud_rate: u32,
+        timeout: Duration,
+    ) -> Result<Self, UsbSerialError> {
+        Self::open_usb_serial(identifier, baud_rate, timeout).map(Self::new_from_raw_serial)
     }
 
     /// Creates a Zephyr MCUmgr SMP client based on a BLE connection.

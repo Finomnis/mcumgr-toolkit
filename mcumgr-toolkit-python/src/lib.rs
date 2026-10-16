@@ -78,6 +78,33 @@ impl MCUmgrClient {
         })
     }
 
+    /// Creates a new serial port based Zephyr MCUmgr SMP client in raw mode.
+    ///
+    /// Requires the device to also be configured in raw serial mode.
+    ///
+    /// Only suitable for reliable serial connections like USB CDC ACM,
+    /// because raw mode has no framing, encoding or error detection.
+    ///
+    /// ### Arguments
+    ///
+    /// * `serial` - The identifier of the serial device. (Windows: `COMxx`, Linux: `/dev/ttyXX`)
+    /// * `baud_rate` - The baud rate of the serial port.
+    /// * `timeout_ms` - The communication timeout, in ms.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (serial, baud_rate=115200, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn raw_serial(serial: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
+        let serial = serialport::new(serial, baud_rate)
+            .timeout(Duration::from_millis(timeout_ms))
+            .open()
+            .into_diagnostic()
+            .map_err(err_to_pyerr)?;
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_raw_serial(serial);
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
     /// Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
     ///
     /// Useful for programming many devices in rapid succession, as Windows usually
@@ -99,6 +126,42 @@ impl MCUmgrClient {
     #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
     fn usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
         let client = ::mcumgr_toolkit::MCUmgrClient::new_from_usb_serial(
+            identifier,
+            baud_rate,
+            Duration::from_millis(timeout_ms),
+        )
+        .map_err(err_to_pyerr)?;
+        Ok(MCUmgrClient {
+            client: Mutex::new(Some(Arc::new(client))),
+        })
+    }
+
+    /// Creates a Zephyr MCUmgr SMP client in raw mode based on a USB serial port identified by VID:PID.
+    ///
+    /// Requires the device to also be configured in raw serial mode.
+    ///
+    /// Only suitable for reliable serial connections like USB CDC ACM,
+    /// because raw mode has no framing, encoding or error detection.
+    ///
+    /// Useful for programming many devices in rapid succession, as Windows usually
+    /// gives each one a different COMxx identifier.
+    ///
+    /// ### Arguments
+    ///
+    /// * `identifier` - A regex that identifies the device.
+    /// * `baud_rate` - The baud rate the port should operate at.
+    /// * `timeout_ms` - The communication timeout, in ms.
+    ///
+    /// ### Identifier examples
+    ///
+    /// - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+    /// - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+    /// - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+    ///
+    #[staticmethod]
+    #[pyo3(signature = (identifier, baud_rate=115200, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
+    fn raw_usb_serial(identifier: &str, baud_rate: u32, timeout_ms: u64) -> PyResult<Self> {
+        let client = ::mcumgr_toolkit::MCUmgrClient::new_from_raw_usb_serial(
             identifier,
             baud_rate,
             Duration::from_millis(timeout_ms),

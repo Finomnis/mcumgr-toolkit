@@ -135,13 +135,26 @@ fn cli_main_internal<T: clap::Args>(
             .timeout(Duration::from_millis(args.common.timeout))
             .open()
             .map_err(CliError::OpenSerialFailed)?;
-        Client::new(MCUmgrClient::new_from_serial(serial))
+
+        if args.raw {
+            Client::new(MCUmgrClient::new_from_raw_serial(serial))
+        } else {
+            Client::new(MCUmgrClient::new_from_serial(serial))
+        }
     } else if let Some(identifier) = args.usb_serial {
-        let result = MCUmgrClient::new_from_usb_serial(
-            identifier,
-            args.baud,
-            Duration::from_millis(args.common.timeout),
-        );
+        let result = if args.raw {
+            MCUmgrClient::new_from_raw_usb_serial(
+                identifier,
+                args.baud,
+                Duration::from_millis(args.common.timeout),
+            )
+        } else {
+            MCUmgrClient::new_from_usb_serial(
+                identifier,
+                args.baud,
+                Duration::from_millis(args.common.timeout),
+            )
+        };
 
         if let Err(UsbSerialError::IdentifierEmpty { ports }) = &result {
             if args.common.json {

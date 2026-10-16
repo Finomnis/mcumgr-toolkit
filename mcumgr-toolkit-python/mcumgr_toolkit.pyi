@@ -171,9 +171,50 @@ class MCUmgrClient:
         * `timeout_ms` - The communication timeout, in ms.
         """
     @staticmethod
+    def raw_serial(serial: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+        r"""
+        Creates a new serial port based Zephyr MCUmgr SMP client in raw mode.
+        
+        Requires the device to also be configured in raw serial mode.
+        
+        Only suitable for reliable serial connections like USB CDC ACM,
+        because raw mode has no framing, encoding or error detection.
+        
+        ### Arguments
+        
+        * `serial` - The identifier of the serial device. (Windows: `COMxx`, Linux: `/dev/ttyXX`)
+        * `baud_rate` - The baud rate of the serial port.
+        * `timeout_ms` - The communication timeout, in ms.
+        """
+    @staticmethod
     def usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
         r"""
         Creates a Zephyr MCUmgr SMP client based on a USB serial port identified by VID:PID.
+        
+        Useful for programming many devices in rapid succession, as Windows usually
+        gives each one a different COMxx identifier.
+        
+        ### Arguments
+        
+        * `identifier` - A regex that identifies the device.
+        * `baud_rate` - The baud rate the port should operate at.
+        * `timeout_ms` - The communication timeout, in ms.
+        
+        ### Identifier examples
+        
+        - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
+        - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.
+        - `1234:.*:[2-3]` - Vendor ID 1234, any Product Id, Interface 2 or 3.
+        """
+    @staticmethod
+    def raw_usb_serial(identifier: builtins.str, baud_rate: builtins.int = 115200, timeout_ms: builtins.int = 1000) -> MCUmgrClient:
+        r"""
+        Creates a Zephyr MCUmgr SMP client in raw mode based on a USB serial port identified by VID:PID.
+        
+        Requires the device to also be configured in raw serial mode.
+        
+        Only suitable for reliable serial connections like USB CDC ACM,
+        because raw mode has no framing, encoding or error detection.
         
         Useful for programming many devices in rapid succession, as Windows usually
         gives each one a different COMxx identifier.
