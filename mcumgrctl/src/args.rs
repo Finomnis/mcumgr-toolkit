@@ -85,7 +85,10 @@ pub struct App<CustomBackendArgs: clap::Args> {
     #[arg(short, long, default_value_t = 115200, requires = "serial_transport")]
     pub baud: u32,
 
-    /// Use serial port raw mode
+    /// Use raw serial mode (no encoding, framing or error detection)
+    ///
+    /// Requires the device to be configured with CONFIG_UART_MCUMGR_RAW_PROTOCOL.
+    /// Only suitable for reliable connections like USB CDC ACM.
     #[arg(long, requires = "serial_transport")]
     pub raw: bool,
 

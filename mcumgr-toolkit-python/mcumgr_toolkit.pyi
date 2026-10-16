@@ -175,6 +175,11 @@ class MCUmgrClient:
         r"""
         Creates a new serial port based Zephyr MCUmgr SMP client in raw mode.
         
+        Requires the device to also be configured in raw serial mode.
+        
+        Only suitable for reliable serial connections like USB CDC ACM,
+        because raw mode has no framing, encoding or error detection.
+        
         ### Arguments
         
         * `serial` - The identifier of the serial device. (Windows: `COMxx`, Linux: `/dev/ttyXX`)
@@ -208,16 +213,19 @@ class MCUmgrClient:
         
         Requires the device to also be configured in raw serial mode.
         
+        Only suitable for reliable serial connections like USB CDC ACM,
+        because raw mode has no framing, encoding or error detection.
+        
         Useful for programming many devices in rapid succession, as Windows usually
         gives each one a different COMxx identifier.
         
-        # Arguments
+        ### Arguments
         
         * `identifier` - A regex that identifies the device.
         * `baud_rate` - The baud rate the port should operate at.
-        * `timeout` - The communication timeout.
+        * `timeout_ms` - The communication timeout, in ms.
         
-        # Identifier examples
+        ### Identifier examples
         
         - `1234:89AB` - Vendor ID 1234, Product ID 89AB. Will fail if product has multiple serial ports.
         - `1234:89AB:12` - Vendor ID 1234, Product ID 89AB, Interface 12.

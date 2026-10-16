@@ -10,14 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- Add serial  transport layer support
-  - Add serial raw modes:
+- Add raw serial transport mode
+  - Add raw serial constructors:
     - Rust:
       - `MCUmgrClient::new_from_raw_serial`
       - `MCUmgrClient::new_from_raw_usb_serial`
     - Python:
-      - `MCUmgrClient::raw_serial`
-      - `MCUmgrClient::raw_usb_serial`
+      - `MCUmgrClient.raw_serial`
+      - `MCUmgrClient.raw_usb_serial`
     - CLI: add `--raw` flag
         - Only valid if specified with `--serial` or `--usb-serial`
         - Changes the message encoding of the given serial port to raw
