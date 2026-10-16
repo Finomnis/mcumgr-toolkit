@@ -5,7 +5,7 @@ use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, 
 /// A transport layer implementation for serial ports, without any framing,
 /// encoding or error detection.
 ///
-/// Only suitable for stable serial connections like USB CDC ACM.
+/// Only suitable for reliable serial connections like USB CDC ACM.
 pub struct RawSerialTransport<T> {
     serial: T,
 }
