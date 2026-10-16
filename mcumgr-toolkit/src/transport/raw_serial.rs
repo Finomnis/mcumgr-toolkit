@@ -1,4 +1,4 @@
-Iuse crate::transport::{SmpHeader, serial::ConfigurableTimeout};
+use crate::transport::{SmpHeader, serial::ConfigurableTimeout};
 
 use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport};
 
