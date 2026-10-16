@@ -1,4 +1,4 @@
-use crate::transport::{SmpHeader, serial::ConfigurableTimeout};
+Iuse crate::transport::{SmpHeader, serial::ConfigurableTimeout};
 
 use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport};
 
@@ -51,7 +51,7 @@ where
         let data = &mut data[..len];
         self.serial.read_exact(data)?;
 
-        log::debug!("Received UDP SMP Frame ({} bytes)", len);
+        log::debug!("Received Raw SMP Frame ({} bytes)", len);
         Ok(&buffer[..SMP_HEADER_SIZE + len])
     }
 
