@@ -89,7 +89,7 @@ pub struct App<CustomBackendArgs: clap::Args> {
     ///
     /// Requires the device to also be configured in raw mode.
     /// Only suitable for reliable connections like USB CDC ACM.
-    #[arg(long, requires = "serial_transport")]
+    #[arg(long, verbatim_doc_comment, requires = "serial_transport")]
     pub raw: bool,
 
     /// Use the given UDP endpoint as backend
