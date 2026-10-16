@@ -8,7 +8,6 @@ use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, 
 /// Only suitable for reliable serial connections like USB CDC ACM.
 pub struct RawSerialTransport<T> {
     serial: T,
-    send_buffer: Vec<u8>,
 }
 
 impl<T> RawSerialTransport<T> {
@@ -19,10 +18,7 @@ impl<T> RawSerialTransport<T> {
     /// * `serial` - A serial port object, like [`serialport::SerialPort`].
     ///
     pub fn new(serial: T) -> Self {
-        Self {
-            serial,
-            send_buffer: Vec::new(),
-        }
+        Self { serial }
     }
 }
 
@@ -35,12 +31,8 @@ where
         header: [u8; SMP_HEADER_SIZE],
         data: &[u8],
     ) -> Result<(), SendError> {
-        // Send header and data in a single write, to avoid splitting
-        // small frames across multiple USB transfers.
-        self.send_buffer.clear();
-        self.send_buffer.extend_from_slice(&header);
-        self.send_buffer.extend_from_slice(data);
-        self.serial.write_all(&self.send_buffer)?;
+        self.serial.write_all(&header)?;
+        self.serial.write_all(data)?;
         log::debug!("Sent Raw SMP Frame ({} bytes)", data.len());
         Ok(())
     }
