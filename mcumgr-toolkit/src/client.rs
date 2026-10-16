@@ -347,8 +347,8 @@ impl MCUmgrClient {
     ///
     /// Requires the device to also be configured in raw serial mode.
     ///
-    /// Only suitable for stable serial connections like USB CDC ACM,
-    /// because raw mode has no framing, encoding or error correction.
+    /// Only suitable for reliable serial connections like USB CDC ACM,
+    /// because raw mode has no framing, encoding or error detection.
     ///
     /// ```no_run
     /// # use mcumgr_toolkit::MCUmgrClient;
