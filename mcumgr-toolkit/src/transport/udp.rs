@@ -1,5 +1,5 @@
 use std::{
-    net::{Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket},
+    net::{Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs, UdpSocket},
     time::Duration,
 };
 
@@ -16,22 +16,44 @@ impl UdpTransport {
     ///
     /// # Arguments
     ///
-    /// * `addr` - The remote UDP endpoint (e.g. `"192.168.1.1:1337".parse().unwrap()`).
+    /// * `addr` - The remote UDP endpoint (e.g. `"host.name:1337"`).
     /// * `timeout` - The initial communication timeout.
     ///
-    pub fn new(addr: SocketAddr, timeout: Duration) -> std::io::Result<Self> {
-        let bind_addr: SocketAddr = if addr.is_ipv4() {
-            (Ipv4Addr::UNSPECIFIED, 0).into()
+    pub fn new(addr: impl ToSocketAddrs, timeout: Duration) -> std::io::Result<Self> {
+        fn try_connect(addr: SocketAddr) -> std::io::Result<UdpSocket> {
+            log::debug!("Connecting to {addr} ...");
+            let bind_addr: SocketAddr = if addr.is_ipv4() {
+                (Ipv4Addr::UNSPECIFIED, 0).into()
+            } else {
+                (Ipv6Addr::UNSPECIFIED, 0).into()
+            };
+            let socket = UdpSocket::bind(bind_addr)?;
+            socket.connect(addr)?;
+            Ok(socket)
+        }
+
+        let mut error = None;
+
+        for addr in addr.to_socket_addrs()? {
+            match try_connect(addr) {
+                Ok(socket) => {
+                    socket.set_read_timeout(Some(timeout))?;
+                    return Ok(Self {
+                        socket,
+                        send_buffer: Vec::new(),
+                    });
+                }
+                Err(e) => error = Some(e),
+            }
+        }
+
+        if let Some(error) = error {
+            Err(error)
         } else {
-            (Ipv6Addr::UNSPECIFIED, 0).into()
-        };
-        let socket = UdpSocket::bind(bind_addr)?;
-        socket.connect(addr)?;
-        socket.set_read_timeout(Some(timeout))?;
-        Ok(Self {
-            socket,
-            send_buffer: Vec::new(),
-        })
+            Err(std::io::Error::other(
+                "address resolution yielded an empty list",
+            ))
+        }
     }
 }
 
