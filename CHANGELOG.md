@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes
 
 - Rust: `MCUmgrClient::new_from_udp` now takes `ToSocketAddrs` instead of `SocketAddr`
+- Bump MSRV to `1.89`
 
 ### Changes
 
