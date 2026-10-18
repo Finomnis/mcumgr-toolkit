@@ -1,5 +1,5 @@
 use std::{
-    net::{Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket},
+    net::{Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs, UdpSocket},
     time::Duration,
 };
 
@@ -19,7 +19,7 @@ impl UdpTransport {
     /// * `addr` - The remote UDP endpoint (e.g. `"host.name:1337"`).
     /// * `timeout` - The initial communication timeout.
     ///
-    pub fn new(addr: impl std::net::ToSocketAddrs, timeout: Duration) -> std::io::Result<Self> {
+    pub fn new(addr: impl ToSocketAddrs, timeout: Duration) -> std::io::Result<Self> {
         fn try_connect(addr: SocketAddr) -> std::io::Result<UdpSocket> {
             log::debug!("Connecting to {addr} ...");
             let bind_addr: SocketAddr = if addr.is_ipv4() {

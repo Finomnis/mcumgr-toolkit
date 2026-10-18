@@ -10,6 +10,7 @@ pub mod image_run_state;
 use std::{
     collections::HashMap,
     io::{self, Read, Write},
+    net::ToSocketAddrs,
     sync::atomic::AtomicUsize,
     time::Duration,
 };
@@ -583,10 +584,7 @@ impl MCUmgrClient {
     /// let mut client = MCUmgrClient::new_from_udp("mydevice.local:1337", Duration::from_millis(1000)).unwrap();
     /// # }
     /// ```
-    pub fn new_from_udp(
-        addr: impl std::net::ToSocketAddrs,
-        timeout: Duration,
-    ) -> Result<Self, UdpError> {
+    pub fn new_from_udp(addr: impl ToSocketAddrs, timeout: Duration) -> Result<Self, UdpError> {
         Ok(Self::new_from_transport(UdpTransport::new(addr, timeout)?))
     }
 
