@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.20.0] - xxxx-xx-xx
+
+### Breaking changes
+
+- Rust: `Client::new_from_udp` now takes a `SocketAddr` iterator instead of a single element
+
+### Changes
+
+- UDP connection fallback to other addresses
+    - Example: IPv4 fallback if first resolved address is IPv6 and system does not support IPv6
+
+
 ## [0.19.3] - 2026-10-16
 
 ### Changes
@@ -605,6 +617,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.20.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.19.3...0.20.0
 [0.19.3]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.19.2...0.19.3
 [0.19.2]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.19.1...0.19.2
 [0.19.1]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.19.0...0.19.1
