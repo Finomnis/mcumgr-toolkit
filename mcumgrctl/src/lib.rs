@@ -33,7 +33,7 @@ use mcumgr_toolkit::{MCUmgrClient, client::UsbSerialError};
 use mcumgr_toolkit::client::BleError;
 
 pub use crate::args::CommonArgs;
-use crate::errors::CliError;
+use crate::{args::SocketAddrs, errors::CliError};
 
 /// The result of a backend init function, in case it ran.
 pub enum BackendInitResult {
@@ -181,9 +181,10 @@ fn cli_main_internal<T: clap::Args>(
             BackendInitResult::Finished => return Ok(()),
             BackendInitResult::Connected(client) => Client::new(client),
         }
-    } else if let Some(addrs) = args.udp {
+    } else if let Some(SocketAddrs(addrs)) = args.udp {
+        log::debug!("Resolved addresses: {:?}", addrs);
         Client::new(
-            MCUmgrClient::new_from_udp(addrs.0, Duration::from_millis(args.common.timeout))
+            MCUmgrClient::new_from_udp(addrs, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::UdpOpenFailed)?,
         )
     } else if let Some(init_result) = custom_backends(&args.custom_backends, &args.common)

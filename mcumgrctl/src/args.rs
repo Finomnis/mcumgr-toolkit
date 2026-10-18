@@ -12,11 +12,6 @@ const DEFAULT_SMP_UDP_PORT: u16 = 1337;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SocketAddrs(pub Vec<std::net::SocketAddr>);
-impl From<SocketAddrs> for Vec<std::net::SocketAddr> {
-    fn from(value: SocketAddrs) -> Self {
-        value.0
-    }
-}
 
 fn parse_udp_addrs(s: &str) -> miette::Result<SocketAddrs> {
     let addrs: Vec<std::net::SocketAddr> = match s.to_socket_addrs() {

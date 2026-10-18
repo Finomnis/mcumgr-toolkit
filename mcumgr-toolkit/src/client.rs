@@ -571,7 +571,7 @@ impl MCUmgrClient {
     /// # use std::net::SocketAddr;
     /// # fn main() {
     /// let addr: SocketAddr = "192.168.1.1:1337".parse().unwrap();
-    /// let mut client = MCUmgrClient::new_from_udp(&[addr], Duration::from_millis(1000)).unwrap();
+    /// let mut client = MCUmgrClient::new_from_udp([addr], Duration::from_millis(1000)).unwrap();
     /// # }
     /// ```
     ///
