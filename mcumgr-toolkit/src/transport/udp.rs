@@ -34,7 +34,7 @@ impl UdpTransport {
 
         let mut error = None;
 
-        for addr in addrs.to_socket_addrs()? {
+        for addr in addr.to_socket_addrs()? {
             match try_connect(addr) {
                 Ok(socket) => {
                     socket.set_read_timeout(Some(timeout))?;

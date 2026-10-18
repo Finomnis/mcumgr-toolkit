@@ -10,7 +10,6 @@ pub mod image_run_state;
 use std::{
     collections::HashMap,
     io::{self, Read, Write},
-    net::SocketAddr,
     sync::atomic::AtomicUsize,
     time::Duration,
 };

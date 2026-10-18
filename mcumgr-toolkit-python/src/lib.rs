@@ -183,28 +183,17 @@ impl MCUmgrClient {
     #[staticmethod]
     #[pyo3(signature = (host, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
     fn udp(host: Either<std::net::IpAddr, &str>, port: u16, timeout_ms: u64) -> PyResult<Self> {
-        let addrs: Vec<SocketAddr> = match host {
-            Either::Right(addr_str) => {
-                let addrs: Vec<SocketAddr> = (addr_str, port)
-                    .to_socket_addrs()
-                    .into_diagnostic()
-                    .map_err(err_to_pyerr)?
-                    .collect();
-
-                if addrs.is_empty() {
-                    return Err(PyRuntimeError::new_err(format!(
-                        "Failed to resolve '{addr_str}:{port}'"
-                    )));
-                }
-
-                addrs
-            }
-            Either::Left(addr) => vec![(addr, port).into()],
-        };
-
-        let client =
-            ::mcumgr_toolkit::MCUmgrClient::new_from_udp(addrs, Duration::from_millis(timeout_ms))
-                .map_err(err_to_pyerr)?;
+        let client = match host {
+            Either::Left(addr) => ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
+                (addr, port),
+                Duration::from_millis(timeout_ms),
+            ),
+            Either::Right(addr_str) => ::mcumgr_toolkit::MCUmgrClient::new_from_udp(
+                (addr_str, port),
+                Duration::from_millis(timeout_ms),
+            ),
+        }
+        .map_err(err_to_pyerr)?;
         Ok(MCUmgrClient {
             client: Mutex::new(Some(Arc::new(client))),
         })
