@@ -251,7 +251,7 @@ impl std::fmt::Debug for BleDevices {
 #[derive(Error, Debug, Diagnostic)]
 pub enum UdpError {
     /// An I/O error occurred while opening the UDP socket
-    #[error("Failed to open UDP socket")]
+    #[error("Failed to initialize UDP transport")]
     #[diagnostic(code(mcumgr_toolkit::udp::io_error))]
     Io(#[from] io::Error),
 }

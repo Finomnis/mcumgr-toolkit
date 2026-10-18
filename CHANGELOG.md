@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking changes
 
-- Rust: `Client::new_from_udp` now takes `ToSocketAddrs` instead of `SocketAddr`
+- Rust: `MCUmgrClient::new_from_udp` now takes `ToSocketAddrs` instead of `SocketAddr`
 
 ### Changes
 
