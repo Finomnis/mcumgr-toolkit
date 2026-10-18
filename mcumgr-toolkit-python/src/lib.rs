@@ -9,7 +9,6 @@ use pyo3::{prelude::*, types::PyBytes};
 use pyo3_stub_gen::{derive::*, *};
 
 use std::collections::HashMap;
-use std::net::{SocketAddr, ToSocketAddrs};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
