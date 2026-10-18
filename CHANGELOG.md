@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Improved UDP connection handling when DNS resolution returns multiple addresses
-- CLI: BLE: add "(connected)" tag to BLE devices that are already connected
+- CLI: BLE: add `(connected)` tag to BLE devices that are already connected
 
 
 ## [0.19.3] - 2026-10-16
