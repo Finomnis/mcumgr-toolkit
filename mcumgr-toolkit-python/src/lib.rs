@@ -182,9 +182,9 @@ impl MCUmgrClient {
     ///
     #[staticmethod]
     #[pyo3(signature = (host, port=1337, timeout_ms=::mcumgr_toolkit::DEFAULT_TIMEOUT_MS))]
-    fn udp(host: Either<&str, std::net::IpAddr>, port: u16, timeout_ms: u64) -> PyResult<Self> {
+    fn udp(host: Either<std::net::IpAddr, &str>, port: u16, timeout_ms: u64) -> PyResult<Self> {
         let addrs: Vec<SocketAddr> = match host {
-            Either::Left(addr_str) => {
+            Either::Right(addr_str) => {
                 let addrs: Vec<SocketAddr> = (addr_str, port)
                     .to_socket_addrs()
                     .into_diagnostic()
@@ -199,7 +199,7 @@ impl MCUmgrClient {
 
                 addrs
             }
-            Either::Right(addr) => vec![(addr, port).into()],
+            Either::Left(addr) => vec![(addr, port).into()],
         };
 
         let client =
