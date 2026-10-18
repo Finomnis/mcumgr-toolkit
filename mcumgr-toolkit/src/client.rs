@@ -204,6 +204,8 @@ pub struct BleDeviceInfo {
     pub name: Option<String>,
     /// RSSI, in dBm
     pub rssi: Option<i16>,
+    /// Connected
+    pub connected: bool,
 }
 
 /// A list of available BLE devices
@@ -223,7 +225,13 @@ impl std::fmt::Display for BleDevices {
             return Ok(());
         }
 
-        for BleDeviceInfo { id, name, rssi } in &self.0 {
+        for BleDeviceInfo {
+            id,
+            name,
+            rssi,
+            connected,
+        } in &self.0
+        {
             writeln!(f)?;
 
             if let Some(name) = name {
@@ -234,6 +242,10 @@ impl std::fmt::Display for BleDevices {
 
             if let Some(rssi) = rssi {
                 write!(f, " ({rssi} dBm)")?;
+            }
+
+            if *connected {
+                write!(f, " (connected)")?;
             }
         }
         Ok(())
