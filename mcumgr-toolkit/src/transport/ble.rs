@@ -160,6 +160,10 @@ impl BleRuntime {
                                         id: current_identifier,
                                         name: properties.local_name,
                                         rssi: properties.rssi,
+                                        connected: potential_device
+                                            .is_connected()
+                                            .await
+                                            .unwrap_or(false),
                                     });
                             }
                         }
@@ -224,6 +228,10 @@ impl BleRuntime {
                                                 id: current_identifier,
                                                 name: properties.local_name,
                                                 rssi: properties.rssi,
+                                                connected: device
+                                                    .is_connected()
+                                                    .await
+                                                    .unwrap_or(false),
                                             });
                                         }
                                     }
