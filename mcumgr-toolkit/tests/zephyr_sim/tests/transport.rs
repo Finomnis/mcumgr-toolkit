@@ -11,17 +11,20 @@ use crate::sim::smp::group_id;
 use crate::sim::{Fault, SimDevice};
 
 #[test]
-fn lost_responses_are_retried_with_a_new_sequence_number() {
+fn lost_responses_are_retried_with_the_same_sequence_number() {
     let device = SimDevice::with_firmware();
     let client = device.client();
 
     device.inject_faults([Fault::DropResponse, Fault::DropResponse]);
     assert_eq!(client.os_echo("retry me").unwrap(), "retry me");
+    assert_eq!(client.os_echo("next").unwrap(), "next");
 
+    // Retries repeat the sequence number, the next command uses a new one
     let requests = device.requests();
-    assert_eq!(requests.len(), 3);
-    assert_ne!(requests[0].hdr.seq, requests[1].hdr.seq);
-    assert_ne!(requests[1].hdr.seq, requests[2].hdr.seq);
+    assert_eq!(requests.len(), 4);
+    assert_eq!(requests[0].hdr.seq, requests[1].hdr.seq);
+    assert_eq!(requests[1].hdr.seq, requests[2].hdr.seq);
+    assert_ne!(requests[2].hdr.seq, requests[3].hdr.seq);
 }
 
 #[test]
@@ -71,17 +74,29 @@ fn responses_with_other_sequence_numbers_are_skipped() {
 }
 
 #[test]
-fn a_late_response_to_an_earlier_attempt_is_skipped() {
+fn a_late_response_to_an_earlier_attempt_is_accepted() {
     let device = SimDevice::with_firmware();
     let client = device.client();
 
+    // The first attempt times out; its response arrives after the retry was
+    // sent, and the response to the retry is lost. As the retry has the same
+    // sequence number, the late response answers it.
+    device.inject_faults([Fault::LateResponse, Fault::DropResponse]);
+    assert_eq!(client.os_echo("late").unwrap(), "late");
+    assert_eq!(device.requests().len(), 2);
+}
+
+#[test]
+fn a_surplus_response_to_a_retry_is_skipped() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    // The late response to the first attempt answers the retry; the response
+    // to the retry itself is left over and skipped by the next command
     device.inject_faults([Fault::LateResponse]);
     assert_eq!(client.os_echo("late").unwrap(), "late");
-
-    // The first attempt timed out; its response arrived together with the
-    // response to the retry and was discarded.
-    assert_eq!(device.requests().len(), 2);
     assert_eq!(client.os_echo("next").unwrap(), "next");
+    assert_eq!(device.requests().len(), 3);
 }
 
 #[test]
