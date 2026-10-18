@@ -184,8 +184,11 @@ fn cli_main_internal<T: clap::Args>(
     } else if let Some(SocketAddrs(addrs)) = args.udp {
         log::debug!("Resolved addresses: {:?}", addrs);
         Client::new(
-            MCUmgrClient::new_from_udp(addrs, Duration::from_millis(args.common.timeout))
-                .map_err(CliError::UdpOpenFailed)?,
+            MCUmgrClient::new_from_udp(
+                addrs.as_slice(),
+                Duration::from_millis(args.common.timeout),
+            )
+            .map_err(CliError::UdpOpenFailed)?,
         )
     } else if let Some(init_result) = custom_backends(&args.custom_backends, &args.common)
         .map_err(|e| CliError::CustomBackendError(e.into()))?
