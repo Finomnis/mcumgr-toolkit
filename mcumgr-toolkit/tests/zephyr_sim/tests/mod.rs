@@ -5,6 +5,7 @@ mod firmware_update;
 mod fs_mgmt;
 mod img_mgmt;
 mod os_mgmt;
+mod raw_serial_transport;
 mod serial_transport;
 mod settings_mgmt;
 mod shell_mgmt;

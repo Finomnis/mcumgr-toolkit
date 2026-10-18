@@ -6,7 +6,8 @@
 //! and is connected to the client through the public
 //! [`Transport`](mcumgr_toolkit::transport::Transport) trait via
 //! [`MCUmgrClient::new_from_transport`](mcumgr_toolkit::MCUmgrClient::new_from_transport),
-//! or through a simulated serial port speaking Zephyr's SMP-over-UART framing.
+//! or through simulated serial ports speaking Zephyr's SMP-over-UART framing or
+//! its raw UART protocol.
 
 // Same as in the library: two ifs are often more readable
 #![allow(clippy::collapsible_if)]

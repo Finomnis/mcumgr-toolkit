@@ -28,6 +28,7 @@ pub mod fs_mgmt;
 pub mod image;
 pub mod img_mgmt;
 pub mod os_mgmt;
+pub mod raw_serial;
 pub mod serial;
 pub mod settings_mgmt;
 pub mod shell_mgmt;
@@ -377,6 +378,11 @@ impl SimDevice {
     /// A client connected through Zephyr's serial (UART/console) transport
     pub fn serial_client(&self) -> MCUmgrClient {
         MCUmgrClient::new_from_serial(serial::SimSerialPort::new(self.clone()))
+    }
+
+    /// A client connected through Zephyr's raw UART transport
+    pub fn raw_serial_client(&self) -> MCUmgrClient {
+        MCUmgrClient::new_from_raw_serial(raw_serial::SimRawSerialPort::new(self.clone()))
     }
 
     /// Queues faults for the next requests, see [`Fault`]
