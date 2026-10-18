@@ -181,9 +181,9 @@ fn cli_main_internal<T: clap::Args>(
             BackendInitResult::Finished => return Ok(()),
             BackendInitResult::Connected(client) => Client::new(client),
         }
-    } else if let Some(addr) = args.udp {
+    } else if let Some(addrs) = args.udp {
         Client::new(
-            MCUmgrClient::new_from_udp(addr, Duration::from_millis(args.common.timeout))
+            MCUmgrClient::new_from_udp(addrs.0, Duration::from_millis(args.common.timeout))
                 .map_err(CliError::UdpOpenFailed)?,
         )
     } else if let Some(init_result) = custom_backends(&args.custom_backends, &args.common)

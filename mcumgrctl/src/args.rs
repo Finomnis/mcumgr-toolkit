@@ -10,17 +10,29 @@ use crate::groups::Group;
 
 const DEFAULT_SMP_UDP_PORT: u16 = 1337;
 
-fn parse_udp_addr(s: &str) -> miette::Result<std::net::SocketAddr> {
-    let addr = match s.to_socket_addrs() {
-        Ok(mut iter) => iter.next(),
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SocketAddrs(pub Vec<std::net::SocketAddr>);
+impl From<SocketAddrs> for Vec<std::net::SocketAddr> {
+    fn from(value: SocketAddrs) -> Self {
+        value.0
+    }
+}
+
+fn parse_udp_addrs(s: &str) -> miette::Result<SocketAddrs> {
+    let addrs: Vec<std::net::SocketAddr> = match s.to_socket_addrs() {
+        Ok(iter) => iter.collect(),
         Err(err) if err.kind() == std::io::ErrorKind::InvalidInput => (s, DEFAULT_SMP_UDP_PORT)
             .to_socket_addrs()
             .into_diagnostic()?
-            .next(),
+            .collect(),
         Err(err) => return Err(err).into_diagnostic(),
     };
 
-    addr.ok_or_else(|| miette::miette!("Failed to resolve address"))
+    if addrs.is_empty() {
+        miette::bail!("Failed to resolve address");
+    }
+
+    Ok(SocketAddrs(addrs))
 }
 
 /// Settings relevant for all backends
@@ -96,8 +108,8 @@ pub struct App<CustomBackendArgs: clap::Args> {
     ///
     /// Accepts a hostname or IP address with an optional port.
     /// Port defaults to 1337 if omitted (e.g. "mydevice.local" or "192.168.1.1:1337").
-    #[arg(long, verbatim_doc_comment, group="transport", value_parser = parse_udp_addr, value_name = "ADDR")]
-    pub udp: Option<std::net::SocketAddr>,
+    #[arg(long, verbatim_doc_comment, group="transport", value_parser = parse_udp_addrs, value_name = "ADDR")]
+    pub udp: Option<SocketAddrs>,
 
     /// Use the given BLE device as backend
     ///
