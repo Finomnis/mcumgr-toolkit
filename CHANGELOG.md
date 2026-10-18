@@ -10,12 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking changes
 
-- Rust: `Client::new_from_udp` now takes a `SocketAddr` iterator instead of a single element
+- Rust: `Client::new_from_udp` now takes `ToSocketAddrs` instead of `SocketAddr`
 
 ### Changes
 
-- UDP connection fallback to other addresses
-    - Example: IPv4 fallback if first resolved address is IPv6 and system does not support IPv6
+- Improved UDP connection handling when DNS resolution returns multiple addresses
 
 
 ## [0.19.3] - 2026-10-16
