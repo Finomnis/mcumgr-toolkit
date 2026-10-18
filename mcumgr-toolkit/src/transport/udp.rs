@@ -16,13 +16,10 @@ impl UdpTransport {
     ///
     /// # Arguments
     ///
-    /// * `addrs` - The remote UDP endpoint addresses (e.g. `"host.name:1337".to_socket_addrs().unwrap()`).
+    /// * `addr` - The remote UDP endpoint (e.g. `"host.name:1337"`).
     /// * `timeout` - The initial communication timeout.
     ///
-    pub fn new(
-        addrs: impl IntoIterator<Item = SocketAddr>,
-        timeout: Duration,
-    ) -> std::io::Result<Self> {
+    pub fn new(addr: impl std::net::ToSocketAddrs, timeout: Duration) -> std::io::Result<Self> {
         fn try_connect(addr: SocketAddr) -> std::io::Result<UdpSocket> {
             log::debug!("Connecting to {addr} ...");
             let bind_addr: SocketAddr = if addr.is_ipv4() {
@@ -37,7 +34,7 @@ impl UdpTransport {
 
         let mut error = None;
 
-        for addr in addrs {
+        for addr in addrs.to_socket_addrs()? {
             match try_connect(addr) {
                 Ok(socket) => {
                     socket.set_read_timeout(Some(timeout))?;

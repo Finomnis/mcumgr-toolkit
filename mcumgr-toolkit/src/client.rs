@@ -560,7 +560,7 @@ impl MCUmgrClient {
     ///
     /// # Arguments
     ///
-    /// * `addrs` - The remote UDP endpoint addresses.
+    /// * `addr` - The remote UDP endpoint.
     /// * `timeout` - The communication timeout.
     ///
     /// # Example
@@ -570,28 +570,25 @@ impl MCUmgrClient {
     /// # use std::time::Duration;
     /// # use std::net::SocketAddr;
     /// # fn main() {
-    /// let addr: SocketAddr = "192.168.1.1:1337".parse().unwrap();
-    /// let mut client = MCUmgrClient::new_from_udp([addr], Duration::from_millis(1000)).unwrap();
+    /// let addr: SocketAddr = ([192, 168, 1, 1], 1337).into();
+    /// let mut client = MCUmgrClient::new_from_udp(addr, Duration::from_millis(1000)).unwrap();
     /// # }
     /// ```
     ///
-    /// Alternatively, you can use [`to_socket_addrs`](https://doc.rust-lang.org/std/net/trait.ToSocketAddrs.html#tymethod.to_socket_addrs)
-    /// to resolve hostnames:
+    /// Or via DNS resolution:
     ///
     /// ```no_run
     /// # use mcumgr_toolkit::MCUmgrClient;
     /// # use std::time::Duration;
-    /// # use std::net::ToSocketAddrs;
     /// # fn main() {
-    /// let addrs = "mydevice.local:1337".to_socket_addrs().unwrap();
-    /// let mut client = MCUmgrClient::new_from_udp(addrs, Duration::from_millis(1000)).unwrap();
+    /// let mut client = MCUmgrClient::new_from_udp("mydevice.local:1337", Duration::from_millis(1000)).unwrap();
     /// # }
     /// ```
     pub fn new_from_udp(
-        addrs: impl IntoIterator<Item = SocketAddr>,
+        addr: impl std::net::ToSocketAddrs,
         timeout: Duration,
     ) -> Result<Self, UdpError> {
-        Ok(Self::new_from_transport(UdpTransport::new(addrs, timeout)?))
+        Ok(Self::new_from_transport(UdpTransport::new(addr, timeout)?))
     }
 
     /// Configures the maximum SMP frame size that we can send to the device.
