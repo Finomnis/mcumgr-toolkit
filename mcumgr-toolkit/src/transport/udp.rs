@@ -50,9 +50,8 @@ impl UdpTransport {
         if let Some(error) = error {
             Err(error)
         } else {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Endpoint address list empty",
+            Err(std::io::Error::other(
+                "address resolution yielded an empty list",
             ))
         }
     }
