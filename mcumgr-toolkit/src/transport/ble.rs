@@ -194,6 +194,7 @@ impl BleRuntime {
                         match events.next().await.ok_or(BleError::ScanStopped)? {
                             btleplug::api::CentralEvent::DeviceDiscovered(id)
                             | btleplug::api::CentralEvent::DeviceConnected(id)
+                            | btleplug::api::CentralEvent::DeviceDisconnected(id)
                             | btleplug::api::CentralEvent::DeviceUpdated(id)
                             | btleplug::api::CentralEvent::DeviceServicesModified(id)
                             | btleplug::api::CentralEvent::ServiceDataAdvertisement {
