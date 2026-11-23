@@ -63,6 +63,12 @@ pub enum Group {
     },
     /// Execute a raw SMP command
     Raw(#[command(flatten)] raw::RawCommand),
+    /// Upload a file with a raw SMP command
+    ///
+    /// Chunks like `image upload`: every chunk carries the given fields,
+    /// `off` and `data`, the first one also `len`. The device answers
+    /// each chunk with `off`, the offset it expects next.
+    RawUpload(#[command(flatten)] raw::RawUploadCommand),
 }
 
 pub fn run(
@@ -82,6 +88,7 @@ pub fn run(
         Group::Enum { command } => r#enum::run(client, multiprogress, args, command),
         Group::Zephyr { command } => zephyr::run(client, multiprogress, args, command),
         Group::Raw(raw_command) => raw::run(client, multiprogress, args, raw_command),
+        Group::RawUpload(command) => raw::run_upload(client, multiprogress, args, command),
     }
 }
 

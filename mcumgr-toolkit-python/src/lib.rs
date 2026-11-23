@@ -8,7 +8,7 @@ use pyo3::types::PyDateTime;
 use pyo3::{prelude::*, types::PyBytes};
 use pyo3_stub_gen::{derive::*, *};
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -1017,6 +1017,66 @@ impl MCUmgrClient {
             .raw_command(&command)
             .map_err(err_to_pyerr)?;
         RawPyAnyCommand::convert_result(py, result)
+    }
+
+    /// Upload data with a user-defined command that chunks like `image_upload`.
+    ///
+    /// Every chunk is a map of `fields`, `off` and `data`; the first chunk
+    /// also carries `len`, the size of the whole upload. The device answers
+    /// each chunk with `off`, the offset it expects next.
+    ///
+    /// ### Arguments
+    ///
+    /// * `group_id` - The group ID of the command.
+    /// * `command_id` - The command ID.
+    /// * `data` - The data to upload.
+    /// * `fields` - User-defined fields, sent with every chunk. Must not contain `off`, `data` or `len`.
+    /// * `progress` - A callable object that takes (transmitted, total) values as parameters.
+    ///                Any return value is ignored. Raising an exception aborts the operation.
+    ///
+    /// ### Performance
+    ///
+    /// Chunks fill the SMP frame size, see `set_frame_size`.
+    ///
+    #[pyo3(signature = (group_id, command_id, data, fields=None, progress=None))]
+    pub fn raw_upload<'py>(
+        &self,
+        group_id: u16,
+        command_id: u8,
+        data: &Bound<'py, PyBytes>,
+        fields: Option<BTreeMap<String, Bound<'py, PyAny>>>,
+        #[gen_stub(override_type(type_repr="typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]]", imports=("builtins", "collections.abc", "typing")))]
+        progress: Option<Bound<'py, PyAny>>,
+    ) -> PyResult<()> {
+        let bytes: &[u8] = data.extract()?;
+        let fields = fields
+            .unwrap_or_default()
+            .into_iter()
+            .map(|(key, value)| Ok((key, serde_pyobject::from_pyobject(value)?)))
+            .collect::<PyResult<BTreeMap<String, ciborium::Value>>>()?;
+
+        let mut cb_error = None;
+
+        let res = if let Some(progress) = progress {
+            let mut cb = |current, total| match progress.call((current, total), None) {
+                Ok(_) => true,
+                Err(e) => {
+                    cb_error = Some(e);
+                    false
+                }
+            };
+            self.get_client()?
+                .raw_upload(group_id, command_id, &fields, bytes, Some(&mut cb))
+        } else {
+            self.get_client()?
+                .raw_upload(group_id, command_id, &fields, bytes, None)
+        };
+
+        if let Some(cb_error) = cb_error {
+            return Err(cb_error);
+        }
+
+        res.map_err(err_to_pyerr)
     }
 
     fn __enter__(slf: PyRef<Self>) -> PyResult<PyRef<Self>> {

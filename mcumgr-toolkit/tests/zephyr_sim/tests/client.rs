@@ -5,13 +5,15 @@ use std::time::Duration;
 use mcumgr_toolkit::MCUmgrClient;
 use mcumgr_toolkit::client::MCUmgrClientError;
 use mcumgr_toolkit::commands::McuMgrCommand;
+use mcumgr_toolkit::connection::ExecuteError;
 use serde::{Deserialize, Serialize};
 
 use super::{assert_timeout, device_error, smp_error};
+use crate::sim::cbor::{Kind, uint};
 use crate::sim::image::ImageBuilder;
 use crate::sim::os_mgmt::Thread;
-use crate::sim::smp::{group_id, mgmt_err, op};
-use crate::sim::{Config, SimDevice};
+use crate::sim::smp::{Ctx, Group, group_id, mgmt_err, op, write};
+use crate::sim::{Config, Device, SimDevice};
 
 #[test]
 fn new_from_transport_connects_to_the_device() {
@@ -248,6 +250,104 @@ fn raw_command_executes_built_in_commands() {
         .raw_command(&mcumgr_toolkit::commands::os::Echo { d: "built-in" })
         .unwrap();
     assert_eq!(response.r, "built-in");
+}
+
+/// Group and command of a user-defined upload
+const USER_GROUP: u16 = 64;
+const USER_UPLOAD: u8 = 0;
+
+/// The user-defined fields of [`user_upload`]
+#[derive(Serialize)]
+struct UserUploadFields {
+    slot: u32,
+}
+
+/// A user-defined upload handler that answers every chunk with the next offset
+fn user_upload(_device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
+    let decoded = ctx
+        .decode(&[
+            ("slot", Kind::U32),
+            ("off", Kind::Size),
+            ("len", Kind::Size),
+            ("data", Kind::Bstr),
+        ])
+        .map_err(|_| mgmt_err::EINVAL)?;
+    let (Some(off), Some(data)) = (decoded.uint("off"), decoded.bytes("data")) else {
+        return Err(mgmt_err::EINVAL);
+    };
+
+    ctx.put("off", uint(off + data.len() as u64));
+    Ok(())
+}
+
+#[test]
+fn raw_upload_sends_user_fields_and_chunks() {
+    let device = SimDevice::with_firmware();
+    device.lock().groups.push(Group::new(
+        USER_GROUP,
+        "user",
+        &[(USER_UPLOAD, write(user_upload))],
+    ));
+    let client = device.client();
+
+    let data: Vec<u8> = (0..5000u32).map(|i| i as u8).collect();
+    let mut progress = vec![];
+    client
+        .raw_upload(
+            USER_GROUP,
+            USER_UPLOAD,
+            &UserUploadFields { slot: 1 },
+            &data,
+            Some(&mut |done, total| {
+                progress.push((done, total));
+                true
+            }),
+        )
+        .unwrap();
+
+    let requests = device.requests_for(USER_GROUP, USER_UPLOAD);
+    assert!(requests.len() > 1);
+    let mut uploaded = vec![];
+    for (index, request) in requests.iter().enumerate() {
+        assert_eq!(request.hdr.op, op::WRITE);
+        assert_eq!(request.field("slot"), Some(&uint(1u8)));
+        assert_eq!(request.field("off"), Some(&uint(uploaded.len() as u64)));
+        assert_eq!(request.field("len").is_some(), index == 0);
+        uploaded.extend_from_slice(request.field("data").unwrap().as_bytes().unwrap());
+    }
+    assert_eq!(uploaded, data);
+    assert_eq!(progress.last(), Some(&(5000, 5000)));
+}
+
+#[test]
+fn raw_upload_to_an_unknown_group_is_not_supported() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    let err = client
+        .raw_upload(
+            USER_GROUP,
+            USER_UPLOAD,
+            &UserUploadFields { slot: 1 },
+            [1, 2, 3],
+            None,
+        )
+        .unwrap_err();
+    assert!(err.command_not_supported());
+}
+
+#[test]
+fn raw_upload_rejects_fields_that_are_not_a_map() {
+    let device = SimDevice::with_firmware();
+    let client = device.client();
+
+    let err = client
+        .raw_upload(USER_GROUP, USER_UPLOAD, &[1, 2], [1, 2, 3], None)
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        MCUmgrClientError::ExecuteError(ExecuteError::EncodeFailed(_))
+    ));
 }
 
 #[test]

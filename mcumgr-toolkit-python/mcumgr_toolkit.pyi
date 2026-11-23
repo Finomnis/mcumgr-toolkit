@@ -675,6 +675,27 @@ class MCUmgrClient:
         # Returns: {'r': 'Hello!'}
         ```
         """
+    def raw_upload(self, group_id: builtins.int, command_id: builtins.int, data: bytes, fields: typing.Optional[typing.Mapping[builtins.str, typing.Any]] = None, progress: typing.Optional[collections.abc.Callable[[builtins.int, builtins.int], None]] = None) -> None:
+        r"""
+        Upload data with a user-defined command that chunks like `image_upload`.
+        
+        Every chunk is a map of `fields`, `off` and `data`; the first chunk
+        also carries `len`, the size of the whole upload. The device answers
+        each chunk with `off`, the offset it expects next.
+        
+        ### Arguments
+        
+        * `group_id` - The group ID of the command.
+        * `command_id` - The command ID.
+        * `data` - The data to upload.
+        * `fields` - User-defined fields, sent with every chunk. Must not contain `off`, `data` or `len`.
+        * `progress` - A callable object that takes (transmitted, total) values as parameters.
+                       Any return value is ignored. Raising an exception aborts the operation.
+        
+        ### Performance
+        
+        Chunks fill the SMP frame size, see `set_frame_size`.
+        """
     def __enter__(self) -> MCUmgrClient: ...
     def __exit__(self, _exc_type: typing.Any, _exc_value: typing.Any, _traceback: typing.Any) -> builtins.bool:
         r"""
