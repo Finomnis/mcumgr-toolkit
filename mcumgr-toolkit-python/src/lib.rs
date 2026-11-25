@@ -466,7 +466,7 @@ impl MCUmgrClient {
         self.get_client()?
             .os_bootloader_info()
             .map_err(err_to_pyerr)
-            .map(|info| serde_pyobject::to_pyobject(py, &info))?
+            .map(|info| pythonize::pythonize(py, &info))?
             .map_err(Into::into)
     }
 

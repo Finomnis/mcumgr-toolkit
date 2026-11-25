@@ -11,7 +11,7 @@ macro_rules! generate_repr_from_serialize {
         #[pyo3::pymethods]
         impl $type {
             fn __repr__(&self, py: pyo3::Python<'_>) -> pyo3::PyResult<String> {
-                let py_obj = serde_pyobject::to_pyobject(py, self)?;
+                let py_obj = ::pythonize::pythonize(py, self)?;
 
                 let repr_str = py
                     .import("builtins")?

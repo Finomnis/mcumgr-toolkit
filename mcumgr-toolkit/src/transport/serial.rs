@@ -1,11 +1,7 @@
 use std::time::Duration;
 
 use base64::prelude::*;
-use ringbuf::{
-    LocalRb,
-    storage::Heap,
-    traits::{Consumer, Observer, Producer},
-};
+use ringbuf::{LocalRb, storage::Heap, traits::Observer};
 use serialport::SerialPort;
 
 use super::{ReceiveError, SMP_HEADER_SIZE, SMP_TRANSFER_BUFFER_SIZE, SendError, Transport};

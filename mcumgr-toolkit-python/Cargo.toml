@@ -44,7 +44,7 @@ vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
 pyo3 = { workspace = true, features = ["chrono", "either"] }
 pyo3-stub-gen.workspace = true
 pyo3-log.workspace = true
-serde-pyobject.workspace = true
+pythonize.workspace = true
 serde.workspace = true
 ciborium.workspace = true
 mcumgr-toolkit = { workspace = true, features = ["ble"] }
