@@ -667,6 +667,7 @@ class MCUmgrClient:
         * `group_id` - The group ID of the command
         * `command_id` - The command ID
         * `data` - Anything that can be serialized as a proper packet payload.
+          `bytes` and `bytearray` are sent as CBOR byte strings.
         
         ### Example
         
