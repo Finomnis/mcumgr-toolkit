@@ -109,7 +109,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          manylinux: 2014
+          manylinux: 2_28
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10 --features vendored-dbus
 
       - name: Install built wheel
@@ -143,7 +143,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          manylinux: 2014
+          manylinux: 2_28
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10 --features vendored-dbus
 
       - uses: uraimo/run-on-arch-action@v3.2.1
