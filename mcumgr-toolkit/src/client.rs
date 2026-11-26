@@ -24,7 +24,10 @@ use thiserror::Error;
 use crate::{
     bootloader::BootloaderInfo,
     commands::{
-        self, fs::file_upload_max_data_chunk_size, image::image_upload_max_data_chunk_size,
+        self,
+        fs::file_upload_max_data_chunk_size,
+        image::image_upload_max_data_chunk_size,
+        raw::{raw_upload_fields, raw_upload_max_data_chunk_size},
     },
     connection::{Connection, ExecuteError},
     transport::{
@@ -1508,5 +1511,84 @@ impl MCUmgrClient {
         command: &T,
     ) -> Result<T::Response, MCUmgrClientError> {
         self.connection.execute_command(command).map_err(Into::into)
+    }
+
+    /// Upload data with a user-defined command that chunks like
+    /// [`image_upload`](MCUmgrClient::image_upload).
+    ///
+    /// Every chunk is a map of `fields`, `off` and `data`; the first chunk
+    /// also carries `len`, the size of the whole upload. The device answers
+    /// each chunk with `off`, the offset it expects next.
+    ///
+    /// # Arguments
+    ///
+    /// * `group_id` - The group ID of the command.
+    /// * `command_id` - The command ID.
+    /// * `fields` - User-defined fields, sent with every chunk. Anything that serializes to a map
+    ///   without `off`, `data` or `len`, e.g. a struct or a `HashMap`.
+    /// * `data` - The data to upload.
+    /// * `progress` - A callback that receives a pair of (transferred, total) bytes and returns false on error.
+    ///
+    /// # Performance
+    ///
+    /// Chunks fill the SMP frame size, see [`MCUmgrClient::set_frame_size`].
+    pub fn raw_upload(
+        &self,
+        group_id: u16,
+        command_id: u8,
+        fields: &impl Serialize,
+        data: impl AsRef<[u8]>,
+        mut progress: Option<&mut dyn FnMut(u64, u64) -> bool>,
+    ) -> Result<(), MCUmgrClientError> {
+        let fields = raw_upload_fields(fields).map_err(|e| ExecuteError::EncodeFailed(e.into()))?;
+
+        let first_chunk_size_max =
+            raw_upload_max_data_chunk_size(self.usable_frame_size(), &fields, true)
+                .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+        let other_chunk_size_max =
+            raw_upload_max_data_chunk_size(self.usable_frame_size(), &fields, false)
+                .map_err(MCUmgrClientError::FrameSizeTooSmall)?;
+
+        let data = data.as_ref();
+        let size = data.len();
+        let mut offset = 0;
+
+        loop {
+            let first_chunk = offset == 0;
+            let chunk_size_max = if first_chunk {
+                first_chunk_size_max
+            } else {
+                other_chunk_size_max
+            };
+            let chunk_data = &data[offset..offset + (size - offset).min(chunk_size_max)];
+
+            let upload_response = self.connection.execute_command(&commands::raw::RawUpload {
+                group_id,
+                command_id,
+                fields: &fields,
+                off: offset as u64,
+                data: chunk_data,
+                len: first_chunk.then_some(size as u64),
+            })?;
+
+            offset = upload_response
+                .off
+                .try_into()
+                .map_err(|_| MCUmgrClientError::UnexpectedOffset)?;
+
+            if offset > size {
+                return Err(MCUmgrClientError::UnexpectedOffset);
+            }
+
+            if let Some(progress) = &mut progress {
+                if !progress(offset as u64, size as u64) {
+                    return Err(MCUmgrClientError::ProgressCallbackError);
+                };
+            }
+
+            if offset >= size {
+                return Ok(());
+            }
+        }
     }
 }

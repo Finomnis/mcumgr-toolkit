@@ -6,6 +6,8 @@ pub mod fs;
 pub mod image;
 /// [Default/OS management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_0.html) group commands
 pub mod os;
+/// Raw commands of user-defined groups
+pub(crate) mod raw;
 /// [Settings (config) management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_3.html) group commands
 pub mod settings;
 /// [Shell management](https://docs.zephyrproject.org/latest/services/device_mgmt/smp_groups/smp_group_9.html) group commands
@@ -89,6 +91,52 @@ impl std::io::Write for CountingWriter {
     fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
     }
+}
+
+/// Computes how large the `data` field of an upload request is allowed to be.
+///
+/// # Arguments
+///
+/// * `smp_frame_size` - The max allowed size of an SMP frame.
+/// * `request`        - The largest possible request, with exactly one byte of `data`.
+///
+fn max_data_chunk_size(smp_frame_size: usize, request: &impl Serialize) -> std::io::Result<usize> {
+    const MGMT_HDR_SIZE: usize = 8; // Size of SMP header
+
+    let mut size_counter = CountingWriter::new();
+    ciborium::into_writer(request, &mut size_counter).map_err(|_| data_too_large_error())?;
+
+    let size_with_one_byte = size_counter.bytes_written;
+    let size_without_data = size_with_one_byte - 1;
+
+    let estimated_data_size = smp_frame_size
+        .checked_sub(MGMT_HDR_SIZE)
+        .ok_or_else(data_too_large_error)?
+        .checked_sub(size_without_data)
+        .ok_or_else(data_too_large_error)?;
+
+    let data_length_bytes = if estimated_data_size == 0 {
+        return Err(data_too_large_error());
+    } else if estimated_data_size <= u8::MAX as usize {
+        1
+    } else if estimated_data_size <= u16::MAX as usize {
+        2
+    } else if estimated_data_size <= u32::MAX as usize {
+        4
+    } else {
+        8
+    };
+
+    // Remove data length entry from estimated data size
+    let actual_data_size = estimated_data_size
+        .checked_sub(data_length_bytes as usize)
+        .ok_or_else(data_too_large_error)?;
+
+    if actual_data_size == 0 {
+        return Err(data_too_large_error());
+    }
+
+    Ok(actual_data_size)
 }
 
 impl_mcumgr_command!((read,  MGMT_GROUP_ID_OS, 0): os::Echo<'_> => os::EchoResponse);
