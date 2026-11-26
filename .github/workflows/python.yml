@@ -91,7 +91,7 @@ jobs:
           retention-days: 7
 
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Temporary fix for i686 build issue
     strategy:
       fail-fast: false
       matrix:
@@ -110,7 +110,6 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: 2014
-          docker-options: --network=host
           args: --release --out dist -m mcumgr-toolkit-python/Cargo.toml -i python3.10 --features vendored-dbus
 
       - name: Install built wheel
