@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Python: replace `serde-pyobject` with `pythonize`
   - might be a breaking change in rare corner cases
-- Python: upgrade manylinux from `2014` to `2_28`
 
 
 ## [0.20.0] - 2026-10-18
