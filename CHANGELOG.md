@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes
 
 - Python: replace `serde-pyobject` with `pythonize`
-  - might be a breaking change in rare corner cases
+  - raw commands: `bytes`, integers beyond 64 bit, sets and dataclasses are now supported
+  - raw commands: arbitrary Python objects (e.g. pydantic models) are no longer accepted;
+    pass a `dict` or dataclass instead
 
 
 ## [0.20.0] - 2026-10-18
