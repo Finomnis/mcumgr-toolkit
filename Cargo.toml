@@ -10,10 +10,8 @@ rust-version = "1.89"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/Finomnis/mcumgr-toolkit"
-description = "Software suite for Zephyr's MCUmgr protocol"
 keywords = ["zephyr", "mcumgr", "smp"]
 
-exclude = ["/.gitignore", "/.github/"]
 
 [workspace.dependencies]
 mcumgr-toolkit = { version = "0.20.0", path = "./mcumgr-toolkit" }
@@ -24,7 +22,7 @@ rand = "0.10.1"
 base64 = "0.23.1"
 crc = "3.4.0"
 sha2 = "0.11.0"
-ringbuf = "0.5.0"
+ringbuf = "0.6.0"
 serde = "1.0.228"
 serde_bytes = "0.11.19"
 serde_json = "1.0.145"
@@ -39,10 +37,10 @@ strum = "0.28.0"
 indicatif = "0.18.3"
 indicatif-log-bridge = "0.2.3"
 chrono = "0.4.42"
-pyo3 = "0.29.0"
+pyo3 = "0.30.0"
 pyo3-stub-gen = "0.23.0"
 pyo3-log = "0.13.3"
-serde-pyobject = "0.8.0"
+pythonize = "0.30.0"
 hex = "0.4.3"
 regex = "1.12.2"
 console = "0.16.2"

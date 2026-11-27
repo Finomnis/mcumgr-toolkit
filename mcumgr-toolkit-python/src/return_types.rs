@@ -121,7 +121,7 @@ impl SettingData {
 
 /// Data format of the hash/checksum type
 #[gen_stub_pyclass_enum]
-#[pyclass(frozen, eq, eq_int, hash, skip_from_py_object)]
+#[pyclass(frozen, eq, eq_int, hash)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Serialize)]
 pub enum FileChecksumDataFormat {
     /// Data is a number
