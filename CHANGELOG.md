@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rust: replace `chrono` with `jiff`
   - `MCUmgrClient::os_get_datetime`, `MCUmgrClient::os_set_datetime`, `DateTimeGetResponse` and `DateTimeSet`
     now use `jiff::civil::DateTime` instead of `chrono::NaiveDateTime`
+- CLI: rename diagnostic code `mcumgrctl::chrono_parse` to `mcumgrctl::datetime_parse`
 
 
 ## [0.21.0] - 2026-11-27
