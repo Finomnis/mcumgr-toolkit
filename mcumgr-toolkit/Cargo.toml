@@ -36,7 +36,7 @@ serde_repr.workspace = true
 ciborium.workspace = true
 log.workspace = true
 strum = { workspace = true, features = ["derive"] }
-jiff.workspace = true
+jiff = { workspace = true, features = ["serde"] }
 hex = { workspace = true, features = ["serde"] }
 regex.workspace = true
 polonius-the-crab.workspace = true

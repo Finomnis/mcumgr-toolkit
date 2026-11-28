@@ -169,26 +169,6 @@ impl<'de> serde::Deserialize<'de> for MemoryPoolStatisticsResponse {
     }
 }
 
-/// Parses a [`jiff::civil::DateTime`] object with optional timezone specifiers
-fn deserialize_datetime_and_ignore_timezone<'de, D>(
-    de: D,
-) -> Result<jiff::civil::DateTime, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    static PARSER: jiff::fmt::temporal::DateTimeParser = jiff::fmt::temporal::DateTimeParser::new();
-
-    let value = String::deserialize(de)?;
-    let pieces = PARSER
-        .parse_pieces(&value)
-        .map_err(serde::de::Error::custom)?;
-    let time = pieces
-        .time()
-        .ok_or_else(|| serde::de::Error::custom("datetime string is missing a time"))?;
-
-    Ok(pieces.date().to_datetime(time))
-}
-
 /// Serializes a [`jiff::civil::DateTime`] object with zero or three fractional digits,
 /// which is most compatible with Zephyr
 fn serialize_datetime_for_zephyr<S>(
@@ -214,7 +194,6 @@ impl_serialize_as_empty_map!(DateTimeGet);
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct DateTimeGetResponse {
     /// String in format: `yyyy-MM-dd'T'HH:mm:ss.SSS`.
-    #[serde(deserialize_with = "deserialize_datetime_and_ignore_timezone")]
     pub datetime: jiff::civil::DateTime,
 }
 
