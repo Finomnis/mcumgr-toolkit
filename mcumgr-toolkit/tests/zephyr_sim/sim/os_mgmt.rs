@@ -406,7 +406,7 @@ fn datetime_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         time.second()
     );
     if device.config.os_datetime_ms {
-        text += &format!(".{:03}", time.subsec_nanosecond() / 1_000_000);
+        text += &format!(".{:03}", time.millisecond());
     }
 
     ctx.put("datetime", Value::Text(text));
