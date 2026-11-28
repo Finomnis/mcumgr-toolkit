@@ -263,7 +263,7 @@ pub fn run(
             if args.verbose {
                 println!("Device time: {}", datetime.strftime("%F %T%.f"));
             } else {
-                println!("{}", datetime);
+                println!("{:?}", datetime);
             }
         }
         OsCommand::SystemReset { force, bootmode } => {
