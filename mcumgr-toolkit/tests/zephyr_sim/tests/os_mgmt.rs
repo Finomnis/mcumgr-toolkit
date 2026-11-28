@@ -1,6 +1,6 @@
 //! OS management group (group 0)
 
-use chrono::{NaiveDate, Timelike};
+use jiff::civil;
 use mcumgr_toolkit::bootloader::{BootloaderInfo, BootloaderType, MCUbootMode};
 use mcumgr_toolkit::commands::os::ThreadStateFlags;
 
@@ -140,10 +140,7 @@ fn datetime() {
         group_error(group_id::OS, os_mgmt_err::RTC_NOT_SET)
     );
 
-    let time = NaiveDate::from_ymd_opt(2026, 10, 5)
-        .unwrap()
-        .and_hms_opt(13, 37, 42)
-        .unwrap();
+    let time = civil::datetime(2026, 10, 5, 13, 37, 42, 0);
     client.os_set_datetime(time).unwrap();
     assert_eq!(device.lock().os.rtc, Some(time));
     assert_eq!(client.os_get_datetime().unwrap(), time);
@@ -160,14 +157,11 @@ fn datetime_milliseconds_are_dropped_by_devices_without_ms_support() {
     let device = SimDevice::with_firmware();
     let client = device.client();
 
-    let time = NaiveDate::from_ymd_opt(2000, 1, 1)
-        .unwrap()
-        .and_hms_milli_opt(0, 0, 1, 250)
-        .unwrap();
+    let time = civil::datetime(2000, 1, 1, 0, 0, 1, 250_000_000);
     client.os_set_datetime(time).unwrap();
     assert_eq!(
         client.os_get_datetime().unwrap(),
-        time.with_nanosecond(0).unwrap()
+        time.with().subsec_nanosecond(0).build().unwrap()
     );
 }
 
@@ -179,10 +173,7 @@ fn datetime_with_milliseconds() {
     });
     let client = device.client();
 
-    let time = NaiveDate::from_ymd_opt(2024, 2, 29)
-        .unwrap()
-        .and_hms_milli_opt(23, 59, 59, 999)
-        .unwrap();
+    let time = civil::datetime(2024, 2, 29, 23, 59, 59, 999_000_000);
     client.os_set_datetime(time).unwrap();
     assert_eq!(client.os_get_datetime().unwrap(), time);
 }
@@ -193,18 +184,12 @@ fn datetime_errors() {
     let client = device.client();
 
     // Years before 1900 are rejected by the parser
-    let time = NaiveDate::from_ymd_opt(1899, 12, 31)
-        .unwrap()
-        .and_hms_opt(0, 0, 0)
-        .unwrap();
+    let time = civil::datetime(1899, 12, 31, 0, 0, 0, 0);
     let err = client.os_set_datetime(time).unwrap_err();
     assert_eq!(device_error(err), smp_error(mgmt_err::EINVAL));
 
     device.lock().os.rtc_broken = true;
-    let time = NaiveDate::from_ymd_opt(2020, 1, 1)
-        .unwrap()
-        .and_hms_opt(0, 0, 0)
-        .unwrap();
+    let time = civil::datetime(2020, 1, 1, 0, 0, 0, 0);
     let err = client.os_set_datetime(time).unwrap_err();
     assert_eq!(
         device_error(err),
@@ -428,10 +413,7 @@ fn datetime_limits() {
     let client = device.client();
 
     for (y, mo, d, h, mi, s) in [(1900, 1, 1, 0, 0, 0), (9999, 12, 31, 23, 59, 59)] {
-        let time = NaiveDate::from_ymd_opt(y, mo, d)
-            .unwrap()
-            .and_hms_opt(h, mi, s)
-            .unwrap();
+        let time = civil::datetime(y, mo, d, h, mi, s, 0);
         client.os_set_datetime(time).unwrap();
         assert_eq!(client.os_get_datetime().unwrap(), time);
     }

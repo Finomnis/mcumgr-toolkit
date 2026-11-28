@@ -230,40 +230,20 @@ pub fn run(
             }
         }
         OsCommand::SetDatetime { value, utc } => {
-            use chrono::{DateTime, FixedOffset, NaiveDateTime};
-
-            let datetime_value = if let Some(value) = value {
-                value
-                    .parse::<DateTime<FixedOffset>>()
-                    .map(|datetime| {
-                        if utc {
-                            datetime.naive_utc()
-                        } else {
-                            datetime.naive_local()
-                        }
-                    })
-                    .or_else(|_| value.parse::<NaiveDateTime>())?
-            } else {
-                let now = chrono::Local::now();
-                if utc {
-                    now.naive_utc()
-                } else {
-                    now.naive_local()
-                }
-            };
+            let datetime_value = parse_datetime(value.as_deref(), utc)?;
 
             client.os_set_datetime(datetime_value)?;
 
             if args.verbose {
-                println!("Set device time to: {}", datetime_value.format("%F %T"));
+                println!("Set device time to: {}", datetime_value.strftime("%F %T"));
             }
         }
         OsCommand::GetDatetime => {
             let datetime = client.os_get_datetime()?;
             if args.verbose {
-                println!("Device time: {}", datetime);
+                println!("Device time: {}", datetime.strftime("%F %T%.f"));
             } else {
-                println!("{:?}", datetime);
+                println!("{}", datetime);
             }
         }
         OsCommand::SystemReset { force, bootmode } => {
@@ -348,4 +328,77 @@ pub fn run(
     }
 
     Ok(())
+}
+
+/// Determines the datetime to set on the device.
+///
+/// Parses `value` with an optional UTC offset, or uses the host time if `value` is `None`.
+///
+/// If `utc` is set, the result is converted to UTC. Otherwise, the local time is used.
+fn parse_datetime(value: Option<&str>, utc: bool) -> Result<jiff::civil::DateTime, jiff::Error> {
+    use jiff::{Timestamp, fmt::temporal::DateTimeParser, tz::Offset, tz::TimeZone};
+
+    let Some(value) = value else {
+        let now = Timestamp::now();
+        return Ok(if utc {
+            Offset::UTC.to_datetime(now)
+        } else {
+            now.to_zoned_datetime(TimeZone::system()).datetime()
+        });
+    };
+
+    static PARSER: DateTimeParser = DateTimeParser::new();
+    let pieces = PARSER.parse_pieces(value)?;
+    let time = pieces
+        .time()
+        .ok_or_else(|| jiff::Error::from_args(format_args!("datetime string is missing a time")))?;
+    let datetime = pieces.date().to_datetime(time);
+
+    match pieces.to_numeric_offset() {
+        Some(offset) if utc => Ok(Offset::UTC.to_datetime(offset.to_timestamp(datetime)?)),
+        _ => Ok(datetime),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_datetime;
+    use jiff::civil::datetime;
+
+    #[test]
+    fn parse_datetime_without_offset() {
+        for utc in [false, true] {
+            assert_eq!(
+                parse_datetime(Some("2025-11-20T11:56:05"), utc).unwrap(),
+                datetime(2025, 11, 20, 11, 56, 5, 0)
+            );
+        }
+        assert_eq!(
+            parse_datetime(Some("2025-11-20 11:56:05.366"), false).unwrap(),
+            datetime(2025, 11, 20, 11, 56, 5, 366_000_000)
+        );
+    }
+
+    #[test]
+    fn parse_datetime_with_offset() {
+        let value = Some("2025-11-20T11:56:05+01:00");
+        assert_eq!(
+            parse_datetime(value, false).unwrap(),
+            datetime(2025, 11, 20, 11, 56, 5, 0)
+        );
+        assert_eq!(
+            parse_datetime(value, true).unwrap(),
+            datetime(2025, 11, 20, 10, 56, 5, 0)
+        );
+        assert_eq!(
+            parse_datetime(Some("2025-11-20T11:56:05Z"), true).unwrap(),
+            datetime(2025, 11, 20, 11, 56, 5, 0)
+        );
+    }
+
+    #[test]
+    fn parse_datetime_errors() {
+        assert!(parse_datetime(Some("2025-11-20"), false).is_err());
+        assert!(parse_datetime(Some("not a datetime"), false).is_err());
+    }
 }

@@ -747,7 +747,7 @@ impl MCUmgrClient {
     /// Sets the RTC of the device to the given datetime.
     pub fn os_set_datetime(
         &self,
-        datetime: chrono::NaiveDateTime,
+        datetime: jiff::civil::DateTime,
     ) -> Result<(), MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::DateTimeSet { datetime })
@@ -756,7 +756,7 @@ impl MCUmgrClient {
     }
 
     /// Retrieves the device RTC's datetime.
-    pub fn os_get_datetime(&self) -> Result<chrono::NaiveDateTime, MCUmgrClientError> {
+    pub fn os_get_datetime(&self) -> Result<jiff::civil::DateTime, MCUmgrClientError> {
         self.connection
             .execute_command(&commands::os::DateTimeGet)
             .map(|val| val.datetime)

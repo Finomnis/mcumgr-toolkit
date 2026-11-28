@@ -44,8 +44,8 @@ pub enum CliError {
     #[diagnostic(code(mcumgrctl::destination_unknown))]
     DestinationFilenameUnknown,
     #[error("Failed to parse datetime string")]
-    #[diagnostic(code(mcumgrctl::chrono_parse))]
-    ChronoParseFailed(#[from] chrono::ParseError),
+    #[diagnostic(code(mcumgrctl::datetime_parse))]
+    DatetimeParseFailed(#[from] jiff::Error),
     #[error("Failed to open USB serial port")]
     #[diagnostic(code(mcumgrctl::usb_serial))]
     UsbSerialOpenFailed(#[from] UsbSerialError),

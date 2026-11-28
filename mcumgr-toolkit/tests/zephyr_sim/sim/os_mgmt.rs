@@ -1,7 +1,7 @@
 //! OS management group, modelled after
 //! `subsys/mgmt/mcumgr/grp/os_mgmt/src/os_mgmt.c`.
 
-use chrono::{Datelike, NaiveDate, NaiveDateTime, Timelike};
+use jiff::civil::DateTime;
 
 use ciborium::Value;
 
@@ -60,7 +60,7 @@ pub struct OsState {
     pub threads: Vec<Thread>,
     pub heaps: Vec<Heap>,
     /// `None` makes `rtc_get_time` fail with `-ENODATA`
-    pub rtc: Option<NaiveDateTime>,
+    pub rtc: Option<DateTime>,
     /// Makes `rtc_set_time`/`rtc_get_time` fail with an I/O error
     pub rtc_broken: bool,
     /// Every reset request that was accepted, in order
@@ -406,7 +406,7 @@ fn datetime_read(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
         time.second()
     );
     if device.config.os_datetime_ms {
-        text += &format!(".{:03}", time.nanosecond() / 1_000_000);
+        text += &format!(".{:03}", time.millisecond());
     }
 
     ctx.put("datetime", Value::Text(text));
@@ -487,13 +487,18 @@ fn datetime_write(device: &mut Device, ctx: &mut Ctx) -> Result<(), i32> {
     }
 
     // rtc_set_time() rejects dates that do not exist
-    let new_time = NaiveDate::from_ymd_opt(values[0] as i32, values[1] as u32, values[2] as u32)
-        .and_then(|date| {
-            date.and_hms_milli_opt(values[3] as u32, values[4] as u32, values[5] as u32, msec)
-        });
+    let new_time = DateTime::new(
+        values[0] as i16,
+        values[1] as i8,
+        values[2] as i8,
+        values[3] as i8,
+        values[4] as i8,
+        values[5] as i8,
+        msec as i32 * 1_000_000,
+    );
 
     match new_time {
-        Some(time) if !device.os.rtc_broken => device.os.rtc = Some(time),
+        Ok(time) if !device.os.rtc_broken => device.os.rtc = Some(time),
         _ => ctx.add_cmd_err(group_id::OS, os_mgmt_err::RTC_COMMAND_FAILED),
     }
     Ok(())

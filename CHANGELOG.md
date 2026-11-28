@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.22.0] - xxxx-xx-xx
+
+### Breaking changes
+
+- Rust: replace `chrono` with `jiff`
+  - `MCUmgrClient::os_get_datetime`, `MCUmgrClient::os_set_datetime`, `DateTimeGetResponse` and `DateTimeSet`
+    now use `jiff::civil::DateTime` instead of `chrono::NaiveDateTime`
+
+
 ## [0.21.0] - 2026-11-27
 
 ### Breaking changes
@@ -628,6 +637,7 @@ Initial release, not feature complete yet.
 
 Primarily to test release workflow.
 
+[0.22.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.20.0...0.21.0
 [0.20.0]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.19.3...0.20.0
 [0.19.3]: https://github.com/Finomnis/mcumgr-toolkit/compare/0.19.2...0.19.3

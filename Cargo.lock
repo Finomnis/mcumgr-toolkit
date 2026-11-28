@@ -330,7 +330,6 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
- "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -1073,10 +1072,12 @@ checksum = "107f2e89536b6818514025f6787b0d94d819e54fe3b40365275fc753de485b3f"
 dependencies = [
  "jiff-core",
  "jiff-static",
+ "jiff-tzdb-platform",
  "log",
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
+ "windows-link",
 ]
 
 [[package]]
@@ -1098,6 +1099,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.10",
+]
+
+[[package]]
+name = "jiff-tzdb"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12e71a1b68a875a44a33bb7a1dd84392cb77145a3367a552a3cfe6a4f5cf3afc"
+
+[[package]]
+name = "jiff-tzdb-platform"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc65b284afcfa8f6cf189c7274c805505314a7ab975c60e1f548bff56525420e"
+dependencies = [
+ "jiff-tzdb",
 ]
 
 [[package]]
@@ -1256,12 +1272,12 @@ version = "0.21.0"
 dependencies = [
  "base64",
  "btleplug",
- "chrono",
  "ciborium",
  "crc",
  "dbus",
  "futures",
  "hex",
+ "jiff",
  "log",
  "miette",
  "polonius-the-crab",
@@ -1287,6 +1303,7 @@ dependencies = [
  "ciborium",
  "either",
  "hex",
+ "jiff",
  "mcumgr-toolkit",
  "miette",
  "pyo3",
@@ -1303,7 +1320,6 @@ dependencies = [
 name = "mcumgrctl"
 version = "0.21.0"
 dependencies = [
- "chrono",
  "ciborium",
  "clap",
  "clap_complete",
@@ -1313,6 +1329,7 @@ dependencies = [
  "hex",
  "indicatif",
  "indicatif-log-bridge",
+ "jiff",
  "log",
  "mcumgr-toolkit",
  "miette",
@@ -1712,7 +1729,6 @@ version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "229ca13b8a15bb0d1487b81ab975bfcd97513416499a8312011b6036e42e0de4"
 dependencies = [
- "chrono",
  "either",
  "libc",
  "once_cell",
