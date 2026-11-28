@@ -23,7 +23,6 @@ use crate::raw_py_any_command::RawPyAnyCommand;
 mod return_types;
 pub use return_types::*;
 
-mod datetime;
 mod errors;
 mod hash_type;
 mod mcuboot;
@@ -401,7 +400,7 @@ impl MCUmgrClient {
     ///
     pub fn os_set_datetime<'py>(&self, datetime: Bound<'py, PyDateTime>) -> PyResult<()> {
         self.get_client()?
-            .os_set_datetime(datetime::py_datetime_to_civil(&datetime)?)
+            .os_set_datetime(datetime.extract()?)
             .map_err(err_to_pyerr)
     }
 
@@ -413,7 +412,7 @@ impl MCUmgrClient {
         self.get_client()?
             .os_get_datetime()
             .map_err(err_to_pyerr)
-            .and_then(|datetime| datetime::civil_to_py_datetime(py, datetime))
+            .and_then(|datetime| datetime.into_pyobject(py))
     }
 
     /// Issues a system reset.

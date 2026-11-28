@@ -1303,7 +1303,6 @@ dependencies = [
  "ciborium",
  "either",
  "hex",
- "jiff",
  "mcumgr-toolkit",
  "miette",
  "pyo3",
@@ -1482,7 +1481,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "pyo3",
- "pyo3-build-config",
+ "pyo3-build-config 0.30.1",
  "rustc-hash 2.1.3",
 ]
 
@@ -1725,17 +1724,25 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "229ca13b8a15bb0d1487b81ab975bfcd97513416499a8312011b6036e42e0de4"
+version = "0.30.0"
+source = "git+https://github.com/PyO3/pyo3?rev=143012921bf66cb36e964a1e38b1292a4ed919d8#143012921bf66cb36e964a1e38b1292a4ed919d8"
 dependencies = [
  "either",
+ "jiff",
  "libc",
  "once_cell",
  "portable-atomic",
- "pyo3-build-config",
+ "pyo3-build-config 0.30.0",
  "pyo3-ffi",
  "pyo3-macros",
+]
+
+[[package]]
+name = "pyo3-build-config"
+version = "0.30.0"
+source = "git+https://github.com/PyO3/pyo3?rev=143012921bf66cb36e964a1e38b1292a4ed919d8#143012921bf66cb36e964a1e38b1292a4ed919d8"
+dependencies = [
+ "target-lexicon",
 ]
 
 [[package]]
@@ -1749,12 +1756,11 @@ dependencies = [
 
 [[package]]
 name = "pyo3-ffi"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e7ff73c555c286d212d4ce7e5fbda845a973c4f61bd5f160f5f2c3c2a04d1c4"
+version = "0.30.0"
+source = "git+https://github.com/PyO3/pyo3?rev=143012921bf66cb36e964a1e38b1292a4ed919d8#143012921bf66cb36e964a1e38b1292a4ed919d8"
 dependencies = [
  "libc",
- "pyo3-build-config",
+ "pyo3-build-config 0.30.0",
 ]
 
 [[package]]
@@ -1770,9 +1776,8 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c46d2e5862c7bb8207e3b639f713dda3c499933444784154c11d013c5a691b60"
+version = "0.30.0"
+source = "git+https://github.com/PyO3/pyo3?rev=143012921bf66cb36e964a1e38b1292a4ed919d8#143012921bf66cb36e964a1e38b1292a4ed919d8"
 dependencies = [
  "proc-macro2",
  "pyo3-macros-backend",
@@ -1782,9 +1787,8 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros-backend"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b89f066f2ae72a2aef52d1537ca2fcd104440ebfadee06e97aa90738a25b9b"
+version = "0.30.0"
+source = "git+https://github.com/PyO3/pyo3?rev=143012921bf66cb36e964a1e38b1292a4ed919d8#143012921bf66cb36e964a1e38b1292a4ed919d8"
 dependencies = [
  "heck",
  "proc-macro2",

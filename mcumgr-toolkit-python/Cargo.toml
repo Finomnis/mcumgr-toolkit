@@ -41,8 +41,7 @@ pyo3-embed = []
 vendored-dbus = ["mcumgr-toolkit/vendored-dbus"]
 
 [dependencies]
-pyo3 = { workspace = true, features = ["either"] }
-jiff.workspace = true
+pyo3 = { workspace = true, features = ["either", "jiff"] }
 pyo3-stub-gen.workspace = true
 pyo3-log.workspace = true
 pythonize.workspace = true
